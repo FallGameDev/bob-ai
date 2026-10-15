@@ -1,0 +1,2219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bob AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   BOB AI - DESIGN TOKENS
+   All colors live here so light and dark mode are easy to tweak.
+   ============================================================ */
+:root {
+  --bg: #faf9f6;            /* main page background (warm off white) */
+  --sidebar: #f2f0eb;       /* left sidebar */
+  --surface: #ffffff;       /* cards, composer box */
+  --hover: #e9e6df;         /* hover state for buttons */
+  --border: #e2ded5;        /* thin lines */
+  --text: #1f1e1c;          /* main text */
+  --muted: #75716a;         /* secondary text */
+  --user-bubble: #ece9e2;   /* user message bubble */
+  --accent: #3b6df0;        /* Bob's signature blue */
+  --accent-soft: #e4ebfd;   /* light blue behind chips */
+  --good: #1f9d63;          /* correct quiz answers */
+  --bad: #d9443a;           /* wrong quiz answers */
+  --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1c1c1e; --sidebar: #151517; --surface: #2a2a2d; --hover: #333337;
+    --border: #38383c; --text: #ececec; --muted: #9a9aa0; --user-bubble: #303034;
+    --accent: #6b93ff; --accent-soft: #263152; --good: #3cc985; --bad: #ff6b60;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1c1c1e; --sidebar: #151517; --surface: #2a2a2d; --hover: #333337;
+  --border: #38383c; --text: #ececec; --muted: #9a9aa0; --user-bubble: #303034;
+  --accent: #6b93ff; --accent-soft: #263152; --good: #3cc985; --bad: #ff6b60;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.3);
+}
+
+/* ============================================================
+   BASE LAYOUT
+   ============================================================ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg); color: var(--text);
+  display: flex; overflow: hidden;
+  font-size: 15px; line-height: 1.6;
+}
+button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.sidebar {
+  width: 260px; background: var(--sidebar);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; padding: 12px;
+  transition: margin-left .25s ease; z-index: 20;
+}
+.sidebar.closed { margin-left: -260px; }
+.side-top { display: flex; align-items: center; justify-content: space-between; padding: 4px 4px 12px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 16px; }
+.logo {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: var(--accent); color: #fff;
+  display: grid; place-items: center;
+  font-family: 'Source Serif 4', serif; font-size: 17px;
+}
+.icon-btn { padding: 7px; border-radius: 8px; display: grid; place-items: center; color: var(--muted); }
+.icon-btn:hover { background: var(--hover); color: var(--text); }
+.new-chat { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; width: 100%; font-weight: 500; }
+.new-chat:hover { background: var(--hover); }
+.side-label { font-size: 12px; color: var(--muted); padding: 18px 10px 6px; font-weight: 500; }
+.chat-list { flex: 1; overflow-y: auto; }
+.chat-item { display: block; width: 100%; text-align: left; padding: 7px 10px; border-radius: 8px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chat-item:hover { background: var(--hover); }
+.chat-item.active { background: var(--hover); font-weight: 500; }
+.side-bottom { border-top: 1px solid var(--border); padding-top: 10px; display: flex; align-items: center; gap: 4px; }
+.avatar { width: 30px; height: 30px; border-radius: 50%; background: #c96a3c; color: #fff; display: grid; place-items: center; font-size: 13px; font-weight: 600; flex-shrink: 0; }
+.user-btn { display: flex; align-items: center; gap: 10px; flex: 1; padding: 6px; border-radius: 10px; text-align: left; min-width: 0; }
+.user-btn:hover { background: var(--hover); }
+.user-name { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ============================================================
+   MAIN AREA
+   ============================================================ */
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
+.header { display: flex; align-items: center; gap: 6px; padding: 10px 14px; height: 56px; }
+.model-btn { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 8px; font-weight: 500; font-size: 15px; }
+.model-btn:hover { background: var(--hover); }
+.model-btn small { color: var(--muted); font-weight: 400; }
+.spacer { flex: 1; }
+
+/* Mode picker dropdown */
+.menu { position: absolute; top: 52px; left: 50px; width: 270px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); padding: 6px; display: none; z-index: 30; }
+.menu.open { display: block; }
+.menu-item { display: flex; gap: 10px; align-items: flex-start; width: 100%; text-align: left; padding: 9px 10px; border-radius: 10px; }
+.menu-item:hover { background: var(--hover); }
+.menu-item b { font-weight: 500; display: block; font-size: 14px; }
+.menu-item span { font-size: 12.5px; color: var(--muted); }
+.check { margin-left: auto; color: var(--accent); visibility: hidden; }
+.menu-item.on .check { visibility: visible; }
+
+.scroll { flex: 1; overflow-y: auto; }
+.thread { max-width: 740px; margin: 0 auto; padding: 20px 20px 40px; }
+
+/* Welcome screen */
+.welcome { max-width: 740px; margin: 0 auto; padding: 12vh 20px 20px; text-align: center; }
+.welcome .big-logo { width: 52px; height: 52px; border-radius: 14px; font-size: 30px; margin: 0 auto 18px; }
+.welcome h1 { font-family: 'Source Serif 4', serif; font-weight: 500; font-size: 34px; letter-spacing: -.5px; margin-bottom: 6px; }
+.welcome p { color: var(--muted); }
+.cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 30px; text-align: left; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 13px 15px; font-size: 14px; transition: transform .15s, box-shadow .15s; }
+.card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.card b { display: block; font-weight: 500; margin-bottom: 2px; }
+.card span { color: var(--muted); font-size: 13px; }
+
+/* Messages */
+.msg { margin: 22px 0; animation: pop .25s ease; }
+@keyframes pop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.msg.user { display: flex; justify-content: flex-end; }
+.msg.user .bubble { background: var(--user-bubble); padding: 10px 16px; border-radius: 18px; max-width: 80%; white-space: pre-wrap; word-wrap: break-word; }
+.msg.bot { display: flex; gap: 14px; }
+.msg.bot .logo { flex-shrink: 0; margin-top: 2px; }
+.bot-body { flex: 1; min-width: 0; }
+.bot-body p { margin-bottom: 10px; }
+.bot-body ul, .bot-body ol { margin: 0 0 10px 22px; }
+.bot-body li { margin-bottom: 3px; }
+.bot-body code { background: var(--hover); padding: 1px 6px; border-radius: 5px; font-size: 13.5px; }
+.bot-body .good { color: var(--good); font-weight: 600; }
+.bot-body .bad { color: var(--bad); font-weight: 600; }
+.source-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; background: var(--accent-soft); color: var(--accent); padding: 3px 9px; border-radius: 99px; margin: 2px 4px 2px 0; }
+.source-chip svg { width: 12px; height: 12px; }
+.actions { display: flex; gap: 2px; margin-top: 4px; opacity: 0; transition: opacity .2s; }
+.msg.bot:hover .actions { opacity: 1; }
+.actions .icon-btn { padding: 6px; }
+.actions svg { width: 16px; height: 16px; }
+
+/* Links inside Bob's answers (Social Blade, ViewStats, Wikipedia) */
+.bot-body a { color: var(--accent); text-decoration: none; font-weight: 500; }
+.bot-body a:hover { text-decoration: underline; }
+.field small { display: block; color: var(--muted); font-size: 12px; margin-top: 5px; }
+.field small a { color: var(--accent); }
+.field.check-row { display: flex; align-items: center; gap: 8px; }
+.field.check-row input { width: auto; accent-color: var(--accent); }
+.field.check-row label { margin: 0; font-weight: 400; }
+
+/* Thinking dots */
+.typing { display: flex; gap: 5px; padding: 10px 0; }
+.typing i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: blink 1.2s infinite; }
+.typing i:nth-child(2) { animation-delay: .2s; }
+.typing i:nth-child(3) { animation-delay: .4s; }
+@keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+
+/* ============================================================
+   COMPOSER
+   ============================================================ */
+.composer-wrap { padding: 0 20px 14px; }
+.composer { max-width: 740px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: 22px; box-shadow: var(--shadow); padding: 12px 12px 10px 18px; }
+.composer textarea { width: 100%; border: none; outline: none; resize: none; background: transparent; color: var(--text); font: inherit; max-height: 200px; min-height: 26px; }
+.composer textarea::placeholder { color: var(--muted); }
+.composer-row { display: flex; align-items: center; gap: 4px; margin-top: 6px; }
+.pill { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); padding: 6px 10px; border: 1px solid var(--border); border-radius: 99px; }
+.pill:hover { background: var(--hover); color: var(--text); }
+.send { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; transition: opacity .2s; }
+.send:disabled { opacity: .35; cursor: default; }
+.fineprint { text-align: center; font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+/* ============================================================
+   SETTINGS POPUP
+   ============================================================ */
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.4); display: none; place-items: center; z-index: 50; padding: 16px; }
+.modal-bg.open { display: grid; animation: pop .2s ease; }
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow); width: 100%; max-width: 420px; padding: 22px; }
+.modal h2 { font-family: 'Source Serif 4', serif; font-weight: 500; font-size: 22px; margin-bottom: 4px; }
+.modal p { color: var(--muted); font-size: 14px; margin-bottom: 16px; }
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+.field input, .field select { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font: inherit; outline: none; }
+.field input:focus, .field select:focus { border-color: var(--accent); }
+.preview-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; font-size: 14px; color: var(--muted); }
+.modal-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+.btn { padding: 9px 16px; border-radius: 10px; font-weight: 500; font-size: 14px; }
+.btn.ghost:hover { background: var(--hover); }
+.btn.primary { background: var(--accent); color: #fff; }
+.btn.primary:hover { opacity: .9; }
+.btn.danger { color: var(--bad); margin-right: auto; }
+.btn.danger:hover { background: var(--hover); }
+
+/* ============================================================
+   HOME PAGE (what people see before they log in)
+   ============================================================ */
+.home {
+  position: fixed; inset: 0; z-index: 40; overflow-y: auto;
+  background:
+    radial-gradient(900px 500px at 50% -10%, var(--accent-soft), transparent 70%),
+    var(--bg);
+}
+.home[hidden] { display: none; }
+.home-inner { max-width: 960px; margin: 0 auto; padding: 0 20px 40px; }
+.home-nav { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; }
+.hero { text-align: center; padding: 7vh 0 30px; }
+.hero-logo { width: 64px; height: 64px; border-radius: 18px; font-size: 38px; margin: 0 auto 22px; box-shadow: var(--shadow); }
+.hero h1 { font-family: 'Source Serif 4', serif; font-weight: 500; font-size: clamp(32px, 6vw, 52px); letter-spacing: -1px; line-height: 1.1; margin-bottom: 14px; }
+.hero p { color: var(--muted); font-size: 17px; max-width: 560px; margin: 0 auto; }
+
+/* The login key box */
+.login-card {
+  max-width: 440px; margin: 30px auto 0; text-align: left;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 18px; box-shadow: var(--shadow); padding: 18px;
+}
+.login-card label { display: block; font-weight: 500; font-size: 14px; margin-bottom: 8px; }
+.key-row { display: flex; gap: 8px; }
+.key-row input {
+  flex: 1; min-width: 0; padding: 11px 13px; border-radius: 11px;
+  border: 1px solid var(--border); background: var(--bg); color: var(--text);
+  font: inherit; font-family: ui-monospace, Menlo, monospace; letter-spacing: 1px; text-transform: uppercase; outline: none;
+}
+.key-row input:focus { border-color: var(--accent); }
+.login-msg { min-height: 20px; font-size: 13px; margin-top: 8px; color: var(--bad); }
+.login-msg.ok { color: var(--good); }
+.login-card small { display: block; color: var(--muted); font-size: 13px; }
+.shake { animation: shake .35s; }
+@keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+
+/* Feature cards */
+.features { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 50px; }
+.feature { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+.feature .f-icon { width: 34px; height: 34px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; margin-bottom: 10px; }
+.feature b { display: block; font-weight: 600; margin-bottom: 4px; }
+.feature span { color: var(--muted); font-size: 14px; }
+
+/* Little fake chat that shows what Bob does */
+.demo { max-width: 640px; margin: 50px auto 0; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow); padding: 6px 22px; }
+.demo .msg { animation: none; }
+.home-foot { text-align: center; color: var(--muted); font-size: 13px; margin-top: 40px; }
+
+/* Owner tool for making new keys (open the page with #makekey) */
+.makekey { max-width: 640px; margin: 30px auto 0; background: var(--surface); border: 2px dashed var(--border); border-radius: 16px; padding: 18px; }
+.makekey[hidden] { display: none; }
+.makekey h3 { font-size: 16px; margin-bottom: 4px; }
+.makekey p { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+.makekey textarea { width: 100%; height: 60px; margin-top: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-family: ui-monospace, Menlo, monospace; font-size: 12px; padding: 8px; resize: none; }
+
+@media (max-width: 760px) {
+  .features { grid-template-columns: 1fr 1fr; }
+  .key-row { flex-direction: column; }
+}
+
+/* ============================================================
+   PHONE LAYOUT
+   ============================================================ */
+.overlay { display: none; }
+@media (max-width: 760px) {
+  .sidebar { position: fixed; inset: 0 auto 0 0; height: 100%; }
+  .overlay.show { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 15; }
+  .cards { grid-template-columns: 1fr; }
+  .welcome { padding-top: 6vh; }
+  .welcome h1 { font-size: 27px; }
+  .thread, .welcome { padding-left: 16px; padding-right: 16px; }
+  .composer-wrap { padding: 0 12px 12px; }
+  .msg.user .bubble { max-width: 88%; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===================== SIDEBAR ===================== -->
+<aside class="sidebar" id="sidebar">
+  <div class="side-top">
+    <div class="brand"><div class="logo">b</div>Bob AI</div>
+    <button class="icon-btn" id="closeSide" title="Close sidebar">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg>
+    </button>
+  </div>
+  <button class="new-chat" id="newChat">
+    <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New chat
+  </button>
+  <div class="side-label">Recent</div>
+  <div class="chat-list" id="chatList"></div>
+  <div class="side-bottom">
+    <button class="user-btn" id="userBtn" title="Settings">
+      <div class="avatar" id="avatar">?</div>
+      <div class="user-name" id="userName">Guest</div>
+    </button>
+    <button class="icon-btn" id="settingsBtn" title="Settings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+    <button class="icon-btn" id="themeBtn" title="Switch light or dark">
+      <svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+  </div>
+</aside>
+<div class="overlay" id="overlay"></div>
+
+<!-- ===================== HOME PAGE (logged out) ===================== -->
+<section class="home" id="home" hidden>
+  <div class="home-inner">
+    <nav class="home-nav">
+      <div class="brand"><div class="logo">b</div>Bob AI</div>
+      <button class="btn ghost" id="jumpLogin">Log in</button>
+    </nav>
+
+    <div class="hero">
+      <div class="logo hero-logo">b</div>
+      <h1>Meet Bob, your<br>study buddy.</h1>
+      <p>Bob explains games, YouTubers, and history, solves any K-12 math problem step by step, and quizzes you until it sticks. No downloads. It all runs in your browser.</p>
+
+      <form class="login-card" id="loginForm" autocomplete="off">
+        <label for="keyInput">Enter your login key</label>
+        <div class="key-row">
+          <input id="keyInput" placeholder="XXXX-XXXX-XXXX" spellcheck="false">
+          <button class="btn primary" type="submit">Log in</button>
+        </div>
+        <div class="login-msg" id="loginMsg"></div>
+        <small>No key? Get one from a YouTuber who uses Bob, or from FallGameDev.</small>
+      </form>
+    </div>
+
+    <div class="features">
+      <div class="feature">
+        <div class="f-icon"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h7"/><path d="m15 15 2 2 4-4"/></svg></div>
+        <b>Math, K-12</b><span>From counting to calculus, with every step shown.</span>
+      </div>
+      <div class="feature">
+        <div class="f-icon"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M6 12h4M8 10v4"/><circle cx="16" cy="11" r="1"/><circle cx="18" cy="13" r="1"/></svg></div>
+        <b>Games &amp; creators</b><span>Rec Room, Minecraft, FNAF, and your favorite YouTubers.</span>
+      </div>
+      <div class="feature">
+        <div class="f-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></svg></div>
+        <b>Quiz mode</b><span>Bob keeps asking questions and tells you if you nailed it.</span>
+      </div>
+      <div class="feature">
+        <div class="f-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div>
+        <b>Looks people up</b><span>Doesn't know someone? Bob checks online and shows their stats.</span>
+      </div>
+    </div>
+
+    <div class="demo">
+      <div class="msg user"><div class="bubble">Solve 3x + 7 = 22</div></div>
+      <div class="msg bot"><div class="logo">b</div><div class="bot-body">
+        <p><b>Solving: 3x + 7 = 22</b></p>
+        <ol><li>Get the x terms on one side: <b>3x = 15</b></li><li>Divide both sides by 3.</li><li><b>x = 5</b></li></ol>
+      </div></div>
+    </div>
+
+    <!-- Owner only: visit the page with #makekey at the end of the address -->
+    <div class="makekey" id="makeKey" hidden>
+      <h3>Make a new login key</h3>
+      <p>Type a key (or make a random one), then copy the line into the LOGIN_KEYS list in the code and push it.</p>
+      <div class="key-row">
+        <input id="newKeyName" placeholder="Who is it for? (like brissanna)" style="text-transform:none;letter-spacing:0;font-family:inherit">
+      </div>
+      <div class="key-row" style="margin-top:8px">
+        <input id="newKeyInput" placeholder="NEW-KEY-HERE" spellcheck="false">
+        <button class="btn ghost" type="button" id="randomKeyBtn">Random</button>
+        <button class="btn primary" type="button" id="makeLineBtn">Make line</button>
+      </div>
+      <textarea id="newKeyOut" readonly placeholder="Your line shows up here"></textarea>
+    </div>
+
+    <div class="home-foot">Made by FallGameDev · Wildcard Studios</div>
+  </div>
+</section>
+
+<!-- ===================== SETTINGS POPUP ===================== -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h2 id="modalTitle">Settings</h2>
+    <p id="modalSub">Change how Bob sees you.</p>
+    <div class="preview-row">
+      <div class="avatar" id="previewAvatar">?</div>
+      <span id="previewText">This is how you will show up</span>
+    </div>
+    <div class="field">
+      <label for="nameInput">Display name</label>
+      <input id="nameInput" maxlength="30" placeholder="Your name">
+    </div>
+    <div class="field">
+      <label for="colorInput">Avatar color</label>
+      <select id="colorInput">
+        <option value="#c96a3c">Orange</option>
+        <option value="#3b6df0">Blue</option>
+        <option value="#2f9e6e">Green</option>
+        <option value="#9b4fd6">Purple</option>
+        <option value="#d6457a">Pink</option>
+      </select>
+    </div>
+    <div class="field check-row">
+      <input type="checkbox" id="onlineInput" checked>
+      <label for="onlineInput">Search online when Bob doesn't know someone</label>
+    </div>
+    <div class="field">
+      <label for="ytKeyInput">YouTube API key (optional)</label>
+      <input id="ytKeyInput" placeholder="Paste a key to see live subscriber counts" autocomplete="off" spellcheck="false">
+      <small>Stays on this device only. Get a free key at <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noopener">Google Cloud</a> (turn on "YouTube Data API v3").</small>
+    </div>
+    <div class="modal-btns">
+      <button class="btn danger" id="clearBtn">Clear all chats</button>
+      <button class="btn ghost" id="logoutBtn">Log out</button>
+      <button class="btn ghost" id="cancelBtn">Cancel</button>
+      <button class="btn primary" id="saveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MAIN ===================== -->
+<main class="main">
+  <header class="header">
+    <button class="icon-btn" id="openSide" title="Open sidebar">
+      <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <button class="model-btn" id="modelBtn">
+      <span>Bob 1</span> <small id="modelTag">Study</small>
+      <svg viewBox="0 0 24 24" style="width:14px;height:14px"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <div class="spacer"></div>
+    <button class="icon-btn" id="newChat2" title="New chat">
+      <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+    </button>
+  </header>
+
+  <div class="menu" id="menu"></div>
+
+  <div class="scroll" id="scroll">
+    <section class="welcome" id="welcome">
+      <div class="logo big-logo">b</div>
+      <h1 id="greeting">Good evening</h1>
+      <p>I know games, creators, history, word science, and every kind of K-12 math.</p>
+      <div class="cards" id="cards"></div>
+    </section>
+    <section class="thread" id="thread"></section>
+  </div>
+
+  <div class="composer-wrap">
+    <div class="composer">
+      <textarea id="input" rows="1" placeholder="Message Bob..."></textarea>
+      <div class="composer-row">
+        <button class="pill" id="pillBtn">
+          <svg viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/></svg>
+          <span id="pillText">Study mode</span>
+        </button>
+        <div class="spacer"></div>
+        <button class="send" id="send" disabled title="Send">
+          <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="fineprint">Bob answers from his files and looks people up online when he needs to. Double check important answers.</div>
+  </div>
+</main>
+
+<script>
+/* ================================================================
+   PART 1: BOB'S KNOWLEDGE BASE
+   Every entry is one "chunk" Bob can find and explain.
+     cat     = category (used for quizzes and the topics list)
+     title   = the main name
+     names   = other names people might type
+     keys    = extra search words
+     text    = the explanation (written for a smart 6th grader)
+     example = optional worked example (mostly math)
+     grade   = optional grade level for math lessons
+     quiz    = optional id of a math quiz generator for this lesson
+   ================================================================ */
+const SRC_PDF = "AI & LLM Corpus Vol. II";
+const SRC_LESSON = "Bob Math Lessons";
+const SRC_ENGINE = "Bob Math Engine";
+
+const KB = [
+  /* ---------- GAMES (from the PDF) ---------- */
+  { cat: "Games", title: "Rec Room", names: ["recroom"], keys: "vr social virtual reality maker pen circuits build rooms avatar quests",
+    text: `Rec Room is a social VR game you can play on lots of different devices. Players hang out in rooms that other players built, play mini games, and build their own creations. You can customize your avatar and use the Maker Pen along with Circuits, a visual coding system where you connect blocks called nodes instead of typing code. People use it to make games, sports arenas, trigger systems, moving props, and full quests in a shared 3D world.` },
+  { cat: "Games", title: "Roblox", names: ["roblox studio"], keys: "luau lua scripting obby horror simulator roleplay multiplayer replication robux",
+    text: `Roblox is a huge online platform and game engine where people build multiplayer games. Developers code in Luau, a faster version of the Lua language, inside a program called Roblox Studio. You can find every genre there, like horror games, survival simulators, roleplay, and obbies (obstacle courses). Roblox uses client server replication, which means the server keeps every player's game in sync, and it has its own virtual money system.` },
+  { cat: "Games", title: "Terraria", names: [], keys: "2d sandbox dig caves crafting bosses npc hardmode",
+    text: `Terraria is a 2D side scrolling sandbox adventure game. You dig deep into randomly generated caves, collect and process resources, craft and build, and fight in fast combat. You battle bosses that get harder and harder, take care of NPCs who move into your town, and eventually flip your world into Hardmode, a tougher version with stronger enemies and better loot.` },
+  { cat: "Games", title: "Hello Neighbor", names: [], keys: "stealth horror puzzle ai learns traps basement neighbor",
+    text: `Hello Neighbor is a stealth puzzle horror game where you try to sneak into your neighbor's basement. The neighbor is controlled by an AI that learns from you. It watches the paths you take, then sets traps, boards up the windows you use a lot, resets camera alarms, and changes its patrol routes based on how you tried to break in before.` },
+  { cat: "Games", title: "Snaptic", names: [], keys: "indie puzzle physics timing kinetic momentum platforming hazards button mapping",
+    text: `Snaptic is an indie game all about hands on puzzle design, precise timing, and physics. It tests how well you move through space using changing button controls, fast hazards you have to react to, momentum based platforming, and real time obstacle puzzles.` },
+  { cat: "Games", title: "Minecraft", names: [], keys: "voxel blocks survival sandbox redstone mining building procedural dimensions computer logic",
+    text: `Minecraft is a sandbox survival game made of blocks (called voxels) in a world that is randomly generated and basically never ends. Players mine materials, build anything they want, and explore different dimensions. Its redstone system works like electric wiring, so players can build real logic machines like automatic doors, item sorters, and even working computers that use binary.` },
+  { cat: "Games", title: "Elden Ring", names: [], keys: "dark fantasy action rpg lands between tarnished spirit ashes incantations open world souls",
+    text: `Elden Ring is a dark fantasy action RPG set in a world called the Lands Between. It is known for tough real time combat, huge areas to explore, and deep lore. Players build their character (called a Tarnished) using spirit ashes that summon helpers, special weapon skills, and magic spells called incantations, while exploring big connected castles known as legacy dungeons.` },
+  { cat: "Games", title: "The Legend of Zelda: Tears of the Kingdom", names: ["tears of the kingdom", "totk", "zelda"], keys: "ultrahand fuse physics vehicles sky islands depths open world",
+    text: `Tears of the Kingdom is an open world adventure game built around creative physics. Powers like Ultrahand (stick objects together) and Fuse (combine items with weapons) let you build your own vehicles, siege machines, and combo weapons. You use them to explore sky islands, the land below, and a giant underground area.` },
+  { cat: "Games", title: "Cyberpunk 2077", names: ["cyberpunk"], keys: "night city sci fi rpg v cyberware hacking corporations",
+    text: `Cyberpunk 2077 is a sci fi action RPG set in Night City, a dark future city run by giant corporations where people upgrade their bodies with tech. You play as a mercenary named V and use hacking programs, guns, and cyberware upgrades while making choices that change the story.` },
+  { cat: "Games", title: "Geometry Dash", names: ["gd"], keys: "rhythm platformer music level editor triggers spawn colors",
+    text: `Geometry Dash is a super fast rhythm platformer where you guide a shape through spikes and obstacles in time with electronic music. It has a full level editor with trigger systems, spawn loops, and color layers, so players can build and share their own levels.` },
+  { cat: "Games", title: "Five Nights at Freddy's", names: ["fnaf", "five nights at freddys"], keys: "horror animatronics security guard night shift power cameras doors lore",
+    text: `Five Nights at Freddy's (FNAF) is a famous survival horror series where you work night shifts as a security guard and try to survive creepy animatronic characters. You have to manage your power, security cameras, and doors. The series also hides a lot of secret lore that fans uncover through minigames and clues in the background.` },
+  { cat: "Games", title: "Overwatch", names: [], keys: "hero shooter team tank damage support ultimate objective",
+    text: `Overwatch is a team based hero shooter. Players pick heroes from three roles: Tank, Damage, and Support. Winning depends on good team combos, controlling the map, capturing objectives, and timing your ultimate abilities together with your team.` },
+  { cat: "Games", title: "Portal 2", names: ["portal"], keys: "puzzle portal gun aperture science momentum lasers gel tractor beam bridge",
+    text: `Portal 2 is a first person puzzle game built around the Aperture Science portal gun. You shoot two connected portals onto flat walls and use them to solve puzzles with momentum, lasers, bouncy and speedy gels, tractor beams, and light bridges.` },
+
+  /* ---------- CREATORS (from the PDF) ---------- */
+  { cat: "Creators", title: "brissanna", names: ["yourstrulybrissanna", "brissana"], keys: "youtube vr titanfall cube rage compilation health bar edits memes",
+    text: `brissanna (@YoursTrulyBrissanna) is a YouTube creator known for high energy, meme filled commentary. He plays VR games like Titanfall 2 VR, C.U.B.E., and indie horror games, and makes viral rage compilation edits where he adds video game health bars over funny real life clips. His channel mixes fast editing, community livestreams, and internet humor.` },
+  { cat: "Creators", title: "FallGameDev", names: ["fall game dev"], keys: "indie developer itch.io web games kitty scammer hell sentient cursor luau roblox",
+    text: `FallGameDev is an indie game creator and programmer who makes web games on itch.io, like the KITTY series, Scammer Hell, and Sentient Cursor, plus custom Luau scripts on Roblox. Their style focuses on procedural platforming, custom UI layouts, bold outlined art, and experimental 2D web engines.` },
+  { cat: "Creators", title: "MrBeast", names: ["jimmy donaldson", "mr beast"], keys: "youtube challenges stunts philanthropy giveaways",
+    text: `MrBeast (Jimmy Donaldson) is a huge YouTube creator famous for big budget stunts, giant elimination challenges with lots of people, and large charity projects. His videos use super fast editing to keep you watching, custom game shows, real money prizes, and wild endurance challenges.` },
+  { cat: "Creators", title: "Markiplier", names: ["mark fischbach"], keys: "youtube horror lets play fnaf films interactive",
+    text: `Markiplier (Mark Fischbach) is an American gaming YouTuber known for big reactions, a dramatic narrator voice, and long playthroughs of indie horror games like Five Nights at Freddy's. He also writes, directs, and stars in interactive choose your own adventure films.` },
+  { cat: "Creators", title: "Jacksepticeye", names: ["sean mcloughlin", "jack"], keys: "youtube irish commentary energetic",
+    text: `Jacksepticeye (Sean McLoughlin) is an Irish gaming YouTuber known for super excited, high pitched commentary and fast talking. He plays story driven indie games, big action adventure games, and does comedy reactions.` },
+  { cat: "Creators", title: "Penguinz0", names: ["moistcr1tikal", "moistcritikal", "charlie white", "charlie", "cr1tikal"], keys: "commentary monotone deadpan news reviews",
+    text: `Penguinz0 (MoistCr1TiKaL, real name Charlie White) is a commentary creator known for his flat monotone voice, dry jokes, and funny comparisons. He covers daily news, internet culture, bad movie reviews, and gaming stream highlights.` },
+  { cat: "Creators", title: "Marques Brownlee", names: ["mkbhd"], keys: "tech reviews phones hardware electric cars",
+    text: `Marques Brownlee (MKBHD) is a well known tech reviewer who makes crisp, high quality videos about phones, electric cars, and new gadgets, with deep looks at how they actually work.` },
+  { cat: "Creators", title: "KreekCraft", names: ["forrest waldron"], keys: "roblox livestream updates theories speedruns",
+    text: `KreekCraft (Forrest Waldron) is a popular Roblox creator who livestreams update breakdowns, secret lore theories, speedruns, and community events across big Roblox games.` },
+  { cat: "Creators", title: "Flamingo", names: ["albert aretz", "albert"], keys: "roblox comedy trolling disguises",
+    text: `Flamingo (Albert Aretz) is an American YouTuber who makes chaotic, weird Roblox comedy videos with avatar disguises, server trolling, fast edits, and unscripted jokes.` },
+  { cat: "Creators", title: "CoryxKenshin", names: ["cory williams", "cory"], keys: "youtube horror editing comedy fighting games",
+    text: `CoryxKenshin (Cory Williams) is a gaming YouTuber known for rhythm style editing cuts, great comedic timing, custom sound effects, and playthroughs of indie horror and fighting games.` },
+
+  /* ---------- HISTORY & CULTURE (from the PDF) ---------- */
+  { cat: "History & Culture", title: "Albert Einstein", names: ["einstein"], keys: "physics relativity e=mc2 quantum scientist",
+    text: `Albert Einstein was a German born physicist who came up with the general theory of relativity, which explains gravity as the bending of space and time. He also made big discoveries in quantum mechanics. His most famous formula is E = mc², which means energy equals mass times the speed of light squared.` },
+  { cat: "History & Culture", title: "Ada Lovelace", names: ["lovelace"], keys: "first programmer analytical engine babbage algorithm math",
+    text: `Ada Lovelace was an English mathematician known as the first computer programmer. She published the first algorithm meant to run on a machine, Charles Babbage's Analytical Engine, long before modern computers existed.` },
+  { cat: "History & Culture", title: "Leonardo da Vinci", names: ["da vinci", "leonardo"], keys: "renaissance artist inventor mona lisa notebooks",
+    text: `Leonardo da Vinci was an Italian Renaissance genius who was great at many things. He painted masterpieces like the Mona Lisa and filled notebooks with drawings of the human body, machines, and how water flows.` },
+  { cat: "History & Culture", title: "Nikola Tesla", names: ["tesla"], keys: "inventor electricity ac alternating current motor radio coil",
+    text: `Nikola Tesla was a Serbian American inventor who developed the alternating current (AC) power system we still use today, plus induction motors and early high voltage radio coils.` },
+  { cat: "History & Culture", title: "Taylor Swift", names: ["taylor"], keys: "singer songwriter music tours",
+    text: `Taylor Swift is an American singer songwriter famous for telling stories in her songs across many music styles, breaking records with her concert tours, and fighting to own her own music.` },
+  { cat: "History & Culture", title: "Keanu Reeves", names: ["keanu"], keys: "actor matrix john wick",
+    text: `Keanu Reeves is a Canadian actor famous for starring in The Matrix and John Wick movies. He is known for his martial arts training and for being humble and kind in public.` },
+
+  /* ---------- LANGUAGE & AI (from the PDF) ---------- */
+  { cat: "Language & AI", title: "Parts of Speech Tagging", names: ["pos tagging", "pos tags", "parts of speech"], keys: "nnp vbz dt jj nn nns rb vbn prp in cc noun verb adjective adverb grammar nlp",
+    text: `Parts of speech (POS) tagging is when a computer labels every word in a sentence with its job. AI uses short codes for these:
+- NNP = proper noun (a name), NN = noun, NNS = plural noun
+- VBZ = verb (like "edits"), VBD = past tense verb, VBN = past participle
+- JJ = adjective, RB = adverb, DT = determiner (a, the)
+- PRP = pronoun, IN = preposition, CC = conjunction (and, or)`,
+    example: `"brissanna edits a viral video" is NNP + VBZ + DT + JJ + NN. "FallGameDev codes Luau scripts" is NNP + VBZ + NNP + NNS.` },
+  { cat: "Language & AI", title: "Dependency Trees", names: ["dependency tree", "dependency parsing"], keys: "root subject object modifier grammar sentence structure nsubj dobj amod nlp",
+    text: `A dependency tree shows how words in a sentence connect to each other. The main verb is the ROOT. Other words hang off it: the subject (who did it), the object (what they did it to), and modifiers like adjectives that describe nouns.`,
+    example: `In "brissanna overlayed custom health bars onto hilarious raging clip compilations," the root is "overlayed." The subject is "brissanna," the object is "bars" (described by "custom" and "health"), and "onto compilations" tells where, with "hilarious," "raging," and "clip" describing "compilations."` },
+  { cat: "Language & AI", title: "BPE Tokenization", names: ["tokenization", "tokens", "subword", "bpe"], keys: "byte pair encoding split words pieces ai language model",
+    text: `AI language models do not read whole words. They chop words into smaller pieces called tokens. Byte Pair Encoding (BPE) is one way to do it: common chunks stay together and rare words get split into parts the model already knows.`,
+    example: `"Unscripted" becomes Un + script + ed. "Multithreaded" becomes Multi + thread + ed. "Hyperdimensional" becomes Hyper + dimension + al.` },
+  { cat: "Language & AI", title: "Procedural Noise", names: ["perlin noise", "simplex noise", "noise"], keys: "terrain generation seed voxel minecraft biomes caves heightmap random",
+    text: `Procedural noise (like Perlin or Simplex noise) is math that turns coordinates into smooth, random looking values. Games like Minecraft use it to decide how tall the land is, where biomes go, and where caves form. Because it all comes from one starting number called a seed, the same seed always makes the same world.` },
+  { cat: "Language & AI", title: "Web Games vs Roblox Development", names: ["fallgamedev vs roblox", "itch.io vs roblox"], keys: "workflow html5 canvas game loop luau studio compare",
+    text: `FallGameDev builds standalone HTML5 and JavaScript games with their own game loops and canvas drawing for sites like itch.io, and also writes Luau for Roblox. Most Roblox developers work only inside Roblox Studio, where the engine already handles physics and keeping players in sync.` },
+
+  /* ---------- MATH LESSONS: KINDERGARTEN TO GRADE 2 ---------- */
+  { cat: "Math", grade: "K", title: "Counting", names: ["count", "numbers"], keys: "counting one two three how many", quiz: "add",
+    text: `Counting means saying numbers in order, one for each thing, like 1, 2, 3, 4, 5. The last number you say tells you how many things there are.`,
+    example: `🍎🍎🍎🍎 Point and count: 1, 2, 3, 4. There are 4 apples.` },
+  { cat: "Math", grade: "K", title: "Shapes", names: ["2d shapes", "3d shapes"], keys: "circle square triangle rectangle hexagon cube sphere cone cylinder sides corners vertices",
+    text: `Flat (2D) shapes include circles (0 sides), triangles (3 sides), squares and rectangles (4 sides), pentagons (5), and hexagons (6). Solid (3D) shapes include cubes, spheres (balls), cones, and cylinders (cans).`,
+    example: `A stop sign is an octagon because it has 8 sides.` },
+  { cat: "Math", grade: "K", title: "Comparing Numbers", names: ["greater than", "less than", "compare"], keys: "bigger smaller more fewer > < alligator equal",
+    text: `To compare numbers, you decide which is bigger. The symbol > means "greater than" and < means "less than." The open side always faces the bigger number, like a hungry mouth.`,
+    example: `8 > 3 (8 is greater than 3). 2 < 9 (2 is less than 9).` },
+  { cat: "Math", grade: "K", title: "Addition", names: ["adding", "add", "sum", "plus"], keys: "put together total carry regroup", quiz: "add",
+    text: `Addition means putting groups together to find the total. The answer is called the sum. For bigger numbers, line them up by place value and add from right to left, carrying a 1 when a column goes over 9.`,
+    example: `47 + 38: 7 + 8 = 15, write 5 carry 1. Then 4 + 3 + 1 = 8. Answer: 85.` },
+  { cat: "Math", grade: "K", title: "Subtraction", names: ["subtracting", "subtract", "difference", "minus", "take away"], keys: "borrow regroup", quiz: "sub",
+    text: `Subtraction means taking away or finding how far apart two numbers are. The answer is called the difference. If the top digit is too small, borrow 10 from the next column.`,
+    example: `52 - 27: 2 is less than 7, so borrow: 12 - 7 = 5. Then 4 - 2 = 2. Answer: 25.` },
+  { cat: "Math", grade: "1", title: "Place Value", names: ["ones tens hundreds"], keys: "digit value ones tens hundreds thousands expanded form",
+    text: `Place value means a digit is worth different amounts depending on where it sits. From right to left the places are ones, tens, hundreds, thousands, and so on. Each place is worth 10 times the one to its right.`,
+    example: `In 3,482 the 3 means 3,000, the 4 means 400, the 8 means 80, and the 2 means 2. Expanded form: 3000 + 400 + 80 + 2.` },
+  { cat: "Math", grade: "1", title: "Skip Counting", names: ["count by"], keys: "count by 2 5 10 pattern",
+    text: `Skip counting means counting by a number other than 1. It is a shortcut that helps with multiplication later.`,
+    example: `By 5s: 5, 10, 15, 20, 25. By 10s: 10, 20, 30, 40.` },
+  { cat: "Math", grade: "2", title: "Even and Odd Numbers", names: ["even", "odd"], keys: "pairs divisible by 2",
+    text: `Even numbers can be split into 2 equal groups with nothing left over. They end in 0, 2, 4, 6, or 8. Odd numbers always have 1 left over and end in 1, 3, 5, 7, or 9.`,
+    example: `14 is even (7 + 7). 15 is odd (7 + 7 + 1 left over).` },
+  { cat: "Math", grade: "2", title: "Telling Time", names: ["clock", "time"], keys: "hour minute hand analog quarter half past",
+    text: `On a clock, the short hand points to the hour and the long hand points to the minutes. Each number on the clock stands for 5 minutes for the long hand. "Quarter past" means 15 minutes and "half past" means 30 minutes.`,
+    example: `Short hand near 3, long hand on 6: that is 3:30, or half past three.` },
+  { cat: "Math", grade: "2", title: "Money", names: ["coins", "dollars", "cents"], keys: "penny nickel dime quarter change",
+    text: `A penny is 1 cent, a nickel is 5 cents, a dime is 10 cents, and a quarter is 25 cents. 100 cents make 1 dollar. To count money, start with the biggest coins first.`,
+    example: `2 quarters + 1 dime + 3 pennies = 50 + 10 + 3 = 63 cents.` },
+
+  /* ---------- GRADES 3 TO 5 ---------- */
+  { cat: "Math", grade: "3", title: "Multiplication", names: ["multiply", "times", "product", "times tables"], keys: "groups of repeated addition array", quiz: "mul",
+    text: `Multiplication is a fast way to add equal groups. 4 × 3 means 4 groups of 3. The answer is called the product. For big numbers, multiply each digit and add the partial results.`,
+    example: `23 × 4: 20 × 4 = 80 and 3 × 4 = 12, so 80 + 12 = 92.` },
+  { cat: "Math", grade: "3", title: "Division", names: ["divide", "quotient", "remainder", "long division"], keys: "split equal groups share", quiz: "div",
+    text: `Division splits a number into equal groups. The answer is called the quotient, and anything left over is the remainder. For long division, follow the loop: Divide, Multiply, Subtract, Bring down.`,
+    example: `85 ÷ 4: 8 ÷ 4 = 2, then bring down 5. 5 ÷ 4 = 1 with 1 left. Answer: 21 remainder 1.` },
+  { cat: "Math", grade: "3", title: "Fractions", names: ["fraction", "numerator", "denominator"], keys: "part of whole pizza", quiz: "frac",
+    text: `A fraction shows part of a whole. The bottom number (denominator) is how many equal pieces the whole is cut into. The top number (numerator) is how many pieces you have.`,
+    example: `A pizza cut into 8 slices where you eat 3 means you ate 3/8 of the pizza.` },
+  { cat: "Math", grade: "3", title: "Area and Perimeter", names: ["area", "perimeter"], keys: "rectangle square length width around inside", quiz: "area",
+    text: `Perimeter is the distance around a shape, so you add up all the sides. Area is how much space is inside, measured in square units. For a rectangle, Area = length × width and Perimeter = 2 × (length + width).`,
+    example: `A 5 by 3 rectangle: Area = 15 square units, Perimeter = 2 × (5 + 3) = 16 units.` },
+  { cat: "Math", grade: "3", title: "Rounding", names: ["round"], keys: "nearest ten hundred estimate",
+    text: `Rounding makes a number simpler. Look at the digit just to the right of the place you are rounding to. If it is 5 or more, round up. If it is 4 or less, round down.`,
+    example: `Round 347 to the nearest ten: the ones digit is 7, so round up to 350.` },
+  { cat: "Math", grade: "4", title: "Factors and Multiples", names: ["factor", "multiple", "prime", "composite"], keys: "prime numbers divisible",
+    text: `Factors are numbers that divide evenly into a number. Multiples are what you get when you multiply a number by 1, 2, 3, and so on. A prime number has exactly two factors: 1 and itself.`,
+    example: `Factors of 12: 1, 2, 3, 4, 6, 12. Multiples of 4: 4, 8, 12, 16. 7 is prime.` },
+  { cat: "Math", grade: "4", title: "Equivalent Fractions", names: ["simplify fractions", "simplest form", "reduce fractions"], keys: "equal fractions same value", quiz: "frac",
+    text: `Equivalent fractions look different but are worth the same. Multiply or divide the top and bottom by the same number. To simplify, divide both by their greatest common factor.`,
+    example: `6/8: both divide by 2, so 6/8 = 3/4.` },
+  { cat: "Math", grade: "4", title: "Decimals", names: ["decimal", "tenths", "hundredths"], keys: "decimal point place value money", quiz: "dec",
+    text: `Decimals are another way to write parts of a whole. The first place after the decimal point is tenths, then hundredths, then thousandths. When adding or subtracting decimals, line up the decimal points.`,
+    example: `3.25 + 1.4 = 3.25 + 1.40 = 4.65.` },
+  { cat: "Math", grade: "4", title: "Angles", names: ["angle", "degrees"], keys: "acute obtuse right straight protractor",
+    text: `An angle is formed where two lines meet, measured in degrees. Acute angles are less than 90°, right angles are exactly 90°, obtuse angles are between 90° and 180°, and a straight angle is 180°.`,
+    example: `The corner of a piece of paper is a right angle (90°).` },
+  { cat: "Math", grade: "5", title: "Adding and Subtracting Fractions", names: ["adding fractions", "subtracting fractions", "common denominator"], keys: "unlike denominators lcd", quiz: "frac",
+    text: `To add or subtract fractions, the bottoms (denominators) must match. If they do not, find a common denominator, change each fraction, then add or subtract the tops. Simplify at the end.`,
+    example: `1/3 + 1/4 = 4/12 + 3/12 = 7/12.` },
+  { cat: "Math", grade: "5", title: "Multiplying and Dividing Fractions", names: ["multiplying fractions", "dividing fractions", "keep change flip", "reciprocal"], keys: "times fractions",
+    text: `To multiply fractions, multiply top times top and bottom times bottom. To divide fractions, use Keep, Change, Flip: keep the first fraction, change ÷ to ×, and flip the second fraction upside down.`,
+    example: `2/3 × 3/4 = 6/12 = 1/2. And 1/2 ÷ 1/4 = 1/2 × 4/1 = 2.` },
+  { cat: "Math", grade: "5", title: "Order of Operations", names: ["pemdas", "gemdas", "bodmas"], keys: "parentheses exponents multiply divide add subtract order",
+    text: `When a problem has several operations, use PEMDAS: Parentheses, Exponents, Multiplication and Division (left to right), then Addition and Subtraction (left to right).`,
+    example: `3 + 4 × 2 = 3 + 8 = 11, not 14, because multiplication comes first.` },
+  { cat: "Math", grade: "5", title: "Volume", names: ["volume", "cubic units"], keys: "box rectangular prism cube space inside",
+    text: `Volume is how much space a 3D object fills, measured in cubic units. For a box (rectangular prism), Volume = length × width × height.`,
+    example: `A box 4 by 3 by 2 has volume 4 × 3 × 2 = 24 cubic units.` },
+  { cat: "Math", grade: "5", title: "Coordinate Plane", names: ["coordinates", "graphing points", "ordered pair", "x axis", "y axis"], keys: "plot point grid quadrant origin",
+    text: `The coordinate plane is a grid with a horizontal x axis and a vertical y axis. A point is written (x, y): go left or right first, then up or down. The center (0, 0) is called the origin.`,
+    example: `(3, 2) means go 3 right and 2 up from the origin.` },
+
+  /* ---------- GRADES 6 TO 8 ---------- */
+  { cat: "Math", grade: "6", title: "Ratios and Rates", names: ["ratio", "rate", "unit rate"], keys: "compare per each speed price",
+    text: `A ratio compares two amounts, like 3:2 or 3 to 2. A rate compares different units, like miles per hour. A unit rate tells how much for just 1 of something.`,
+    example: `$12 for 4 tacos is a unit rate of $12 ÷ 4 = $3 per taco.` },
+  { cat: "Math", grade: "6", title: "Percents", names: ["percent", "percentage", "%"], keys: "out of 100 discount tip sale", quiz: "pct",
+    text: `Percent means "out of 100." To find a percent of a number, change the percent to a decimal (divide by 100) and multiply.`,
+    example: `20% of 80 = 0.20 × 80 = 16. You can also ask Bob things like "15 is what percent of 60."` },
+  { cat: "Math", grade: "6", title: "Integers and Negative Numbers", names: ["integers", "negative numbers", "negatives"], keys: "below zero number line opposite absolute value", quiz: "neg",
+    text: `Integers are whole numbers and their negatives. On a number line, negatives are left of zero. Adding a negative is like subtracting. Two negatives multiplied or divided make a positive. Absolute value is the distance from zero, so |-5| = 5.`,
+    example: `-3 + 8 = 5. -4 × -2 = 8. -6 × 3 = -18.` },
+  { cat: "Math", grade: "6", title: "Exponents", names: ["exponent", "powers", "squared", "cubed"], keys: "base power repeated multiplication", quiz: "exp",
+    text: `An exponent tells how many times to multiply a number by itself. In 2⁵, 2 is the base and 5 is the exponent. Anything to the power of 0 equals 1.`,
+    example: `2⁵ = 2 × 2 × 2 × 2 × 2 = 32. And 5² = 25.` },
+  { cat: "Math", grade: "6", title: "Mean, Median, Mode, and Range", names: ["mean", "median", "mode", "range", "average"], keys: "statistics data set middle most often", quiz: "mean",
+    text: `Mean is the average: add all the numbers and divide by how many there are. Median is the middle number when sorted. Mode is the number that shows up most. Range is the biggest minus the smallest.`,
+    example: `Data 2, 4, 4, 6, 9: mean = 25 ÷ 5 = 5, median = 4, mode = 4, range = 9 - 2 = 7.` },
+  { cat: "Math", grade: "6", title: "Variables and Expressions", names: ["variable", "expression", "evaluate"], keys: "letter unknown algebra substitute",
+    text: `A variable is a letter that stands for a number. An expression mixes numbers, variables, and operations, like 3x + 2. To evaluate it, plug in the value of the variable.`,
+    example: `3x + 2 when x = 4 is 3(4) + 2 = 14. Try asking Bob "3x + 2 when x = 4."` },
+  { cat: "Math", grade: "6", title: "GCF and LCM", names: ["gcf", "lcm", "greatest common factor", "least common multiple"], keys: "common factor multiple",
+    text: `The Greatest Common Factor (GCF) is the biggest number that divides into both numbers. The Least Common Multiple (LCM) is the smallest number both go into. GCF helps simplify fractions and LCM helps find common denominators.`,
+    example: `For 12 and 18: GCF = 6, LCM = 36.` },
+  { cat: "Math", grade: "7", title: "Proportions", names: ["proportion", "cross multiply"], keys: "equal ratios scale",
+    text: `A proportion says two ratios are equal. To solve one, cross multiply: multiply diagonally and set the results equal.`,
+    example: `3/4 = x/12. Cross multiply: 4x = 36, so x = 9.` },
+  { cat: "Math", grade: "7", title: "Solving Equations", names: ["equation", "solve for x", "one step", "two step"], keys: "algebra inverse operations balance", quiz: "eq",
+    text: `An equation is like a balanced scale. To solve it, do the same thing to both sides to get the variable alone. Undo addition or subtraction first, then undo multiplication or division.`,
+    example: `2x + 3 = 11. Subtract 3: 2x = 8. Divide by 2: x = 4. Bob can solve these for you with steps.` },
+  { cat: "Math", grade: "7", title: "Inequalities", names: ["inequality"], keys: "greater less than or equal solve flip sign",
+    text: `An inequality uses <, >, ≤, or ≥ instead of =. You solve it like an equation, but if you multiply or divide both sides by a negative number, you must flip the sign.`,
+    example: `-2x > 6. Divide by -2 and flip: x < -3.` },
+  { cat: "Math", grade: "7", title: "Probability", names: ["chance", "likely"], keys: "outcomes favorable coin dice spinner",
+    text: `Probability is how likely something is to happen, from 0 (impossible) to 1 (certain). Probability = favorable outcomes ÷ total outcomes.`,
+    example: `Rolling a 4 on a die: 1 favorable out of 6 total, so 1/6.` },
+  { cat: "Math", grade: "7", title: "Circles", names: ["circle", "circumference", "pi", "radius", "diameter"], keys: "area of a circle 3.14",
+    text: `The radius goes from the center to the edge. The diameter goes all the way across (2 × radius). Circumference = 2πr, and Area = πr². Pi (π) is about 3.14159.`,
+    example: `Radius 5: circumference = 2π(5) ≈ 31.42, area = π(25) ≈ 78.54.` },
+  { cat: "Math", grade: "8", title: "Pythagorean Theorem", names: ["pythagorean", "pythagoras", "hypotenuse"], keys: "right triangle a2 b2 c2 legs", quiz: "pyth",
+    text: `In a right triangle, a² + b² = c², where a and b are the legs and c is the hypotenuse (the longest side, across from the right angle).`,
+    example: `Legs 3 and 4: 9 + 16 = 25, so c = √25 = 5.` },
+  { cat: "Math", grade: "8", title: "Slope", names: ["rise over run", "rate of change"], keys: "steepness line points", quiz: "slope",
+    text: `Slope tells how steep a line is. Slope = rise ÷ run = (y₂ - y₁) ÷ (x₂ - x₁). Positive slope goes up, negative goes down, zero is flat.`,
+    example: `From (1, 2) to (3, 8): (8 - 2) ÷ (3 - 1) = 6 ÷ 2 = 3.` },
+  { cat: "Math", grade: "8", title: "Linear Functions", names: ["y=mx+b", "slope intercept", "linear equation", "y intercept"], keys: "line graph function",
+    text: `A linear function makes a straight line. In y = mx + b, m is the slope and b is the y intercept (where the line crosses the y axis).`,
+    example: `y = 2x + 1 crosses the y axis at 1 and goes up 2 for every 1 step right.` },
+  { cat: "Math", grade: "8", title: "Scientific Notation", names: ["scientific notation"], keys: "big small numbers powers of 10",
+    text: `Scientific notation writes huge or tiny numbers as a number between 1 and 10 times a power of 10.`,
+    example: `5,300,000 = 5.3 × 10⁶. 0.0042 = 4.2 × 10⁻³.` },
+  { cat: "Math", grade: "8", title: "Square Roots", names: ["square root", "radical", "irrational"], keys: "perfect square √", quiz: "sqrt",
+    text: `A square root asks "what number times itself makes this?" Perfect squares like 16 have whole number roots (√16 = 4). Others, like √2, are irrational, meaning the decimal goes on forever without repeating.`,
+    example: `√81 = 9 because 9 × 9 = 81.` },
+  { cat: "Math", grade: "8", title: "Systems of Equations", names: ["system of equations", "substitution", "elimination"], keys: "two equations two variables intersect",
+    text: `A system is two equations with two variables. The solution is the point where both are true (where their lines cross). Solve by substitution (plug one into the other) or elimination (add equations to cancel a variable).`,
+    example: `x + y = 10 and x - y = 2. Add them: 2x = 12, so x = 6 and y = 4.` },
+  { cat: "Math", grade: "8", title: "Transformations", names: ["translation", "reflection", "rotation", "dilation"], keys: "slide flip turn resize geometry",
+    text: `Transformations move shapes. A translation slides, a reflection flips over a line, a rotation turns around a point, and a dilation makes it bigger or smaller.`,
+    example: `Reflecting (2, 3) over the x axis gives (2, -3).` },
+
+  /* ---------- HIGH SCHOOL: ALGEBRA 1 & GEOMETRY ---------- */
+  { cat: "Math", grade: "9", title: "Polynomials", names: ["polynomial", "monomial", "binomial", "foil"], keys: "terms degree combine like terms multiply",
+    text: `A polynomial is a sum of terms like 3x² + 2x - 5. Combine like terms (same variable and power). To multiply two binomials, use FOIL: First, Outer, Inner, Last.`,
+    example: `(x + 2)(x + 3) = x² + 3x + 2x + 6 = x² + 5x + 6.` },
+  { cat: "Math", grade: "9", title: "Factoring", names: ["factor a quadratic", "factoring"], keys: "gcf difference of squares trinomial",
+    text: `Factoring is multiplying backwards. For x² + bx + c, find two numbers that multiply to c and add to b.`,
+    example: `x² + 5x + 6: 2 and 3 multiply to 6 and add to 5, so it factors to (x + 2)(x + 3).` },
+  { cat: "Math", grade: "9", title: "Quadratic Formula", names: ["quadratic", "quadratics", "discriminant", "parabola"], keys: "ax2 bx c roots zeros",
+    text: `For ax² + bx + c = 0, x = (-b ± √(b² - 4ac)) ÷ 2a. The part under the root, b² - 4ac, is the discriminant: positive means 2 answers, zero means 1, negative means no real answers. The graph is a U shaped curve called a parabola.`,
+    example: `x² - 5x + 6 = 0 gives x = 2 or x = 3. Ask Bob to solve any quadratic.` },
+  { cat: "Math", grade: "9", title: "Functions", names: ["function", "domain", "range of a function", "f(x)"], keys: "input output vertical line test",
+    text: `A function gives exactly one output for each input. f(x) = 2x + 1 means "take x, double it, add 1." The domain is all the inputs allowed and the range is all the outputs.`,
+    example: `If f(x) = 2x + 1, then f(3) = 7.` },
+  { cat: "Math", grade: "9", title: "Exponential Growth and Decay", names: ["exponential", "compound interest", "half life"], keys: "growth decay rate",
+    text: `Exponential functions multiply by the same amount each step: y = a × bˣ. If b is bigger than 1 it grows, and if b is between 0 and 1 it decays.`,
+    example: `Bacteria doubling from 100: after 3 hours, 100 × 2³ = 800.` },
+  { cat: "Math", grade: "10", title: "Triangle Angle Sum", names: ["triangle angles", "triangles"], keys: "180 degrees interior",
+    text: `The three angles inside any triangle always add up to 180°.`,
+    example: `If two angles are 50° and 60°, the third is 180 - 110 = 70°.` },
+  { cat: "Math", grade: "10", title: "Similar and Congruent Shapes", names: ["congruent", "similar"], keys: "sss sas asa scale factor",
+    text: `Congruent shapes are exactly the same size and shape. Similar shapes have the same shape but different sizes, with sides in the same ratio (scale factor). Triangles can be proven congruent with rules like SSS, SAS, and ASA.`,
+    example: `A 3-4-5 triangle and a 6-8-10 triangle are similar with a scale factor of 2.` },
+  { cat: "Math", grade: "10", title: "Trigonometry", names: ["trig", "sohcahtoa", "sine", "cosine", "tangent"], keys: "sin cos tan right triangle opposite adjacent",
+    text: `Trig connects angles and sides of right triangles. SOH CAH TOA: Sine = Opposite/Hypotenuse, Cosine = Adjacent/Hypotenuse, Tangent = Opposite/Adjacent.`,
+    example: `sin(30°) = 0.5. Try asking Bob "sin(30)" (Bob uses degrees).` },
+  { cat: "Math", grade: "10", title: "Surface Area", names: ["surface area"], keys: "net faces prism cylinder sphere",
+    text: `Surface area is the total area of all the outside faces of a 3D shape, like wrapping paper. For a box: 2(lw + lh + wh). For a sphere: 4πr².`,
+    example: `A cube with side 3: 6 faces × 9 = 54 square units.` },
+  { cat: "Math", grade: "10", title: "Geometric Proofs", names: ["proof", "proofs", "two column proof"], keys: "statements reasons theorem postulate",
+    text: `A proof uses logic to show something must be true. A two column proof lists statements on the left and the reason for each (a definition, postulate, or theorem) on the right.`,
+    example: `Statement: AB = CD. Reason: Given. Each next step must follow from earlier ones.` },
+
+  /* ---------- HIGH SCHOOL: ALGEBRA 2, PRECALC, CALCULUS, STATS ---------- */
+  { cat: "Math", grade: "11", title: "Logarithms", names: ["log", "logarithm", "ln", "natural log"], keys: "inverse of exponent base",
+    text: `A logarithm answers "what power do I need?" log₂(8) = 3 because 2³ = 8. log means base 10 and ln means base e (about 2.718).`,
+    example: `log(1000) = 3 because 10³ = 1000.` },
+  { cat: "Math", grade: "11", title: "Complex Numbers", names: ["imaginary numbers", "i"], keys: "square root of negative a+bi",
+    text: `The imaginary unit i is defined as √(-1), so i² = -1. Complex numbers look like a + bi and let us solve equations with negative square roots.`,
+    example: `√(-9) = 3i. (2 + 3i) + (1 - i) = 3 + 2i.` },
+  { cat: "Math", grade: "11", title: "Sequences", names: ["arithmetic sequence", "geometric sequence", "series"], keys: "pattern common difference ratio nth term",
+    text: `An arithmetic sequence adds the same number each time (common difference). A geometric sequence multiplies by the same number (common ratio). Arithmetic nth term: aₙ = a₁ + (n - 1)d. Geometric: aₙ = a₁ × rⁿ⁻¹.`,
+    example: `3, 7, 11, 15 adds 4 each time. 2, 6, 18, 54 multiplies by 3.` },
+  { cat: "Math", grade: "12", title: "Unit Circle", names: ["unit circle", "radians"], keys: "trig angles radius 1",
+    text: `The unit circle has radius 1. For any angle, the point on the circle is (cos θ, sin θ). Radians are another angle unit: 180° = π radians.`,
+    example: `90° = π/2 radians, and the point is (0, 1).` },
+  { cat: "Math", grade: "12", title: "Limits", names: ["limit"], keys: "approach calculus infinity",
+    text: `A limit asks what value a function gets close to as x gets close to some number. Limits are the foundation of calculus.`,
+    example: `As x gets closer to 2, x² gets closer to 4.` },
+  { cat: "Math", grade: "12", title: "Derivatives", names: ["derivative", "differentiation", "power rule"], keys: "calculus slope instant rate of change",
+    text: `A derivative measures how fast something changes at an exact moment, like the slope of a curve at one point. Power rule: the derivative of xⁿ is n × xⁿ⁻¹.`,
+    example: `Derivative of x³ is 3x². Derivative of 5x² is 10x.` },
+  { cat: "Math", grade: "12", title: "Integrals", names: ["integral", "integration", "antiderivative"], keys: "calculus area under curve",
+    text: `An integral finds the area under a curve, and it is the reverse of a derivative. Power rule: the integral of xⁿ is xⁿ⁺¹ ÷ (n + 1) + C.`,
+    example: `Integral of 2x is x² + C.` },
+  { cat: "Math", grade: "12", title: "Standard Deviation", names: ["standard deviation", "statistics", "normal distribution", "bell curve"], keys: "spread variance data",
+    text: `Standard deviation measures how spread out data is. Small means the numbers are bunched near the mean, big means they are spread out. In a bell curve, about 68% of data is within 1 standard deviation of the mean.`,
+    example: `Test scores 88, 90, 92 have a small spread. Scores 50, 90, 130 have a big one.` },
+  { cat: "Math", grade: "12", title: "Matrices", names: ["matrix", "matrices"], keys: "rows columns grid determinant",
+    text: `A matrix is a grid of numbers in rows and columns. You can add matrices of the same size, multiply them, and use them to solve systems of equations or rotate things in video games.`,
+    example: `A 2×2 matrix [[a, b], [c, d]] has determinant ad - bc.` }
+];
+
+/* ================================================================
+   PART 2: SEARCH (finds the best KB entry for a question)
+   Scores each entry by how many of the question's words match.
+   ================================================================ */
+const STOP = new Set(("a an the is are was were be of to in on for and or what whats who how why does do did tell me about explain " +
+  "describe can could you your i im my it its this that with as at by from please bob give some info information know thing things " +
+  "teach learn help want need would like").split(" "));
+
+// Splits text into simple lowercase search words
+function tok(s) {
+  return s.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/)
+    .filter(w => w && !STOP.has(w))
+    .map(w => (w.length > 3 && w.endsWith("s") && !w.endsWith("ss")) ? w.slice(0, -1) : w);
+}
+
+// Pre-build word sets for an entry so searching is fast
+function indexEntry(e) {
+  e.titleT = new Set(tok(e.title + " " + e.names.join(" ")));
+  e.keyT = new Set(tok(e.keys || ""));
+  e.textT = new Set(tok(e.text));
+}
+
+/* People Bob looked up online get saved here, so next time he
+   already knows them (even without internet). */
+const LEARN_KEY = "bob-learned";
+let learned = [];
+try { learned = JSON.parse(localStorage.getItem(LEARN_KEY)) || []; } catch (e) { }
+learned.forEach(e => KB.push(e));
+KB.forEach(indexEntry);
+
+function learn(entry) {
+  if (KB.some(e => e.title.toLowerCase() === entry.title.toLowerCase())) return;
+  const clean = { ...entry }; // plain copy without the word sets
+  learned.push(clean);
+  try { localStorage.setItem(LEARN_KEY, JSON.stringify(learned)); } catch (e) { }
+  indexEntry(entry);
+  KB.push(entry);
+}
+
+function search(question) {
+  const low = " " + question.toLowerCase() + " ";
+  const qt = [...new Set(tok(question))];
+  const scored = KB.map(e => {
+    let s = 0;
+    qt.forEach(w => {
+      if (e.titleT.has(w)) s += 5;
+      else if (e.keyT.has(w)) s += 3;
+      else if (e.textT.has(w)) s += 1;
+    });
+    // Big bonus if the full name appears in the question
+    [e.title, ...e.names].forEach(n => {
+      if (n.length > 2 && low.includes(n.toLowerCase())) s += 10;
+    });
+    return { entry: e, score: s };
+  }).sort((a, b) => b.score - a.score);
+  if (scored[0].score < 3) return null;
+  return { entry: scored[0].entry, score: scored[0].score, runnerUp: scored[1] };
+}
+
+/* ================================================================
+   PART 3: MATH ENGINE
+   A real calculator + equation solver that shows its steps.
+   3a. Fraction class (exact answers like 7/12 instead of 0.5833)
+   ================================================================ */
+function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) [a, b] = [b, a % b]; return a || 1; }
+function lcm(a, b) { return Math.abs(a * b) / gcd(a, b); }
+
+class Frac {
+  constructor(n, d = 1) {
+    if (d === 0) throw "divide by zero";
+    if (d < 0) { n = -n; d = -d; }
+    const g = gcd(n, d);
+    this.n = n / g; this.d = d / g;
+    if (!Number.isSafeInteger(this.n) || !Number.isSafeInteger(this.d)) throw "too big";
+  }
+  add(o) { return new Frac(this.n * o.d + o.n * this.d, this.d * o.d); }
+  sub(o) { return new Frac(this.n * o.d - o.n * this.d, this.d * o.d); }
+  mul(o) { return new Frac(this.n * o.n, this.d * o.d); }
+  div(o) { if (o.n === 0) throw "divide by zero"; return new Frac(this.n * o.d, this.d * o.n); }
+  pow(k) {
+    let r = new Frac(1), b = k < 0 ? new Frac(this.d, this.n) : this;
+    for (let i = 0; i < Math.abs(k); i++) r = r.mul(b);
+    return r;
+  }
+  val() { return this.n / this.d; }
+}
+
+/* ---------- 3b. Number formatting helpers ---------- */
+// Pretty number: commas for whole numbers, trims long decimals
+function fmt(v) {
+  if (!isFinite(v)) return "undefined";
+  const r = Math.round(v);
+  if (Math.abs(v - r) < 1e-9) return r.toLocaleString("en-US");
+  return String(parseFloat(v.toPrecision(10)));
+}
+// Turns a decimal back into a simple fraction if it is one (0.75 -> 3/4)
+function niceFrac(x) {
+  let h1 = 1, h0 = 0, k1 = 0, k0 = 1, b = x;
+  for (let i = 0; i < 25; i++) {
+    const a = Math.floor(b);
+    [h1, h0] = [a * h1 + h0, h1];
+    [k1, k0] = [a * k1 + k0, k1];
+    if (Math.abs(x - h1 / k1) < 1e-9) return k1 <= 1000 ? { n: h1, d: k1 } : null;
+    b = 1 / (b - a);
+    if (!isFinite(b)) break;
+  }
+  return null;
+}
+// Shows exact fractions when possible, like "7/3 (about 2.333)"
+function fmtExact(v) {
+  const f = niceFrac(v);
+  if (f && f.d !== 1) return `${f.n}/${f.d}`;
+  return fmt(v);
+}
+function fmtWithApprox(v) {
+  const f = niceFrac(v);
+  if (f && f.d !== 1) return `${f.n}/${f.d} (about ${fmt(+v.toFixed(4))})`;
+  return fmt(v);
+}
+// Fraction to "a/b", plus mixed number for improper fractions
+function fmtFrac(q) {
+  if (q.d === 1) return fmt(q.n);
+  let s = `${q.n}/${q.d}`;
+  if (Math.abs(q.n) > q.d) {
+    const whole = Math.trunc(q.n / q.d), rem = Math.abs(q.n % q.d);
+    s += ` (mixed number: ${whole} ${rem}/${q.d})`;
+  }
+  return s;
+}
+// Makes math look nicer for kids: * becomes ×
+function pretty(s) {
+  return s.replace(/\*/g, " × ").replace(/\s+/g, " ").replace(/\s*\/\s*/g, "/").replace(/\^2\b/g, "²").replace(/\^3\b/g, "³").trim();
+}
+
+/* ---------- 3c. Expression parser ----------
+   Turns text like "2x^2 + 3(4 - 1)" into a tree Bob can calculate.
+   Supports + - * / ^ ( ) ! %, implicit multiply (2x), functions, pi. */
+const FUNCS = ["sqrt", "cbrt", "abs", "sin", "cos", "tan", "log", "ln", "floor", "ceil", "round"];
+
+function tokenize(s) {
+  const t = []; let i = 0;
+  while (i < s.length) {
+    const c = s[i];
+    if (/\s/.test(c)) { i++; continue; }
+    if (/[0-9.]/.test(c)) {
+      let j = i; while (j < s.length && /[0-9.,]/.test(s[j])) {
+        // allow commas in numbers like 1,000 only if followed by 3 digits
+        if (s[j] === "," && !/^,\d{3}(\D|$)/.test(s.slice(j))) break;
+        j++;
+      }
+      const num = s.slice(i, j).replace(/,/g, "");
+      if ((num.match(/\./g) || []).length > 1 || num === ".") throw "bad number";
+      t.push({ k: "num", v: num }); i = j; continue;
+    }
+    if (/[a-z]/.test(c)) {
+      let j = i; while (j < s.length && /[a-z]/.test(s[j])) j++;
+      const w = s.slice(i, j);
+      if (FUNCS.includes(w)) t.push({ k: "fn", v: w });
+      else if (w === "pi") t.push({ k: "const", v: Math.PI });
+      else if (w.length === 1) t.push({ k: "var", v: w });
+      else throw "unknown word";
+      i = j; continue;
+    }
+    if (c === "π") { t.push({ k: "const", v: Math.PI }); i++; continue; }
+    if ("+-*/^()!%√".includes(c)) { t.push({ k: c }); i++; continue; }
+    throw "bad character";
+  }
+  return t;
+}
+
+function parse(str) {
+  const t = tokenize(str); let p = 0;
+  const peek = () => t[p] && t[p].k;
+  const starts = k => ["num", "var", "const", "fn", "(", "√"].includes(k);
+  function expr() {
+    let n = term();
+    while (peek() === "+" || peek() === "-") { const op = t[p++].k; n = ["bin", op, n, term()]; }
+    return n;
+  }
+  function term() {
+    let n = unary();
+    while (true) {
+      if (peek() === "*" || peek() === "/") { const op = t[p++].k; n = ["bin", op, n, unary()]; }
+      else if (starts(peek())) n = ["bin", "*", n, power()]; // implicit multiply like 2x
+      else break;
+    }
+    return n;
+  }
+  function unary() {
+    if (peek() === "-") { p++; return ["neg", unary()]; }
+    if (peek() === "+") { p++; return unary(); }
+    return power();
+  }
+  function power() {
+    const base = postfix();
+    if (peek() === "^") { p++; return ["bin", "^", base, unary()]; }
+    return base;
+  }
+  function postfix() {
+    let n = primary();
+    while (peek() === "!" || peek() === "%") n = [t[p++].k === "!" ? "fact" : "pct", n];
+    return n;
+  }
+  function primary() {
+    const tk = t[p];
+    if (!tk) throw "unexpected end";
+    if (tk.k === "num") { p++; return ["num", tk.v]; }
+    if (tk.k === "var") { p++; return ["var", tk.v]; }
+    if (tk.k === "const") { p++; return ["const", tk.v]; }
+    if (tk.k === "fn") { p++; return ["fn", tk.v, peek() === "(" ? primary() : power()]; }
+    if (tk.k === "√") { p++; return ["fn", "sqrt", power()]; }
+    if (tk.k === "(") {
+      p++; const n = expr();
+      if (peek() !== ")") throw "missing )";
+      p++; return n;
+    }
+    throw "unexpected " + tk.k;
+  }
+  const tree = expr();
+  if (p !== t.length) throw "leftover";
+  return tree;
+}
+
+/* Evaluates a tree as a regular decimal number. x = value for the variable.
+   Trig uses degrees since that is what most homework uses. */
+function evalF(n, x) {
+  const R = Math.PI / 180;
+  switch (n[0]) {
+    case "num": return parseFloat(n[1]);
+    case "var": if (x === undefined) throw "variable"; return x;
+    case "const": return n[1];
+    case "neg": return -evalF(n[1], x);
+    case "pct": return evalF(n[1], x) / 100;
+    case "fact": {
+      const v = evalF(n[1], x);
+      if (v < 0 || v > 170 || v % 1) throw "bad factorial";
+      let r = 1; for (let i = 2; i <= v; i++) r *= i; return r;
+    }
+    case "fn": {
+      const v = evalF(n[2], x);
+      return { sqrt: Math.sqrt(v), cbrt: Math.cbrt(v), abs: Math.abs(v), sin: Math.sin(v * R), cos: Math.cos(v * R),
+        tan: Math.tan(v * R), log: Math.log10(v), ln: Math.log(v), floor: Math.floor(v), ceil: Math.ceil(v), round: Math.round(v) }[n[1]];
+    }
+    case "bin": {
+      const a = evalF(n[2], x), b = evalF(n[3], x);
+      return n[1] === "+" ? a + b : n[1] === "-" ? a - b : n[1] === "*" ? a * b : n[1] === "/" ? a / b : Math.pow(a, b);
+    }
+  }
+  throw "bad tree";
+}
+
+/* Same as evalF but keeps exact fractions. Throws if it can't (like sin or pi). */
+function evalQ(n) {
+  switch (n[0]) {
+    case "num": {
+      const [w, d = ""] = n[1].split(".");
+      return new Frac(parseInt((w || "0") + d, 10), Math.pow(10, d.length));
+    }
+    case "neg": return new Frac(0).sub(evalQ(n[1]));
+    case "pct": return evalQ(n[1]).div(new Frac(100));
+    case "fact": {
+      const v = evalQ(n[1]);
+      if (v.d !== 1 || v.n < 0 || v.n > 18) throw "no";
+      let r = 1; for (let i = 2; i <= v.n; i++) r *= i; return new Frac(r);
+    }
+    case "fn": {
+      const v = evalQ(n[2]);
+      if (n[1] === "abs") return new Frac(Math.abs(v.n), v.d);
+      if (n[1] === "sqrt") {
+        const a = Math.round(Math.sqrt(v.n)), b = Math.round(Math.sqrt(v.d));
+        if (v.n >= 0 && a * a === v.n && b * b === v.d) return new Frac(a, b);
+      }
+      throw "no";
+    }
+    case "bin": {
+      const a = evalQ(n[2]), b = evalQ(n[3]);
+      if (n[1] === "+") return a.add(b);
+      if (n[1] === "-") return a.sub(b);
+      if (n[1] === "*") return a.mul(b);
+      if (n[1] === "/") return a.div(b);
+      if (b.d !== 1 || Math.abs(b.n) > 64) throw "no";
+      return a.pow(b.n);
+    }
+  }
+  throw "no";
+}
+
+// Lists which variable letters a tree uses
+function varsIn(n, set = new Set()) {
+  if (!Array.isArray(n)) return set;
+  if (n[0] === "var") set.add(n[1]);
+  n.forEach(c => varsIn(c, set));
+  return set;
+}
+
+/* ---------- 3d. Turning words into math symbols ---------- */
+function normMath(s) {
+  s = s.toLowerCase()
+    .replace(/[×✕]/g, "*").replace(/÷/g, "/").replace(/[−–]/g, "-")
+    .replace(/²/g, "^2").replace(/³/g, "^3")
+    .replace(/square root of/g, "sqrt ").replace(/cube root of/g, "cbrt ")
+    .replace(/to the power of/g, "^").replace(/\bsquared\b/g, "^2").replace(/\bcubed\b/g, "^3")
+    .replace(/\bmultiplied by\b/g, "*").replace(/\btimes\b/g, "*").replace(/\bdivided by\b/g, "/")
+    .replace(/\bplus\b/g, "+").replace(/\bminus\b/g, "-")
+    .replace(/\bis equal to\b|\bequals\b/g, "=");
+  // "3 x 4" with spaces means multiply (only when there is no equation)
+  if (!s.includes("=")) s = s.replace(/(\d)\s+x\s+(?=\d)/g, "$1*");
+  return s;
+}
+// Strips filler words like "what is" or "solve" from the front
+function stripFiller(s) {
+  s = s.replace(/\?+\s*$/, "").replace(/(\D)!+\s*$/, "$1").trim();
+  let prev;
+  do {
+    prev = s;
+    s = s.replace(/^(hey bob|bob|please|can you|could you|what is|what's|whats|calculate|compute|evaluate|solve for [a-z]|solve|simplify|find|work out|what does|the answer to|answer|do)[\s,:]+/, "").trim();
+  } while (s !== prev);
+  return s.replace(/\s*(equal|equals|=)\s*$/, "").trim();
+}
+
+/* ---------- 3e. Solving equations ---------- */
+// Writes a polynomial nicely, like "2x² - 3x + 1"
+function polyStr(coefs, v) {
+  const parts = [[coefs[0], v + "²"], [coefs[1], v], [coefs[2], ""]];
+  let s = "";
+  parts.forEach(([c, p]) => {
+    if (Math.abs(c) < 1e-12) return;
+    const abs = Math.abs(c);
+    const num = (p && Math.abs(abs - 1) < 1e-12) ? "" : fmtExact(abs);
+    if (!s) s = (c < 0 ? "-" : "") + num + p;
+    else s += (c < 0 ? " - " : " + ") + num + p;
+  });
+  return s || "0";
+}
+function clean(v) { const r = Math.round(v); return Math.abs(v - r) < 1e-9 ? r : v; }
+
+function solveEquation(text, L, Rt, v) {
+  const F = x => evalF(L, x) - evalF(Rt, x);
+  const f0 = F(0), f1 = F(1), fm1 = F(-1);
+  const c = clean(f0), a = clean((f1 + fm1) / 2 - f0), b = clean((f1 - fm1) / 2);
+  const G = x => a * x * x + b * x + c;
+  const isQuad = [2, 3, -2, 0.5, 7].every(x => { const y = F(x); return isFinite(y) && Math.abs(y - G(x)) < 1e-6 * (1 + Math.abs(y)); });
+  const shown = pretty(text);
+
+  if (isQuad && Math.abs(a) < 1e-12) {
+    // LINEAR: bx + c = 0
+    if (Math.abs(b) < 1e-12) {
+      return Math.abs(c) < 1e-12
+        ? { short: `Every number works!`, steps: `**${shown}**\n\nBoth sides are always equal, so **every number** is a solution.` }
+        : { short: `No solution.`, steps: `**${shown}**\n\nWhen you simplify, the ${v}'s cancel out and you get something false, so there is **no solution**.` };
+    }
+    const ans = -c / b;
+    return {
+      short: `**${v} = ${fmtWithApprox(ans)}**`,
+      steps: `**Solving: ${shown}**\n\n` +
+        `1. Get all the ${v} terms on one side and the plain numbers on the other. It simplifies to: **${polyStr([0, b, 0], v)} = ${fmtExact(-c)}**\n` +
+        (Math.abs(b - 1) < 1e-12 ? "" : `2. Divide both sides by ${fmtExact(b)} to get ${v} alone.\n`) +
+        `${Math.abs(b - 1) < 1e-12 ? 2 : 3}. **${v} = ${fmtWithApprox(ans)}**\n\n` +
+        `Check: put ${fmtExact(ans)} back in for ${v} and both sides come out equal. ✓`
+    };
+  }
+
+  if (isQuad) {
+    // QUADRATIC: ax² + bx + c = 0
+    const D = clean(b * b - 4 * a * c);
+    let out = `**Solving: ${shown}**\n\n` +
+      `1. Move everything to one side: **${polyStr([a, b, c], v)} = 0**\n` +
+      `2. This is a quadratic with a = ${fmtExact(a)}, b = ${fmtExact(b)}, c = ${fmtExact(c)}.\n` +
+      `3. Use the quadratic formula: ${v} = (-b ± √(b² - 4ac)) ÷ 2a\n` +
+      `4. Discriminant: b² - 4ac = ${fmtExact(D)}\n`;
+    let short;
+    if (D < -1e-12) {
+      const re = clean(-b / (2 * a)), im = Math.abs(Math.sqrt(-D) / (2 * a));
+      short = `No real solutions (complex: ${fmt(re)} ± ${fmt(+im.toFixed(6))}i)`;
+      out += `5. The discriminant is negative, so there are **no real solutions**. Using imaginary numbers: **${v} = ${fmt(re)} ± ${fmt(+im.toFixed(6))}i**`;
+    } else if (Math.abs(D) < 1e-12) {
+      const r = clean(-b / (2 * a));
+      short = `**${v} = ${fmtWithApprox(r)}**`;
+      out += `5. The discriminant is 0, so there is just one answer: **${v} = ${fmtWithApprox(r)}**`;
+    } else {
+      const r1 = clean((-b + Math.sqrt(D)) / (2 * a)), r2 = clean((-b - Math.sqrt(D)) / (2 * a));
+      const lo = Math.min(r1, r2), hi = Math.max(r1, r2);
+      short = `**${v} = ${fmtWithApprox(lo)}** or **${v} = ${fmtWithApprox(hi)}**`;
+      out += `5. The discriminant is positive, so there are two answers:\n\n**${v} = ${fmtWithApprox(lo)}** or **${v} = ${fmtWithApprox(hi)}**`;
+      if (Number.isInteger(lo) && Number.isInteger(hi) && Math.abs(a - 1) < 1e-12) {
+        out += `\n\nTip: this one factors nicely as (${v} ${lo > 0 ? "-" : "+"} ${Math.abs(lo)})(${v} ${hi > 0 ? "-" : "+"} ${Math.abs(hi)}) = 0.`;
+      }
+    }
+    return { short, steps: out };
+  }
+
+  // HARDER EQUATIONS: search for answers numerically between -100 and 100
+  const roots = [];
+  let px = -100, py = F(px);
+  for (let i = 1; i <= 8000; i++) {
+    const x = -100 + i * 0.025, y = F(x);
+    if (isFinite(y) && isFinite(py) && py * y <= 0) {
+      let lo = px, hi = x;
+      for (let k = 0; k < 80; k++) { const m = (lo + hi) / 2; if (F(lo) * F(m) <= 0) hi = m; else lo = m; }
+      const r = (lo + hi) / 2;
+      if (Math.abs(F(r)) < 1e-6 && !roots.some(q => Math.abs(q - r) < 1e-6)) roots.push(clean(+r.toFixed(9)));
+    }
+    px = x; py = y;
+  }
+  if (!roots.length) return { short: "I couldn't find a real solution.", steps: `**${shown}**\n\nI searched from -100 to 100 and couldn't find a real number that works.` };
+  const list = roots.map(r => `${v} ≈ ${fmt(+r.toFixed(6))}`).join(", ");
+  return { short: `**${list}**`, steps: `**Solving: ${shown}**\n\nThis is harder than a quadratic, so I tested numbers until both sides matched.\n\n**${list}**` };
+}
+
+/* ---------- 3f. Special math helpers (word problems) ---------- */
+const nums = s => (s.match(/-?\d+(?:\.\d+)?/g) || []).map(Number);
+function primeFactors(n) {
+  const f = []; let d = 2;
+  while (n > 1 && d * d <= n) { while (n % d === 0) { f.push(d); n /= d; } d++; }
+  if (n > 1) f.push(n);
+  return f;
+}
+function factorsOf(n) {
+  const small = [], big = [];
+  for (let i = 1; i * i <= n; i++) if (n % i === 0) { small.push(i); if (i !== n / i) big.unshift(n / i); }
+  return small.concat(big);
+}
+function ans(short, steps) { return { short, steps: steps || short }; }
+
+/* Each handler checks if the question matches its pattern.
+   It returns an answer, or null to let the next handler try. */
+const MATH_HANDLERS = [
+  // Times tables: "7 times table"
+  low => {
+    const m = low.match(/(\d+)\s*(times|multiplication) table/) || low.match(/(?:times|multiplication) table (?:for|of) (\d+)/);
+    if (!m) return null;
+    const n = +m[1];
+    const rows = Array.from({ length: 12 }, (_, i) => `- ${n} × ${i + 1} = ${n * (i + 1)}`).join("\n");
+    return ans(`${n} × 1 through ${n} × 12`, `**The ${n} times table**\n\n${rows}`);
+  },
+  // Counting: "count to 20", "skip count by 5"
+  low => {
+    let m = low.match(/skip count(?:ing)? by (\d+)(?: to (\d+))?/);
+    if (m) {
+      const step = +m[1], end = Math.min(+(m[2] || step * 10), step * 50);
+      const list = []; for (let i = step; i <= end; i += step) list.push(i);
+      return ans(list.join(", "), `**Skip counting by ${step}:**\n\n${list.join(", ")}`);
+    }
+    m = low.match(/count (?:to|up to) (\d+)/);
+    if (m && +m[1] <= 200) {
+      const list = Array.from({ length: +m[1] }, (_, i) => i + 1);
+      return ans(list.join(", "), `**Counting to ${m[1]}:**\n\n${list.join(", ")}`);
+    }
+    return null;
+  },
+  // Even or odd
+  low => {
+    const m = low.match(/is (-?\d+) (an? )?(even|odd)/);
+    if (!m) return null;
+    const n = +m[1], even = n % 2 === 0;
+    return ans(`${n} is **${even ? "even" : "odd"}**.`, `${n} is **${even ? "even" : "odd"}** because it ${even ? "can be split into 2 equal groups with nothing left over" : "leaves 1 left over when split into 2 groups"}. Its last digit is ${Math.abs(n) % 10}.`);
+  },
+  // Comparing: "is 7 greater than 4"
+  low => {
+    const m = low.match(/is (-?\d+(?:\.\d+)?) (greater|bigger|more|larger|less|smaller|fewer) than (-?\d+(?:\.\d+)?)/);
+    if (!m) return null;
+    const a = +m[1], b = +m[3], wantsBig = /greater|bigger|more|larger/.test(m[2]);
+    const sym = a > b ? ">" : a < b ? "<" : "=";
+    const yes = wantsBig ? a > b : a < b;
+    return ans(`**${yes ? "Yes" : "No"}.** ${fmt(a)} ${sym} ${fmt(b)}`, `**${yes ? "Yes" : "No"}!** ${fmt(a)} ${sym} ${fmt(b)}\n\nRemember: the open side of < or > always faces the bigger number.`);
+  },
+  // Percent of: "20% of 80"
+  low => {
+    const m = low.match(/(-?\d+(?:\.\d+)?)\s*(?:%|percent) of (-?\d+(?:\.\d+)?)/);
+    if (!m) return null;
+    const p = +m[1], n = +m[2], r = p / 100 * n;
+    return ans(`**${fmt(r)}**`, `**${fmt(p)}% of ${fmt(n)}**\n\n1. Change the percent to a decimal: ${fmt(p)} ÷ 100 = ${fmt(p / 100)}\n2. Multiply: ${fmt(p / 100)} × ${fmt(n)} = **${fmt(r)}**`);
+  },
+  // "15 is what percent of 60" or "what percent of 60 is 15"
+  low => {
+    let m = low.match(/(-?\d+(?:\.\d+)?) is what (?:percent|%) of (-?\d+(?:\.\d+)?)/);
+    let part, whole;
+    if (m) { part = +m[1]; whole = +m[2]; }
+    else if ((m = low.match(/what (?:percent|%) of (-?\d+(?:\.\d+)?) is (-?\d+(?:\.\d+)?)/))) { whole = +m[1]; part = +m[2]; }
+    else return null;
+    const r = part / whole * 100;
+    return ans(`**${fmt(r)}%**`, `**${fmt(part)} is what percent of ${fmt(whole)}?**\n\n1. Divide the part by the whole: ${fmt(part)} ÷ ${fmt(whole)} = ${fmt(part / whole)}\n2. Multiply by 100: **${fmt(r)}%**`);
+  },
+  // Percent change: "percent increase from 50 to 65"
+  low => {
+    const m = low.match(/percent (?:change|increase|decrease) from (-?\d+(?:\.\d+)?) to (-?\d+(?:\.\d+)?)/);
+    if (!m) return null;
+    const a = +m[1], b = +m[2], r = (b - a) / a * 100;
+    return ans(`**${fmt(r)}%** ${r >= 0 ? "increase" : "decrease"}`, `**Percent change from ${fmt(a)} to ${fmt(b)}**\n\n1. Find the change: ${fmt(b)} - ${fmt(a)} = ${fmt(b - a)}\n2. Divide by the original: ${fmt(b - a)} ÷ ${fmt(a)} = ${fmt((b - a) / a)}\n3. Multiply by 100: **${fmt(Math.abs(r))}% ${r >= 0 ? "increase" : "decrease"}**`);
+  },
+  // GCF
+  low => {
+    if (!/\b(gcf|gcd|hcf|greatest common (factor|divisor))\b/.test(low)) return null;
+    const n = nums(low).filter(Number.isInteger).map(Math.abs);
+    if (n.length < 2) return null;
+    const g = n.reduce(gcd);
+    return ans(`**GCF = ${g}**`, `**GCF of ${n.join(", ")}**\n\n` + n.map(x => `- Factors of ${x}: ${factorsOf(x).join(", ")}`).join("\n") + `\n\nThe biggest factor they all share is **${g}**.`);
+  },
+  // LCM
+  low => {
+    if (!/\b(lcm|least common multiple|lowest common multiple|lcd|least common denominator)\b/.test(low)) return null;
+    const n = nums(low).filter(Number.isInteger).map(Math.abs);
+    if (n.length < 2) return null;
+    const l = n.reduce(lcm);
+    return ans(`**LCM = ${l}**`, `**LCM of ${n.join(", ")}**\n\n` + n.map(x => `- Multiples of ${x}: ${Array.from({ length: 6 }, (_, i) => x * (i + 1)).join(", ")}...`).join("\n") + `\n\nThe smallest number they all go into is **${l}**.`);
+  },
+  // Prime factorization
+  low => {
+    if (!/prime factor/.test(low)) return null;
+    const n = nums(low).find(x => Number.isInteger(x) && x > 1);
+    if (!n || n > 1e12) return null;
+    const f = primeFactors(n);
+    return ans(`**${f.join(" × ")}**`, `**Prime factorization of ${fmt(n)}**\n\nKeep dividing by the smallest prime that works:\n\n**${fmt(n)} = ${f.join(" × ")}**`);
+  },
+  // Is it prime?
+  low => {
+    const m = low.match(/is (\d+) (?:a )?prime/);
+    if (!m) return null;
+    const n = +m[1];
+    if (n < 2) return ans(`No, ${n} is not prime.`, `**No.** Prime numbers must be bigger than 1.`);
+    const f = primeFactors(n);
+    if (f.length === 1) return ans(`**Yes, ${fmt(n)} is prime!**`, `**Yes, ${fmt(n)} is prime!** Its only factors are 1 and ${fmt(n)}.`);
+    return ans(`**No**, ${fmt(n)} = ${f[0]} × ${fmt(n / f[0])}`, `**No, ${fmt(n)} is not prime.** It can be divided by ${f[0]}: ${fmt(n)} = ${f[0]} × ${fmt(n / f[0])}`);
+  },
+  // List factors
+  low => {
+    const m = low.match(/(?:all )?(?:the )?factors of (\d+)/);
+    if (!m || +m[1] > 1e9) return null;
+    const f = factorsOf(+m[1]);
+    return ans(f.join(", "), `**Factors of ${fmt(+m[1])}:**\n\n${f.join(", ")}`);
+  },
+  // Mean, median, mode, range
+  low => {
+    const want = ["mean", "average", "median", "mode", "range"].filter(w => new RegExp("\\b" + w + "\\b").test(low));
+    const n = nums(low);
+    if (!want.length || n.length < 2) return null;
+    const s = [...n].sort((a, b) => a - b), sum = s.reduce((a, b) => a + b, 0);
+    const mid = s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2;
+    const counts = {}; s.forEach(x => counts[x] = (counts[x] || 0) + 1);
+    const top = Math.max(...Object.values(counts));
+    const modes = top === 1 ? "none (no number repeats)" : Object.keys(counts).filter(k => counts[k] === top).join(", ");
+    const lines = [];
+    if (want.includes("mean") || want.includes("average")) lines.push(`- **Mean:** add them up (${fmt(sum)}) and divide by ${s.length} = **${fmt(sum / s.length)}**`);
+    if (want.includes("median")) lines.push(`- **Median:** sorted list is ${s.join(", ")}, the middle is **${fmt(mid)}**`);
+    if (want.includes("mode")) lines.push(`- **Mode:** the most common number is **${modes}**`);
+    if (want.includes("range")) lines.push(`- **Range:** ${fmt(s[s.length - 1])} - ${fmt(s[0])} = **${fmt(s[s.length - 1] - s[0])}**`);
+    return ans(lines.join("\n"), `**Data: ${n.join(", ")}**\n\n${lines.join("\n")}`);
+  },
+  // Points: slope, distance, midpoint
+  low => {
+    const pts = [...low.matchAll(/\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)/g)].map(m => [+m[1], +m[2]]);
+    if (pts.length < 2) return null;
+    const [[x1, y1], [x2, y2]] = pts;
+    if (/distance/.test(low)) {
+      const d = Math.hypot(x2 - x1, y2 - y1);
+      return ans(`**${fmt(+d.toFixed(6))}**`, `**Distance from (${x1}, ${y1}) to (${x2}, ${y2})**\n\n1. Use d = √((x₂ - x₁)² + (y₂ - y₁)²)\n2. √(${fmt(x2 - x1)}² + ${fmt(y2 - y1)}²) = √${fmt((x2 - x1) ** 2 + (y2 - y1) ** 2)}\n3. **d ≈ ${fmt(+d.toFixed(6))}**`);
+    }
+    if (/midpoint/.test(low)) {
+      return ans(`**(${fmt((x1 + x2) / 2)}, ${fmt((y1 + y2) / 2)})**`, `**Midpoint:** average the x's and the y's.\n\n((${x1} + ${x2}) ÷ 2, (${y1} + ${y2}) ÷ 2) = **(${fmt((x1 + x2) / 2)}, ${fmt((y1 + y2) / 2)})**`);
+    }
+    if (x2 === x1) return ans("Undefined (vertical line)", `The x values are the same, so the line goes straight up and down. The slope is **undefined**.`);
+    const m = (y2 - y1) / (x2 - x1), b = y1 - m * x1;
+    let steps = `**Slope from (${x1}, ${y1}) to (${x2}, ${y2})**\n\n1. Slope = (y₂ - y₁) ÷ (x₂ - x₁)\n2. (${y2} - ${y1}) ÷ (${x2} - ${x1}) = ${fmt(y2 - y1)} ÷ ${fmt(x2 - x1)}\n3. **Slope = ${fmtExact(m)}**`;
+    if (/equation|line|y\s*=/.test(low)) steps += `\n\nEquation of the line: **y = ${polyStr([0, m, b], "x")}**`;
+    return ans(`**Slope = ${fmtExact(m)}**`, steps);
+  },
+  // Pythagorean theorem
+  low => {
+    if (!/pythag|hypotenuse|missing leg/.test(low)) return null;
+    const n = nums(low).filter(x => x > 0);
+    if (n.length < 2) return null;
+    if (/missing leg|find the leg|other leg|leg if/.test(low)) {
+      const c = Math.max(n[0], n[1]), a = Math.min(n[0], n[1]), b = Math.sqrt(c * c - a * a);
+      return ans(`**${fmt(+b.toFixed(6))}**`, `**Finding a missing leg**\n\n1. a² + b² = c², so b² = c² - a²\n2. b² = ${fmt(c * c)} - ${fmt(a * a)} = ${fmt(c * c - a * a)}\n3. **b = √${fmt(c * c - a * a)} ≈ ${fmt(+b.toFixed(6))}**`);
+    }
+    const [a, b] = n, c = Math.sqrt(a * a + b * b);
+    return ans(`**${fmt(+c.toFixed(6))}**`, `**Pythagorean theorem with legs ${fmt(a)} and ${fmt(b)}**\n\n1. a² + b² = c²\n2. ${fmt(a * a)} + ${fmt(b * b)} = ${fmt(a * a + b * b)}\n3. **c = √${fmt(a * a + b * b)} ${Number.isInteger(c) ? "=" : "≈"} ${fmt(+c.toFixed(6))}**`);
+  },
+  // Shapes: area, perimeter, circumference, volume, surface area
+  low => {
+    if (!/\b(area|perimeter|circumference|volume)\b/.test(low)) return null;
+    const n = nums(low).filter(x => x > 0);
+    if (!n.length) return null;
+    const P = Math.PI, r6 = v => fmt(+v.toFixed(4));
+    const surf = /surface area/.test(low);
+    const say = (title, formula, work, val, unit) => ans(`**${r6(val)}${unit ? " " + unit : ""}**`, `**${title}**\n\n1. Formula: ${formula}\n2. Plug in: ${work}\n3. **= ${r6(val)}${unit ? " " + unit : ""}**`);
+    let r = n[0];
+    if (/diameter/.test(low)) r = n[0] / 2;
+    if (/sphere|ball/.test(low)) return surf ? say("Surface area of a sphere", "4πr²", `4 × π × ${fmt(r)}²`, 4 * P * r * r, "square units") : say("Volume of a sphere", "(4/3)πr³", `(4/3) × π × ${fmt(r)}³`, 4 / 3 * P * r ** 3, "cubic units");
+    if (/cylinder|can\b/.test(low) && n.length >= 2) return surf ? say("Surface area of a cylinder", "2πr² + 2πrh", `2π(${fmt(r)})² + 2π(${fmt(r)})(${fmt(n[1])})`, 2 * P * r * r + 2 * P * r * n[1], "square units") : say("Volume of a cylinder", "πr²h", `π × ${fmt(r)}² × ${fmt(n[1])}`, P * r * r * n[1], "cubic units");
+    if (/cone/.test(low) && n.length >= 2) return say("Volume of a cone", "(1/3)πr²h", `(1/3) × π × ${fmt(r)}² × ${fmt(n[1])}`, P * r * r * n[1] / 3, "cubic units");
+    if (/cube/.test(low)) return surf ? say("Surface area of a cube", "6s²", `6 × ${fmt(n[0])}²`, 6 * n[0] ** 2, "square units") : say("Volume of a cube", "s³", `${fmt(n[0])}³`, n[0] ** 3, "cubic units");
+    if ((/prism|box/.test(low) || /volume/.test(low)) && n.length >= 3) return surf ? say("Surface area of a box", "2(lw + lh + wh)", `2(${n[0]}×${n[1]} + ${n[0]}×${n[2]} + ${n[1]}×${n[2]})`, 2 * (n[0] * n[1] + n[0] * n[2] + n[1] * n[2]), "square units") : say("Volume of a box", "length × width × height", `${fmt(n[0])} × ${fmt(n[1])} × ${fmt(n[2])}`, n[0] * n[1] * n[2], "cubic units");
+    if (/circle|radius|diameter/.test(low)) {
+      if (/circumference|perimeter/.test(low)) return say("Circumference of a circle", "2πr", `2 × π × ${fmt(r)}`, 2 * P * r, "units");
+      return say("Area of a circle", "πr²", `π × ${fmt(r)}²`, P * r * r, "square units");
+    }
+    if (/trapezoid/.test(low) && n.length >= 3) return say("Area of a trapezoid", "(base1 + base2) ÷ 2 × height", `(${fmt(n[0])} + ${fmt(n[1])}) ÷ 2 × ${fmt(n[2])}`, (n[0] + n[1]) / 2 * n[2], "square units");
+    if (/triangle/.test(low)) {
+      if (/perimeter/.test(low) && n.length >= 3) return say("Perimeter of a triangle", "side + side + side", `${n[0]} + ${n[1]} + ${n[2]}`, n[0] + n[1] + n[2], "units");
+      if (n.length >= 2) return say("Area of a triangle", "(base × height) ÷ 2", `(${fmt(n[0])} × ${fmt(n[1])}) ÷ 2`, n[0] * n[1] / 2, "square units");
+    }
+    if (/square/.test(low) || n.length === 1) {
+      if (/perimeter/.test(low)) return say("Perimeter of a square", "4 × side", `4 × ${fmt(n[0])}`, 4 * n[0], "units");
+      return say("Area of a square", "side × side", `${fmt(n[0])} × ${fmt(n[0])}`, n[0] * n[0], "square units");
+    }
+    if (n.length >= 2) {
+      if (/perimeter/.test(low)) return say("Perimeter of a rectangle", "2 × (length + width)", `2 × (${fmt(n[0])} + ${fmt(n[1])})`, 2 * (n[0] + n[1]), "units");
+      return say("Area of a rectangle", "length × width", `${fmt(n[0])} × ${fmt(n[1])}`, n[0] * n[1], "square units");
+    }
+    return null;
+  },
+  // Rounding
+  low => {
+    let m = low.match(/round (-?\d+(?:\.\d+)?) to (?:the )?nearest (ten|hundred|thousand|tenth|hundredth|thousandth|whole number|whole|one|integer)/);
+    if (m) {
+      const places = { ten: -1, hundred: -2, thousand: -3, tenth: 1, hundredth: 2, thousandth: 3 };
+      const p = places[m[2]] ?? 0, f = Math.pow(10, p), r = Math.round(+m[1] * f) / f;
+      return ans(`**${fmt(r)}**`, `**Round ${m[1]} to the nearest ${m[2]}**\n\nLook at the digit just to the right of that place. 5 or more rounds up, 4 or less rounds down.\n\n**${fmt(r)}**`);
+    }
+    m = low.match(/round (-?\d+(?:\.\d+)?) to (\d+) decimal/);
+    if (m) {
+      const r = (+m[1]).toFixed(+m[2]);
+      return ans(`**${r}**`, `**Round ${m[1]} to ${m[2]} decimal places**\n\n**${r}**`);
+    }
+    return null;
+  },
+  // Conversions between fractions, decimals and percents
+  low => {
+    let m = low.match(/(-?\d+)\s*\/\s*(\d+) (?:to|as|into) (?:a )?(decimal|percent)/);
+    if (m) {
+      const v = +m[1] / +m[2];
+      return m[3] === "decimal"
+        ? ans(`**${fmt(v)}**`, `**${m[1]}/${m[2]} as a decimal**\n\nDivide the top by the bottom: ${m[1]} ÷ ${m[2]} = **${fmt(v)}**`)
+        : ans(`**${fmt(v * 100)}%**`, `**${m[1]}/${m[2]} as a percent**\n\n1. Divide: ${m[1]} ÷ ${m[2]} = ${fmt(v)}\n2. Multiply by 100: **${fmt(v * 100)}%**`);
+    }
+    m = low.match(/(-?\d*\.\d+|\d+(?:\.\d+)?%?) (?:to|as|into) (?:a )?(fraction|percent|decimal)/);
+    if (m) {
+      const isPct = m[1].endsWith("%"), v = parseFloat(m[1]) / (isPct ? 100 : 1);
+      if (m[2] === "fraction") {
+        const [, d = ""] = String(parseFloat(m[1])).split(".");
+        const q = new Frac(Math.round(v * Math.pow(10, d.length + (isPct ? 2 : 0))), Math.pow(10, d.length + (isPct ? 2 : 0)));
+        return ans(`**${fmtFrac(q)}**`, `**${m[1]} as a fraction**\n\n1. Write it over a power of 10, then simplify.\n2. **${fmtFrac(q)}**`);
+      }
+      if (m[2] === "percent") return ans(`**${fmt(v * 100)}%**`, `**${m[1]} as a percent:** multiply by 100 = **${fmt(v * 100)}%**`);
+      if (m[2] === "decimal" && isPct) return ans(`**${fmt(v)}**`, `**${m[1]} as a decimal:** divide by 100 = **${fmt(v)}**`);
+    }
+    return null;
+  },
+  // Evaluate with a value: "3x + 2 when x = 4"
+  low => {
+    const m = normMath(low).match(/^(.*?)\s*(?:when|if|for|where)\s+([a-z])\s*(?:=|is)\s*(-?\d+(?:\.\d+)?)/);
+    if (!m) return null;
+    try {
+      const tree = parse(stripFiller(m[1]));
+      const r = evalF(tree, +m[3]);
+      return ans(`**${fmtWithApprox(r)}**`, `**${pretty(stripFiller(m[1]))} when ${m[2]} = ${m[3]}**\n\n1. Replace every ${m[2]} with ${m[3]}.\n2. Do the math using PEMDAS.\n3. **= ${fmtWithApprox(r)}**`);
+    } catch (e) { return null; }
+  }
+];
+
+/* Main math function: tries word problem handlers, then equations, then plain calculations */
+function mathEngine(question) {
+  const low = question.toLowerCase();
+  for (const h of MATH_HANDLERS) {
+    try { const r = h(low); if (r) return r; } catch (e) { /* try the next one */ }
+  }
+
+  // Equations and calculations
+  const norm = normMath(question);
+  let expr = stripFiller(norm);
+  if (!/\d/.test(expr) && !/[a-z]\s*[\^=]/.test(expr)) return null;
+  if (!/[+\-*/^=√!%]|sqrt|cbrt|sin|cos|tan|log|ln|abs/.test(expr)) return null;
+
+  const attempt = s => {
+    if (s.includes("=")) {
+      const sides = s.split("=");
+      if (sides.length !== 2) throw "too many =";
+      const L = parse(sides[0]), R = parse(sides[1]);
+      const vars = new Set([...varsIn(L), ...varsIn(R)]);
+      if (vars.size === 0) {
+        const ok = Math.abs(evalF(L) - evalF(R)) < 1e-9;
+        return ans(ok ? "**True!**" : "**False.**", `**${pretty(s)}**\n\nLeft side = ${fmt(evalF(L))}, right side = ${fmt(evalF(R))}. That is **${ok ? "true" : "false"}**.`);
+      }
+      if (vars.size > 1) return ans("That has more than one variable.", `That equation has more than one variable (${[...vars].join(", ")}). I can solve equations with one letter, like 3x + 4 = 19.`);
+      return solveEquation(s, L, R, [...vars][0]);
+    }
+    const tree = parse(s);
+    const vars = varsIn(tree);
+    if (vars.size) return ans("That has a variable.", `**${pretty(s)}** has a variable (${[...vars].join(", ")}), so it doesn't have one answer yet. Try an equation like **${pretty(s)} = 10**, or give a value like **${pretty(s)} when ${[...vars][0]} = 3**.`);
+    let exact = null;
+    try { exact = evalQ(tree); } catch (e) { }
+    const v = evalF(tree);
+    if (!isFinite(v)) return ans("**Undefined**", `**${pretty(s)}** is undefined (you can't divide by zero).`);
+    const result = exact && exact.d !== 1 ? `${fmtFrac(exact)} = ${fmt(exact.val())}` : fmt(v);
+    const hasTrig = /sin|cos|tan/.test(s);
+    return ans(`**${result}**`, `**${pretty(s)} = ${result}**` + (hasTrig ? `\n\n(Trig is in degrees.)` : /[+\-].*[*/]|[*/].*[+\-]/.test(s) ? `\n\nRemember PEMDAS: multiply and divide before you add and subtract.` : ""));
+  };
+
+  try { return attempt(expr); } catch (e) { }
+  // Second try: start from the first number or bracket
+  const i = expr.search(/[0-9(√-]/);
+  if (i > 0) { try { return attempt(expr.slice(i)); } catch (e) { } }
+  return null;
+}
+
+/* ================================================================
+   PART 4: QUIZZES
+   Math quiz generators make random problems with answers.
+   ================================================================ */
+const R = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+const MATH_QUIZ = [
+  { id: "add", name: "Addition", re: /add|addition|plus|sum/, gen: () => { const a = R(10, 99), b = R(10, 99); return { q: `What is ${a} + ${b}?`, a: a + b, why: `${a} + ${b} = ${a + b}` }; } },
+  { id: "sub", name: "Subtraction", re: /subtract|subtraction|minus|take away/, gen: () => { const a = R(30, 150), b = R(5, a); return { q: `What is ${a} - ${b}?`, a: a - b, why: `${a} - ${b} = ${a - b}` }; } },
+  { id: "mul", name: "Multiplication", re: /multipl|times/, gen: () => { const a = R(2, 12), b = R(2, 12); return { q: `What is ${a} × ${b}?`, a: a * b, why: `${a} × ${b} = ${a * b}` }; } },
+  { id: "div", name: "Division", re: /divi/, gen: () => { const b = R(2, 12), q = R(2, 12); return { q: `What is ${b * q} ÷ ${b}?`, a: q, why: `${b} × ${q} = ${b * q}, so ${b * q} ÷ ${b} = ${q}` }; } },
+  { id: "frac", name: "Fractions", re: /fraction/, gen: () => { const d1 = R(2, 6), d2 = R(2, 6), n1 = R(1, d1 - 1 || 1), n2 = R(1, d2 - 1 || 1); const s = new Frac(n1, d1).add(new Frac(n2, d2)); return { q: `What is ${n1}/${d1} + ${n2}/${d2}? (A fraction is fine)`, a: s.val(), why: `Common denominator ${lcm(d1, d2)}: the answer is ${fmtFrac(s)}` }; } },
+  { id: "pct", name: "Percents", re: /percent/, gen: () => { const p = pick([10, 20, 25, 50, 75]), n = R(2, 20) * 20; return { q: `What is ${p}% of ${n}?`, a: p / 100 * n, why: `${p / 100} × ${n} = ${fmt(p / 100 * n)}` }; } },
+  { id: "eq", name: "Equations", re: /equation|algebra|solve|variable/, gen: () => { const x = R(1, 12), a = R(2, 9), b = R(1, 20); return { q: `Solve for x: ${a}x + ${b} = ${a * x + b}`, a: x, why: `Subtract ${b}: ${a}x = ${a * x}. Divide by ${a}: x = ${x}` }; } },
+  { id: "exp", name: "Exponents", re: /exponent|power|squared|cubed/, gen: () => { const b = R(2, 9), e = pick([2, 2, 3]); return { q: `What is ${b}^${e}?`, a: b ** e, why: `${Array(e).fill(b).join(" × ")} = ${b ** e}` }; } },
+  { id: "area", name: "Area", re: /area|perimeter/, gen: () => { const l = R(2, 15), w = R(2, 15); return pick([{ q: `A rectangle is ${l} by ${w}. What is its area?`, a: l * w, why: `${l} × ${w} = ${l * w}` }, { q: `A triangle has base ${l * 2} and height ${w}. What is its area?`, a: l * w, why: `(${l * 2} × ${w}) ÷ 2 = ${l * w}` }]); } },
+  { id: "pyth", name: "Pythagorean Theorem", re: /pythag|hypotenuse/, gen: () => { const [a, b, c] = pick([[3, 4, 5], [5, 12, 13], [6, 8, 10], [8, 15, 17], [9, 12, 15], [7, 24, 25]]); return { q: `A right triangle has legs ${a} and ${b}. How long is the hypotenuse?`, a: c, why: `${a}² + ${b}² = ${a * a + b * b}, and √${a * a + b * b} = ${c}` }; } },
+  { id: "slope", name: "Slope", re: /slope/, gen: () => { const x1 = R(-5, 5), y1 = R(-5, 5), dx = R(1, 5), m = R(-4, 4); return { q: `What is the slope from (${x1}, ${y1}) to (${x1 + dx}, ${y1 + m * dx})?`, a: m, why: `(${y1 + m * dx} - ${y1}) ÷ (${x1 + dx} - ${x1}) = ${m * dx} ÷ ${dx} = ${m}` }; } },
+  { id: "mean", name: "Mean", re: /mean|average|median|mode/, gen: () => { const n = [R(1, 20), R(1, 20), R(1, 20)]; const sum = n.reduce((a, b) => a + b); const last = 4 - (sum % 4) + R(0, 4) * 4; n.push(last); const t = sum + last; return { q: `What is the mean of ${n.join(", ")}?`, a: t / 4, why: `Add them: ${t}. Divide by 4: ${t / 4}` }; } },
+  { id: "neg", name: "Negative Numbers", re: /negative|integer/, gen: () => { const a = R(-15, -1), b = R(1, 20); return pick([{ q: `What is ${a} + ${b}?`, a: a + b, why: `${a} + ${b} = ${a + b}` }, { q: `What is ${a} × ${-b}?`, a: a * -b, why: `Negative times negative is positive: ${a * -b}` }]); } },
+  { id: "sqrt", name: "Square Roots", re: /square root|root/, gen: () => { const n = R(2, 15); return { q: `What is √${n * n}?`, a: n, why: `${n} × ${n} = ${n * n}` }; } },
+  { id: "dec", name: "Decimals", re: /decimal/, gen: () => { const a = R(1, 99) / 10, b = R(1, 99) / 100; return { q: `What is ${a} + ${b}?`, a: +(a + b).toFixed(2), why: `Line up the decimal points: ${fmt(+(a + b).toFixed(2))}` }; } }
+];
+
+let pendingQuiz = null; // the question Bob is waiting for you to answer
+
+function startMathQuiz(g, intro = true) {
+  const p = g.gen();
+  pendingQuiz = { kind: "num", gen: g, answer: p.a, why: p.why };
+  return { text: `${intro ? `**${g.name} quiz!** ` : ""}${p.q}\n\nType your answer, or say "skip".`, sources: [SRC_ENGINE] };
+}
+
+function startChoiceQuiz(entry) {
+  const others = KB.filter(e => e.cat === entry.cat && e !== entry).sort(() => Math.random() - .5).slice(0, 2);
+  const opts = [entry, ...others].sort(() => Math.random() - .5);
+  let clue = entry.text.split(/(?<=\.)\s/)[0];
+  [entry.title, ...entry.names].sort((a, b) => b.length - a.length).forEach(n => {
+    clue = clue.replace(new RegExp(n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi"), "____");
+  });
+  const letters = ["A", "B", "C"];
+  pendingQuiz = { kind: "choice", entry, opts, letter: letters[opts.indexOf(entry)] };
+  return {
+    text: `**Who or what am I describing?**\n\n"${clue}"\n\n` + opts.map((o, i) => `- **${letters[i]}.** ${o.title}`).join("\n") + `\n\nType A, B, or C.`,
+    sources: [entry.src || SRC_PDF]
+  };
+}
+
+function makeQuiz(question) {
+  const low = question.toLowerCase();
+  for (const g of MATH_QUIZ) if (g.re.test(low)) return startMathQuiz(g);
+  const hit = search(question.replace(/quiz|test|practice|me|on/gi, ""));
+  if (hit) {
+    if (hit.entry.cat === "Math") {
+      const g = MATH_QUIZ.find(q => q.id === hit.entry.quiz) || pick(MATH_QUIZ);
+      return startMathQuiz(g);
+    }
+    return startChoiceQuiz(hit.entry);
+  }
+  if (/math/.test(low) || Math.random() < .5) return startMathQuiz(pick(MATH_QUIZ));
+  return startChoiceQuiz(pick(KB.filter(e => e.cat !== "Math")));
+}
+
+// Reads a typed answer like "12", "3/4", or "-2.5" as a number
+function readNumber(s) {
+  const clean = s.replace(/^(x|answer|it'?s|is)\s*=?\s*/i, "").replace(/[^0-9./\-\s]/g, "").trim();
+  if (!clean) return null;
+  try { const v = evalF(parse(clean)); return isFinite(v) ? v : null; } catch (e) { return null; }
+}
+
+function gradeQuiz(input) {
+  const q = pendingQuiz, low = input.trim().toLowerCase();
+  const giveUp = /^(skip|idk|i don'?t know|give up|pass|no idea|show answer|answer)\b/.test(low);
+  let correct = null, reveal;
+
+  if (q.kind === "num") {
+    reveal = `The answer is **${fmtExact(q.answer)}**. ${q.why}.`;
+    if (!giveUp) {
+      const v = readNumber(input);
+      if (v === null) return null; // not an answer, treat as a normal message
+      correct = Math.abs(v - q.answer) < 1e-6 * (1 + Math.abs(q.answer));
+    }
+  } else {
+    reveal = `It was **${q.letter}. ${q.entry.title}**.`;
+    if (!giveUp) {
+      const m = low.match(/^\(?([abc])\)?[.)]?$/);
+      const named = q.opts.find(o => low.includes(o.title.toLowerCase()));
+      if (!m && !named) return null;
+      correct = m ? m[1].toUpperCase() === q.letter : named === q.entry;
+    }
+  }
+
+  let text = giveUp ? `No worries! ${reveal}` :
+    correct ? `<good>Correct!</good> ${q.kind === "num" ? q.why + "." : "Nice job, it was " + q.entry.title + "."}` :
+      `<bad>Not quite.</bad> ${reveal}`;
+  pendingQuiz = null;
+
+  // In quiz mode, keep the questions coming
+  if (mode.id === "quiz") {
+    const next = q.kind === "num" ? startMathQuiz(q.gen, false) : startChoiceQuiz(pick(KB.filter(e => e.cat === q.entry.cat)));
+    text += `\n\n**Next question:** ` + next.text;
+  }
+  return { text, sources: [q.kind === "num" ? SRC_ENGINE : SRC_PDF] };
+}
+
+/* ================================================================
+   PART 5: ONLINE LOOKUP (for people Bob doesn't know)
+   Social Blade and ViewStats block other websites from reading their
+   pages (a browser rule called CORS), so Bob can't scrape them.
+   Instead he uses:
+     - Wikipedia's free public API (no key needed) for who they are
+     - YouTube's official API (optional free key) for live stats
+   and then gives links to Social Blade and ViewStats.
+   ================================================================ */
+const CREATOR_WORDS = /youtub|streamer|content creator|internet personality|influencer|gamer|vlogger|twitch|tiktok|podcast|let's play/i;
+
+// fetch() with a time limit so Bob never hangs forever
+async function getJSON(url, ms = 8000) {
+  const c = new AbortController();
+  const t = setTimeout(() => c.abort(), ms);
+  try {
+    const r = await fetch(url, { signal: c.signal });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return await r.json();
+  } finally { clearTimeout(t); }
+}
+
+// Brackets inside a web address would break [text](link), so encode them
+const safeUrl = u => u.replace(/\(/g, "%28").replace(/\)/g, "%29");
+// Short numbers like 1.2M
+const compact = n => new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(n);
+// Keeps the first few sentences so answers stay short
+const shorten = (text, n) => text.split(/(?<=[.!?])\s+/).slice(0, n).join(" ");
+// Wikipedia sometimes uses long dashes; swap them for commas so answers match the house style
+const tidy = text => text.replace(/\s*\u2014\s*/g, ", ").replace(/\s+\u2013\s+/g, ", ");
+
+/* Searches Simple English Wikipedia (easier to read) and regular
+   Wikipedia, then picks the page that best matches the name. */
+async function wikiLookup(name) {
+  const words = name.toLowerCase().split(/\s+/).filter(w => w.length > 1);
+  const searches = [
+    ["simple.wikipedia.org", name],
+    ["en.wikipedia.org", name],
+    ["en.wikipedia.org", name + " YouTuber"]
+  ];
+  let failures = 0;
+  const results = await Promise.all(searches.map(async ([host, query]) => {
+    try {
+      const s = await getJSON(`https://${host}/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srlimit=6&format=json&origin=*`);
+      return ((s.query && s.query.search) || []).map(h => ({ ...h, host }));
+    } catch (e) { failures++; return []; }
+  }));
+  if (failures === searches.length) throw new Error("offline");
+
+  // Score every page we found
+  const hits = results.flat().map(h => {
+    const t = h.title.toLowerCase();
+    let sc = 0;
+    const matched = words.filter(w => t.includes(w)).length;
+    if (!matched) return { h, sc: -99 };
+    sc += matched * 2;
+    if (matched === words.length) sc += 2;
+    if (t === name.toLowerCase()) sc += 3;
+    if (/\((youtuber|streamer|gamer)\)/i.test(h.title)) sc += 3;
+    if (CREATOR_WORDS.test(h.snippet)) sc += 3;
+    if (/disambiguation|^list of/i.test(h.title)) sc -= 10;
+    if (h.host.startsWith("simple")) sc += 0.5; // tie goes to the easier version
+    return { h, sc };
+  }).sort((a, b) => b.sc - a.sc);
+
+  for (const { h, sc } of hits.slice(0, 3)) {
+    if (sc < 2) break;
+    try {
+      const sum = await getJSON(`https://${h.host}/api/rest_v1/page/summary/${encodeURIComponent(h.title.replace(/ /g, "_"))}`);
+      if (sum.type === "disambiguation" || !sum.extract) continue;
+      return {
+        title: sum.title,
+        desc: sum.description || "",
+        text: tidy(sum.extract),
+        url: safeUrl((sum.content_urls && sum.content_urls.desktop && sum.content_urls.desktop.page) || `https://${h.host}/wiki/${encodeURIComponent(sum.title)}`),
+        simple: h.host.startsWith("simple")
+      };
+    } catch (e) { /* try the next page */ }
+  }
+  return null;
+}
+
+/* YouTube Data API: finds their channel and live stats. Needs a key. */
+async function ytLookup(name, key) {
+  const s = await getJSON(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=channel&maxResults=1&q=${encodeURIComponent(name)}&key=${encodeURIComponent(key)}`);
+  const id = s.items && s.items[0] && s.items[0].snippet.channelId;
+  if (!id) return null;
+  const c = await getJSON(`https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&id=${id}&key=${encodeURIComponent(key)}`);
+  const ch = c.items && c.items[0];
+  if (!ch) return null;
+  return {
+    title: ch.snippet.title,
+    handle: ch.snippet.customUrl || "",
+    desc: tidy(ch.snippet.description || ""),
+    subs: +ch.statistics.subscriberCount,
+    hidden: ch.statistics.hiddenSubscriberCount,
+    views: +ch.statistics.viewCount,
+    videos: +ch.statistics.videoCount,
+    url: safeUrl(`https://www.youtube.com/${ch.snippet.customUrl || "channel/" + id}`)
+  };
+}
+
+/* Links to the stat sites. With a handle (@name) the links go straight
+   to their page. Without one they open a search for them. */
+function statLinks(name, handle) {
+  const q = encodeURIComponent(name);
+  let sb, vs;
+  if (handle) {
+    const h = handle.replace(/^@/, "");
+    sb = `https://socialblade.com/youtube/handle/${encodeURIComponent(h)}`;
+    vs = `https://www.viewstats.com/@${encodeURIComponent(h)}`;
+  } else {
+    sb = `https://www.google.com/search?q=${q}+site%3Asocialblade.com`;
+    vs = `https://www.google.com/search?q=${q}+site%3Aviewstats.com`;
+  }
+  return `[Social Blade](${sb}) · [ViewStats](${vs}) · [YouTube](https://www.youtube.com/results?search_query=${q})`;
+}
+
+/* The main lookup: runs Wikipedia and YouTube at the same time */
+async function lookupOnline(name) {
+  const key = profile && profile.ytKey;
+  const [w, y] = await Promise.allSettled([wikiLookup(name), key ? ytLookup(name, key) : Promise.resolve(null)]);
+  const offline = w.status === "rejected";
+  let wiki = w.status === "fulfilled" ? w.value : null;
+  let yt = y.status === "fulfilled" ? y.value : null;
+  const ytBroke = key && y.status === "rejected";
+
+  // If Wikipedia found someone who is NOT a creator, the YouTube match is probably a random channel
+  if (wiki && yt && !CREATOR_WORDS.test(wiki.desc + " " + wiki.text)) yt = null;
+
+  if (!wiki && !yt) {
+    // No internet? Use the copy Bob saved last time, if there is one
+    const saved = KB.find(e => e.cat === "Learned online" && [e.title, ...e.names].some(t => t.toLowerCase() === name.toLowerCase()));
+    if (offline && saved) return { text: `I'm offline right now, but here's what I saved last time.\n\n**${saved.title}**\n\n${saved.text}`, sources: [saved.src] };
+    return {
+      text: offline
+        ? `I don't have **${name}** in my files, and I couldn't reach the internet to look them up. Check your connection, or try these:\n\n${statLinks(name)}`
+        : `I don't have **${name}** in my files, and I couldn't find them online either. Double check the spelling, or try these:\n\n${statLinks(name)}`,
+      sources: []
+    };
+  }
+
+  const sources = [];
+  let text = `I didn't have that in my files, so I looked it up online.\n\n`;
+  if (wiki) {
+    text += `**${wiki.title}**${wiki.desc ? " (" + tidy(wiki.desc) + ")" : ""}\n\n${shorten(wiki.text, mode.id === "quick" ? 1 : 4)}`;
+    sources.push(wiki.simple ? "Simple Wikipedia" : "Wikipedia");
+    // Remember who they are for next time (stats are left out since they go stale)
+    learn({ cat: "Learned online", title: wiki.title, names: [name], keys: wiki.desc, text: shorten(wiki.text, 4), src: sources[0], url: wiki.url });
+  }
+  if (yt) {
+    text += (wiki ? "\n\n" : "") + `**YouTube channel: [${yt.title}](${yt.url})**\n` +
+      `- Subscribers: ${yt.hidden ? "hidden by the creator" : compact(yt.subs)}\n` +
+      `- Total views: ${compact(yt.views)}\n` +
+      `- Videos: ${yt.videos.toLocaleString("en-US")}`;
+    if (!wiki && yt.desc) text += `\n\n**About:** ${shorten(yt.desc, 2)}`;
+    sources.push("YouTube");
+  }
+  text += `\n\n**More stats:** ${statLinks(name, yt && yt.handle)}`;
+  if (wiki) text += `\n\n[Read the full article](${wiki.url})`;
+  if (ytBroke) text += `\n\n(Your YouTube API key didn't work, so I skipped live stats. Check it in Settings.)`;
+  else if (!key && wiki && CREATOR_WORDS.test(wiki.desc + " " + wiki.text)) text += `\n\nTip: add a free YouTube API key in Settings to see live subscriber counts here.`;
+  return { text, sources };
+}
+
+/* Spots questions about a person, like "who is Dream" or "look up Kai Cenat".
+   Returns the name, plus force = true for "look up" / "search". */
+function personQuestion(q) {
+  const m = q.trim().match(/^(?:who(?:'s|s| is| are| was| even is)|tell me about|what do you know about|do you know|have you heard of|(look up|search(?: for)?|google)|info (?:on|about))\s+(.+?)[\s?.!]*$/i);
+  if (!m) return null;
+  const name = m[2]
+    .replace(/^(the |a )?(youtuber|streamer|creator|tiktoker)\s+/i, "")
+    .replace(/\s+(on youtube|the youtuber|youtuber|from youtube|streamer)$/i, "")
+    .replace(/^@/, "").trim();
+  if (name.length < 2 || name.split(/\s+/).length > 6) return null;
+  return { name, force: !!m[1] };
+}
+
+/* True if Bob has this exact name in his files. People he learned
+   online don't count, so he refreshes them (and gets live stats). */
+function knowsLocally(name) {
+  const n = name.toLowerCase();
+  return KB.some(e => e.cat !== "Learned online" && [e.title, ...e.names].some(t => {
+    t = t.toLowerCase();
+    if (t === n) return true;
+    if (t.length >= 4 && new RegExp("\\b" + t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b").test(n)) return true;
+    return n.length >= 5 && t.startsWith(n);
+  }));
+}
+
+/* ================================================================
+   PART 6: BOB'S BRAIN
+   Decides how to answer each message, in this order:
+   quiz answer > small talk > quiz request > math > online person lookup > knowledge > fallback
+   ================================================================ */
+function userName() { return (profile && profile.name) || "there"; }
+
+function topicsList() {
+  const cats = [...new Set(KB.map(e => e.cat))];
+  return cats.map(c => {
+    const items = KB.filter(e => e.cat === c);
+    const shown = c === "Math" ? "K-12, from counting all the way to calculus" : items.map(e => e.title).join(", ");
+    return `- **${c}:** ${shown}`;
+  }).join("\n");
+}
+
+async function askBob(question) {
+  await new Promise(r => setTimeout(r, 450 + Math.random() * 500)); // a little "thinking" pause
+  const q = question.trim(), low = q.toLowerCase();
+
+  // 1. Answering a quiz question?
+  if (pendingQuiz) {
+    const graded = gradeQuiz(q);
+    if (graded) return graded;
+    pendingQuiz = null;
+  }
+
+  // 2. Small talk
+  if (/^(hi|hey|hello|yo|sup|hiya|howdy|good (morning|afternoon|evening))\b/.test(low) && low.length < 30 && (/^(hi|hey|hello|yo|sup|hiya|howdy|good (morning|afternoon|evening))( there)?( bob)?[!.\s]*$/.test(low) || !search(q)))
+    return { text: `Hey ${userName()}! What do you want to learn about? You can ask me about games, YouTubers, history, how AI reads words, or give me any math problem.`, sources: [] };
+  if (/how are you/.test(low))
+    return { text: `I'm doing great, thanks for asking! Ready to help. What are we working on?`, sources: [] };
+  if (/\b(thank|thanks|thx|ty)\b/.test(low) && low.length < 40)
+    return { text: `You're welcome, ${userName()}! Anything else?`, sources: [] };
+  if (/who are you|what are you|your name/.test(low))
+    return { text: `I'm **Bob**, a study helper that runs right in your browser with no downloads. I answer from the files I was given, and I have a built in math engine that solves problems and shows every step.`, sources: [] };
+  if (/what can you do|what do you know|list (of )?topics|^topics$|^help$|what can i ask/.test(low))
+    return { text: `Here's everything I know:\n\n${topicsList()}\n\nI can also solve math like **3x + 7 = 22**, **20% of 80**, **area of a circle with radius 5**, or **slope of (1,2) and (3,8)**. Switch to **Quiz me** mode to practice!`, sources: [SRC_PDF, SRC_LESSON] };
+
+  // 3. Quiz request
+  if (/\b(quiz|test me|practice|flash ?card)/.test(low) || mode.id === "quiz") return makeQuiz(q);
+
+  // 4. Math problems
+  const m = mathEngine(q);
+  if (m) return { text: mode.id === "quick" ? m.short : m.steps, sources: [SRC_ENGINE] };
+
+  // 5. A person Bob doesn't know? Look them up online
+  const online = !profile || profile.online !== false;
+  const who = personQuestion(q);
+  if (who && online && (who.force || !knowsLocally(who.name))) return await lookupOnline(who.name);
+
+  // 6. Knowledge search
+  const hit = search(q);
+  if (hit) {
+    const e = hit.entry;
+    const src = e.src || (e.cat === "Math" ? `${SRC_LESSON}${e.grade ? " (Grade " + e.grade + ")" : ""}` : SRC_PDF);
+    if (mode.id === "quick") return { text: e.text.split(/(?<=\.)\s/)[0], sources: [src] };
+    let text = `**${e.title}**\n\n${e.text}`;
+    if (e.example) text += `\n\n**Example:** ${e.example}`;
+    if (e.url) text += `\n\n[Read the full article](${e.url}) · ${statLinks(e.names[0] || e.title)}`;
+    const ru = hit.runnerUp;
+    if (ru && ru.score >= 4 && ru.entry.cat === e.cat) text += `\n\nYou might also like: **${ru.entry.title}**`;
+    return { text, sources: [src] };
+  }
+
+  // 7. Nothing matched. If it's short (probably a name), try online
+  if (online && q.split(/\s+/).length <= 4 && /[a-z]/i.test(q)) return await lookupOnline(q.replace(/[?!.]+$/, ""));
+  return {
+    text: `Hmm, I couldn't find that in my files. I know about:\n\n${topicsList()}\n\nTry asking about one of those, or give me a math problem!`,
+    sources: []
+  };
+}
+
+/* ================================================================
+   PART 7: UI (modes, chats, rendering, settings)
+   ================================================================ */
+const MODES = [
+  { id: "study", name: "Study", desc: "Full explanations and math steps" },
+  { id: "quick", name: "Quick", desc: "Just the answer" },
+  { id: "quiz", name: "Quiz me", desc: "Bob keeps asking you questions" }
+];
+let mode = MODES[0];
+
+const STARTERS = [
+  { title: "Solve 3x + 7 = 22", sub: "with every step shown" },
+  { title: "What is the Pythagorean theorem?", sub: "explained simply" },
+  { title: "Tell me about Rec Room", sub: "and how Circuits work" },
+  { title: "Quiz me on fractions", sub: "practice until it clicks" }
+];
+
+let chats = load() || [];
+let current = null;
+function load() { try { return JSON.parse(localStorage.getItem("bob-chats")); } catch (e) { return null; } }
+function save() { try { localStorage.setItem("bob-chats", JSON.stringify(chats)); } catch (e) { } }
+const $ = id => document.getElementById(id);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* Turns simple markdown (bold, lists, numbered steps) into HTML */
+function format(text) {
+  const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const lines = esc(text).split("\n");
+  let html = "", para = [], list = null, listType = null;
+  const flushP = () => { if (para.length) { html += "<p>" + inline(para.join("<br>")) + "</p>"; para = []; } };
+  const flushL = () => { if (list) { html += `<${listType}>` + list.map(i => "<li>" + inline(i) + "</li>").join("") + `</${listType}>`; list = null; } };
+  for (const line of lines) {
+    let m;
+    if (!line.trim()) { flushP(); flushL(); continue; }
+    if ((m = line.match(/^- (.*)/))) { flushP(); if (listType !== "ul") flushL(); listType = "ul"; (list = list || []).push(m[1]); continue; }
+    if ((m = line.match(/^\d+\. (.*)/))) { flushP(); if (listType !== "ol") flushL(); listType = "ol"; (list = list || []).push(m[1]); continue; }
+    flushL(); para.push(line);
+  }
+  flushP(); flushL();
+  return html;
+}
+function inline(s) {
+  return s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/`(.+?)`/g, "<code>$1</code>")
+    .replace(/&lt;good&gt;(.+?)&lt;\/good&gt;/g, '<span class="good">$1</span>')
+    .replace(/&lt;bad&gt;(.+?)&lt;\/bad&gt;/g, '<span class="bad">$1</span>');
+}
+
+/* Adds a message. If animate is true, Bob "types" it out word by word. */
+async function addMessage(role, text, sources, animate) {
+  const div = document.createElement("div");
+  div.className = "msg " + role;
+  if (role === "user") {
+    const b = document.createElement("div");
+    b.className = "bubble"; b.textContent = text;
+    div.appendChild(b);
+    $("thread").appendChild(div); scrollDown();
+    return;
+  }
+  div.innerHTML = `<div class="logo">b</div><div class="bot-body"><div class="content"></div></div>`;
+  $("thread").appendChild(div);
+  const content = div.querySelector(".content"), body = div.querySelector(".bot-body");
+
+  if (animate) {
+    const parts = text.split(/(\s+)/);
+    let shown = "";
+    for (let i = 0; i < parts.length; i++) {
+      shown += parts[i];
+      if (i % 4 === 0) { content.innerHTML = format(shown); scrollDown(); await sleep(14); }
+    }
+  }
+  content.innerHTML = format(text);
+
+  const chips = (sources || []).map(s =>
+    `<span class="source-chip"><svg viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>${s}</span>`).join("");
+  body.insertAdjacentHTML("beforeend", (chips ? "<div>" + chips + "</div>" : "") + `
+    <div class="actions">
+      <button class="icon-btn copy" title="Copy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button>
+      <button class="icon-btn" title="Good answer"><svg viewBox="0 0 24 24"><path d="M7 10v11M15 5.9 14 10h5.8a2 2 0 0 1 2 2.3l-1.4 7A2 2 0 0 1 18.5 21H7V10l4-8a3 3 0 0 1 4 3.9z"/></svg></button>
+    </div>`);
+  body.querySelector(".copy").onclick = () => { try { navigator.clipboard.writeText(text.replace(/<\/?(good|bad)>/g, "")); } catch (e) { } };
+  scrollDown();
+}
+
+function showTyping() {
+  const div = document.createElement("div");
+  div.className = "msg bot"; div.id = "typing";
+  div.innerHTML = '<div class="logo">b</div><div class="typing"><i></i><i></i><i></i></div>';
+  $("thread").appendChild(div); scrollDown();
+}
+function scrollDown() { $("scroll").scrollTop = $("scroll").scrollHeight; }
+
+function renderChat() {
+  $("thread").innerHTML = "";
+  pendingQuiz = null;
+  const empty = !current || current.messages.length === 0;
+  $("welcome").style.display = empty ? "block" : "none";
+  if (current) current.messages.forEach(m => addMessage(m.role, m.text, m.sources, false));
+  renderList();
+}
+function renderList() {
+  $("chatList").innerHTML = "";
+  chats.forEach(c => {
+    const b = document.createElement("button");
+    b.className = "chat-item" + (c === current ? " active" : "");
+    b.textContent = c.title;
+    b.onclick = () => { current = c; renderChat(); closeMobileSide(); };
+    $("chatList").appendChild(b);
+  });
+}
+
+/* Sending a message */
+let busy = false;
+async function send(text) {
+  text = (text || $("input").value).trim();
+  if (!text || busy) return;
+  busy = true;
+  if (!current) { current = { title: text.slice(0, 40), messages: [] }; chats.unshift(current); }
+  $("welcome").style.display = "none";
+  $("input").value = ""; resizeInput();
+
+  current.messages.push({ role: "user", text });
+  addMessage("user", text);
+  renderList(); save();
+
+  showTyping();
+  let reply;
+  try { reply = await askBob(text); }
+  catch (e) { reply = { text: "Oops, something went wrong on my end. Try asking another way!", sources: [] }; }
+  $("typing").remove();
+
+  current.messages.push({ role: "bot", text: reply.text, sources: reply.sources });
+  await addMessage("bot", reply.text, reply.sources, true);
+  save();
+  busy = false; updateSend();
+}
+
+/* Input box */
+function resizeInput() { const t = $("input"); t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 200) + "px"; updateSend(); }
+function updateSend() { $("send").disabled = !$("input").value.trim() || busy; }
+$("input").addEventListener("input", resizeInput);
+$("input").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
+$("send").onclick = () => send();
+
+/* New chat */
+function newChat() { current = null; renderChat(); $("input").focus(); closeMobileSide(); }
+$("newChat").onclick = newChat;
+$("newChat2").onclick = newChat;
+
+/* Sidebar */
+const isMobile = () => window.innerWidth <= 760;
+function closeMobileSide() { if (isMobile()) { $("sidebar").classList.add("closed"); $("overlay").classList.remove("show"); } }
+$("closeSide").onclick = () => { $("sidebar").classList.add("closed"); $("overlay").classList.remove("show"); };
+$("openSide").onclick = () => { const closed = $("sidebar").classList.toggle("closed"); if (isMobile()) $("overlay").classList.toggle("show", !closed); };
+$("overlay").onclick = closeMobileSide;
+if (isMobile()) $("sidebar").classList.add("closed");
+
+/* Light and dark mode */
+$("themeBtn").onclick = () => {
+  const root = document.documentElement;
+  const nowDark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  root.dataset.theme = nowDark ? "light" : "dark";
+};
+
+/* Mode menu */
+function renderMenu() {
+  $("menu").innerHTML = MODES.map(m => `
+    <button class="menu-item ${m === mode ? "on" : ""}" data-id="${m.id}">
+      <div><b>${m.name}</b><span>${m.desc}</span></div>
+      <svg class="check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
+    </button>`).join("");
+  $("menu").querySelectorAll(".menu-item").forEach(btn => {
+    btn.onclick = () => {
+      mode = MODES.find(m => m.id === btn.dataset.id);
+      $("modelTag").textContent = mode.name;
+      $("pillText").textContent = mode.name + " mode";
+      $("menu").classList.remove("open");
+      renderMenu();
+      if (mode.id === "quiz") $("input").placeholder = "Name a topic to get quizzed on, like fractions or Minecraft...";
+      else $("input").placeholder = "Message Bob...";
+    };
+  });
+}
+$("modelBtn").onclick = e => { e.stopPropagation(); $("menu").classList.toggle("open"); };
+$("pillBtn").onclick = e => { e.stopPropagation(); $("menu").classList.toggle("open"); };
+document.addEventListener("click", e => { if (!$("menu").contains(e.target)) $("menu").classList.remove("open"); });
+
+/* Starter cards */
+$("cards").innerHTML = STARTERS.map(s => `<button class="card"><b>${s.title}</b><span>${s.sub}</span></button>`).join("");
+$("cards").querySelectorAll(".card").forEach((c, i) => { c.onclick = () => send(STARTERS[i].title); });
+
+/* ================================================================
+   PART 8: PROFILE (display name, avatar color, online settings)
+   Browsers can't read your computer's account name (privacy rule),
+   so Bob asks once on your first visit. Change it in Settings.
+   ================================================================ */
+let profile = loadProfile();
+function loadProfile() { try { return JSON.parse(localStorage.getItem("bob-profile")); } catch (e) { return null; } }
+function saveProfile() { try { localStorage.setItem("bob-profile", JSON.stringify(profile)); } catch (e) { } }
+
+function applyProfile() {
+  const name = (profile && profile.name) || "Guest";
+  $("userName").textContent = name;
+  $("avatar").textContent = name[0].toUpperCase();
+  $("avatar").style.background = (profile && profile.color) || "#c96a3c";
+  const h = new Date().getHours();
+  const hello = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+  $("greeting").textContent = profile && profile.name ? hello + ", " + profile.name : hello;
+}
+function updatePreview() {
+  const name = $("nameInput").value.trim() || "Guest";
+  $("previewAvatar").textContent = name[0].toUpperCase();
+  $("previewAvatar").style.background = $("colorInput").value;
+  $("previewText").textContent = "You will show up as " + name;
+}
+$("nameInput").addEventListener("input", updatePreview);
+$("colorInput").addEventListener("change", updatePreview);
+$("nameInput").addEventListener("keydown", e => { if (e.key === "Enter") $("saveBtn").click(); });
+
+let firstTime = false;
+function openSettings(isFirst) {
+  firstTime = isFirst;
+  $("modalTitle").textContent = isFirst ? "Welcome to Bob AI" : "Settings";
+  $("modalSub").textContent = isFirst ? "What should Bob call you?" : "Change how Bob sees you.";
+  $("cancelBtn").style.display = isFirst ? "none" : "";
+  $("clearBtn").style.display = isFirst ? "none" : "";
+  $("logoutBtn").style.display = isFirst ? "none" : "";
+  $("saveBtn").textContent = isFirst ? "Let's go" : "Save";
+  $("nameInput").value = (profile && profile.name) || "";
+  $("colorInput").value = (profile && profile.color) || "#c96a3c";
+  $("onlineInput").checked = !profile || profile.online !== false;
+  $("ytKeyInput").value = (profile && profile.ytKey) || "";
+  updatePreview();
+  $("modalBg").classList.add("open");
+  setTimeout(() => $("nameInput").focus(), 50);
+  closeMobileSide();
+}
+function closeSettings() { $("modalBg").classList.remove("open"); }
+$("userBtn").onclick = () => openSettings(false);
+$("settingsBtn").onclick = () => openSettings(false);
+$("cancelBtn").onclick = closeSettings;
+$("modalBg").onclick = e => { if (e.target === $("modalBg") && !firstTime) closeSettings(); };
+$("saveBtn").onclick = () => {
+  profile = {
+    name: $("nameInput").value.trim() || "Guest",
+    color: $("colorInput").value,
+    online: $("onlineInput").checked,
+    ytKey: $("ytKeyInput").value.trim()
+  };
+  saveProfile(); applyProfile(); closeSettings();
+};
+$("clearBtn").onclick = () => {
+  if (!confirm("Delete every chat? This cannot be undone.")) return;
+  chats = []; current = null; save(); renderChat(); closeSettings();
+};
+
+/* ================================================================
+   PART 9: LOGIN KEYS
+   People need a key to use Bob. Keys are stored as SHA-256 hashes,
+   so nobody can read the real keys by viewing the page source.
+
+   HOW TO ADD A KEY:
+     1. Open the site with #makekey at the end (like .../index.html#makekey)
+     2. Type who it's for and a key, press "Make line"
+     3. Paste that line into the list below and push to GitHub
+   HOW TO REMOVE A KEY: delete its line. Anyone using it gets logged out
+   the next time they open Bob.
+
+   Heads up: this is a fun lock, not bank-level security. Someone who
+   really knows code could still sneak past it, since it all runs in
+   the browser. A real lock would need a server (like Supabase).
+   ================================================================ */
+const LOGIN_KEYS = [
+  { label: "Aidan (owner)", hash: "d034081573752b449d6ef85818aa1e4c801da5f7c5b9618024339243888e6e83" },
+  { label: "YouTuber starter key", hash: "c1a5d5f112978f499e44fdc27800c4654bdde91c2b5558e7e6a56c414dbbcd8b" },
+];
+
+/* SHA-256 written by hand so it works everywhere, even when the page
+   is opened straight from a file. Turns a key into a scrambled code. */
+function sha256(text) {
+  const msg = new TextEncoder().encode(text);
+  const primes = [];
+  for (let n = 2; primes.length < 64; n++) if (primes.every(p => n % p)) primes.push(n);
+  const frac = x => ((x - Math.floor(x)) * 4294967296) | 0;
+  const K = primes.map(p => frac(Math.cbrt(p)));
+  let H = primes.slice(0, 8).map(p => frac(Math.sqrt(p)));
+  const len = msg.length, total = ((len + 9 + 63) >> 6) << 6;
+  const buf = new Uint8Array(total);
+  buf.set(msg); buf[len] = 0x80;
+  const dv = new DataView(buf.buffer), bits = len * 8;
+  dv.setUint32(total - 4, bits >>> 0);
+  dv.setUint32(total - 8, Math.floor(bits / 4294967296));
+  const W = new Int32Array(64);
+  const rot = (x, n) => (x >>> n) | (x << (32 - n));
+  for (let o = 0; o < total; o += 64) {
+    for (let i = 0; i < 16; i++) W[i] = dv.getInt32(o + i * 4);
+    for (let i = 16; i < 64; i++) {
+      const s0 = rot(W[i - 15], 7) ^ rot(W[i - 15], 18) ^ (W[i - 15] >>> 3);
+      const s1 = rot(W[i - 2], 17) ^ rot(W[i - 2], 19) ^ (W[i - 2] >>> 10);
+      W[i] = (W[i - 16] + s0 + W[i - 7] + s1) | 0;
+    }
+    let [a, b, c, d, e, f, g, h] = H;
+    for (let i = 0; i < 64; i++) {
+      const t1 = (h + (rot(e, 6) ^ rot(e, 11) ^ rot(e, 25)) + ((e & f) ^ (~e & g)) + K[i] + W[i]) | 0;
+      const t2 = ((rot(a, 2) ^ rot(a, 13) ^ rot(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) | 0;
+      h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;
+    }
+    H = [a, b, c, d, e, f, g, h].map((x, i) => (H[i] + x) | 0);
+  }
+  return H.map(x => (x >>> 0).toString(16).padStart(8, "0")).join("");
+}
+
+// Keys ignore spaces and capital letters, so "yt-abcd" works like "YT-ABCD"
+const normKey = k => k.toUpperCase().replace(/\s+/g, "");
+
+/* Who is logged in. Saved in localStorage as "bob-login". */
+function currentLogin() {
+  try {
+    const s = JSON.parse(localStorage.getItem("bob-login"));
+    return s && LOGIN_KEYS.find(k => k.hash === s.hash) ? s : null;
+  } catch (e) { return null; }
+}
+
+function showHome() {
+  $("home").hidden = false;
+  $("keyInput").value = "";
+  $("loginMsg").textContent = "";
+  if (location.hash === "#makekey") $("makeKey").hidden = false;
+}
+function showApp() {
+  $("home").hidden = true;
+  if (!profile) openSettings(true); // first time: ask for a name
+}
+
+$("loginForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const key = normKey($("keyInput").value);
+  const msg = $("loginMsg");
+  if (!key) { msg.className = "login-msg"; msg.textContent = "Type your key first."; return; }
+  await sleep(400); // small pause so people can't spam guesses super fast
+  const hash = sha256(key);
+  const match = LOGIN_KEYS.find(k => k.hash === hash);
+  if (!match) {
+    msg.className = "login-msg";
+    msg.textContent = "That key doesn't work. Check for typos and try again.";
+    const card = $("loginForm");
+    card.classList.remove("shake"); void card.offsetWidth; card.classList.add("shake");
+    return;
+  }
+  try { localStorage.setItem("bob-login", JSON.stringify({ hash, label: match.label, at: Date.now() })); } catch (err) { }
+  msg.className = "login-msg ok";
+  msg.textContent = "You're in!";
+  await sleep(350);
+  showApp();
+});
+$("jumpLogin").onclick = () => { $("keyInput").focus(); $("keyInput").scrollIntoView({ behavior: "smooth", block: "center" }); };
+
+$("logoutBtn").onclick = () => {
+  try { localStorage.removeItem("bob-login"); } catch (e) { }
+  closeSettings();
+  showHome();
+};
+
+/* Owner key maker (#makekey) */
+$("randomKeyBtn").onclick = () => {
+  const A = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const part = () => Array.from({ length: 4 }, () => A[Math.floor(Math.random() * A.length)]).join("");
+  const who = ($("newKeyName").value.trim().replace(/[^a-z0-9]/gi, "").slice(0, 6) || "BOB").toUpperCase();
+  $("newKeyInput").value = `${who}-${part()}-${part()}`;
+};
+$("makeLineBtn").onclick = () => {
+  const key = normKey($("newKeyInput").value);
+  if (!key) return;
+  const label = ($("newKeyName").value.trim() || "New key").replace(/"/g, "'");
+  $("newKeyOut").value = `  { label: "${label}", hash: "${sha256(key)}" },   // key: ${key} (delete this note before pushing)`;
+  $("newKeyOut").select();
+};
+window.addEventListener("hashchange", () => { $("makeKey").hidden = location.hash !== "#makekey"; });
+
+/* Start up */
+renderMenu();
+renderChat();
+applyProfile();
+if (currentLogin()) showApp(); else showHome();
+</script>
+</body>
+</html>
