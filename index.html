@@ -1417,6 +1417,36 @@ const MATH_HANDLERS = [
   }
 ];
 
+/* Numbers don't always mean math ("who is 21 Savage", "what is blink-182",
+   "Minecraft 1.21"). This removes every math word and filler word. If real
+   words are still left over, the question is probably NOT math. */
+const MATH_WORDS = new Set(("what whats is are the of a an to for and or by from with in on at it its if when where then " +
+  "please can could you me i do does how much many find get work out solve calculate compute evaluate simplify answer equal equals " +
+  "plus minus times multiplied divided over percent percentage area perimeter circumference volume surface circle radius diameter " +
+  "square root cube sqrt cbrt sin cos tan log ln abs pi gcf gcd hcf lcm lcd greatest least lowest common factor factors multiple " +
+  "prime factorization mean median mode range average data set slope distance midpoint point points line equation hypotenuse leg legs " +
+  "missing other triangle rectangle box prism rectangular cylinder can cone sphere ball trapezoid round rounded nearest ten hundred " +
+  "thousand tenth hundredth thousandth decimal decimals place places whole number numbers integer fraction fractions convert as into " +
+  "even odd greater bigger more larger less smaller fewer than count up skip table multiplication power squared cubed pythagorean " +
+  "theorem increase decrease change x y z n value base height length width side sides units total sum product difference quotient " +
+  "remainder bob hey yo ok okay so").split(" "));
+
+function isMostlyMath(q) {
+  const low = q.toLowerCase();
+  // Real math symbols between numbers (like 5+5 or 3 * 4) are a strong sign
+  const strong = /\d\s*[+*/^×÷=]\s*[\d(a-z]|[a-z]\s*[+*/^=]\s*\d|\d\s*%|\d!|\(\s*-?\d+\s*,/.test(low) || /^\s*-?\d/.test(low.replace(/^(what is|whats|what's|solve|calculate)\s+/, ""));
+  const words = low.replace(/[^a-z0-9\s']/g, " ").split(/\s+/).filter(Boolean);
+  const leftover = words.filter(w =>
+    !MATH_WORDS.has(w) && !MATH_WORDS.has(w.replace(/s$/, "")) &&
+    !/^\d+(\.\d+)?$/.test(w) &&     // plain numbers
+    !/^\d*[a-z]\d*$/.test(w) &&       // things like 2x, x2, y
+    !/^\d+(st|nd|rd|th)$/.test(w));   // 1st, 2nd
+  if (!/\d/.test(low) && !/[a-z]\s*\^|=/.test(low)) return false; // no numbers, no equation
+  if (leftover.length === 0) return true;
+  // A little chit chat around a clear problem is fine ("hey whats 5+5 lol")
+  return strong && leftover.length <= 2 && !/[a-z]-\d|\d[a-z]{2,}/.test(low);
+}
+
 /* Main math function: tries word problem handlers, then equations, then plain calculations */
 function mathEngine(question) {
   const low = question.toLowerCase();
@@ -1459,6 +1489,9 @@ function mathEngine(question) {
   // Second try: start from the first number or bracket
   const i = expr.search(/[0-9(√-]/);
   if (i > 0) { try { return attempt(expr.slice(i)); } catch (e) { } }
+  // Third try: drop leftover chit chat words like "lol" or "bro" (keeps sqrt, sin, pi, etc.)
+  const noChat = expr.replace(/\b[a-z]{2,}\b/g, w => (FUNCS.includes(w) || w === "pi") ? w : "").trim();
+  if (noChat !== expr) { try { return attempt(noChat); } catch (e) { } }
   return null;
 }
 
@@ -1600,12 +1633,13 @@ const tidy = text => text.replace(/\s*\u2014\s*/g, ", ").replace(/\s+\u2013\s+/g
 
 /* Searches Simple English Wikipedia (easier to read) and regular
    Wikipedia, then picks the page that best matches the name. */
-async function wikiLookup(name) {
+async function wikiLookup(name, isPerson) {
   const words = name.toLowerCase().split(/\s+/).filter(w => w.length > 1);
   const searches = [
     ["simple.wikipedia.org", name],
     ["en.wikipedia.org", name],
-    ["en.wikipedia.org", name + " YouTuber"]
+    // For "who is" questions, also try "<name> YouTuber" since most people asked about are creators
+    ...(isPerson ? [["en.wikipedia.org", name + " YouTuber"]] : [])
   ];
   let failures = 0;
   const results = await Promise.all(searches.map(async ([host, query]) => {
@@ -1685,10 +1719,11 @@ function statLinks(name, handle) {
   return `[Social Blade](${sb}) · [ViewStats](${vs}) · [YouTube](https://www.youtube.com/results?search_query=${q})`;
 }
 
-/* The main lookup: runs Wikipedia and YouTube at the same time */
-async function lookupOnline(name) {
-  const key = profile && profile.ytKey;
-  const [w, y] = await Promise.allSettled([wikiLookup(name), key ? ytLookup(name, key) : Promise.resolve(null)]);
+/* The main lookup: runs Wikipedia and YouTube at the same time.
+   isPerson = true for "who is" questions (YouTube stats only make sense for people). */
+async function lookupOnline(name, isPerson = true) {
+  const key = isPerson && profile && profile.ytKey;
+  const [w, y] = await Promise.allSettled([wikiLookup(name, isPerson), key ? ytLookup(name, key) : Promise.resolve(null)]);
   const offline = w.status === "rejected";
   let wiki = w.status === "fulfilled" ? w.value : null;
   let yt = y.status === "fulfilled" ? y.value : null;
@@ -1700,22 +1735,24 @@ async function lookupOnline(name) {
   if (!wiki && !yt) {
     // No internet? Use the copy Bob saved last time, if there is one
     const saved = KB.find(e => e.cat === "Learned online" && [e.title, ...e.names].some(t => t.toLowerCase() === name.toLowerCase()));
-    if (offline && saved) return { text: `I'm offline right now, but here's what I saved last time.\n\n**${saved.title}**\n\n${saved.text}`, sources: [saved.src] };
+    if (offline && saved) return { text: `**${saved.title}**\n\n${saved.text}\n\n(I'm offline, so this is what I saved last time.)`, sources: [saved.src] };
+    const links = isPerson ? `\n\n${statLinks(name)}` : "";
     return {
       text: offline
-        ? `I don't have **${name}** in my files, and I couldn't reach the internet to look them up. Check your connection, or try these:\n\n${statLinks(name)}`
-        : `I don't have **${name}** in my files, and I couldn't find them online either. Double check the spelling, or try these:\n\n${statLinks(name)}`,
+        ? `I couldn't reach the internet to look up **${name}**. Check your connection and try again.${links}`
+        : `I couldn't find anything about **${name}**. Double check the spelling and try again.${links}`,
       sources: []
     };
   }
 
   const sources = [];
-  let text = `I didn't have that in my files, so I looked it up online.\n\n`;
+  let text = "";
+  const isCreator = !!yt || (wiki && CREATOR_WORDS.test(wiki.desc + " " + wiki.text));
   if (wiki) {
     text += `**${wiki.title}**${wiki.desc ? " (" + tidy(wiki.desc) + ")" : ""}\n\n${shorten(wiki.text, mode.id === "quick" ? 1 : 4)}`;
     sources.push(wiki.simple ? "Simple Wikipedia" : "Wikipedia");
     // Remember who they are for next time (stats are left out since they go stale)
-    learn({ cat: "Learned online", title: wiki.title, names: [name], keys: wiki.desc, text: shorten(wiki.text, 4), src: sources[0], url: wiki.url });
+    learn({ cat: "Learned online", title: wiki.title, names: [name], keys: wiki.desc, text: shorten(wiki.text, 4), src: sources[0], url: wiki.url, creator: isCreator });
   }
   if (yt) {
     text += (wiki ? "\n\n" : "") + `**YouTube channel: [${yt.title}](${yt.url})**\n` +
@@ -1725,24 +1762,33 @@ async function lookupOnline(name) {
     if (!wiki && yt.desc) text += `\n\n**About:** ${shorten(yt.desc, 2)}`;
     sources.push("YouTube");
   }
-  text += `\n\n**More stats:** ${statLinks(name, yt && yt.handle)}`;
+  if (isCreator) text += `\n\n**More stats:** ${statLinks(name, yt && yt.handle)}`;
   if (wiki) text += `\n\n[Read the full article](${wiki.url})`;
   if (ytBroke) text += `\n\n(Your YouTube API key didn't work, so I skipped live stats. Check it in Settings.)`;
-  else if (!key && wiki && CREATOR_WORDS.test(wiki.desc + " " + wiki.text)) text += `\n\nTip: add a free YouTube API key in Settings to see live subscriber counts here.`;
+  else if (!key && isCreator) text += `\n\nTip: add a free YouTube API key in Settings to see live subscriber counts here.`;
   return { text, sources };
 }
 
-/* Spots questions about a person, like "who is Dream" or "look up Kai Cenat".
-   Returns the name, plus force = true for "look up" / "search". */
+/* Spots "look it up" questions and pulls out the thing being asked about:
+     "who is Dream", "look up Kai Cenat"  -> people (isPerson = true)
+     "what is a black hole", "define gravity" -> things (isPerson = false)
+   force = true for "look up" / "search", which always goes online. */
 function personQuestion(q) {
-  const m = q.trim().match(/^(?:who(?:'s|s| is| are| was| even is)|tell me about|what do you know about|do you know|have you heard of|(look up|search(?: for)?|google)|info (?:on|about))\s+(.+?)[\s?.!]*$/i);
+  const t = q.trim();
+  const w = t.match(/^(?:what(?:'s|s| is| are| was| were)|define|what does .+? mean|explain|what do you mean by)\s+(.+?)[\s?.!]*$/i);
+  if (w) {
+    const thing = w[1].replace(/^(a|an|the)\s+/i, "").replace(/\s+mean$/i, "").trim();
+    if (thing.length < 2 || thing.split(/\s+/).length > 6) return null;
+    return { name: thing, force: false, isPerson: false };
+  }
+  const m = t.match(/^(?:who(?:'s|s| is| are| was| even is)|tell me about|what do you know about|do you know|have you heard of|(look up|search(?: for)?|google)|info (?:on|about))\s+(.+?)[\s?.!]*$/i);
   if (!m) return null;
   const name = m[2]
     .replace(/^(the |a )?(youtuber|streamer|creator|tiktoker)\s+/i, "")
     .replace(/\s+(on youtube|the youtuber|youtuber|from youtube|streamer)$/i, "")
     .replace(/^@/, "").trim();
   if (name.length < 2 || name.split(/\s+/).length > 6) return null;
-  return { name, force: !!m[1] };
+  return { name, force: !!m[1], isPerson: true };
 }
 
 /* True if Bob has this exact name in his files. People he learned
@@ -1800,13 +1846,13 @@ async function askBob(question) {
   if (/\b(quiz|test me|practice|flash ?card)/.test(low) || mode.id === "quiz") return makeQuiz(q);
 
   // 4. Math problems
-  const m = mathEngine(q);
+  const m = isMostlyMath(q) ? mathEngine(q) : null;
   if (m) return { text: mode.id === "quick" ? m.short : m.steps, sources: [SRC_ENGINE] };
 
-  // 5. A person Bob doesn't know? Look them up online
+  // 5. A person or thing Bob doesn't know? Look it up online
   const online = !profile || profile.online !== false;
   const who = personQuestion(q);
-  if (who && online && (who.force || !knowsLocally(who.name))) return await lookupOnline(who.name);
+  if (who && online && (who.force || !knowsLocally(who.name))) return await lookupOnline(who.name, who.isPerson);
 
   // 6. Knowledge search
   const hit = search(q);
@@ -1816,16 +1862,16 @@ async function askBob(question) {
     if (mode.id === "quick") return { text: e.text.split(/(?<=\.)\s/)[0], sources: [src] };
     let text = `**${e.title}**\n\n${e.text}`;
     if (e.example) text += `\n\n**Example:** ${e.example}`;
-    if (e.url) text += `\n\n[Read the full article](${e.url}) · ${statLinks(e.names[0] || e.title)}`;
+    if (e.url) text += `\n\n[Read the full article](${e.url})` + (e.creator ? ` · ${statLinks(e.names[0] || e.title)}` : "");
     const ru = hit.runnerUp;
     if (ru && ru.score >= 4 && ru.entry.cat === e.cat) text += `\n\nYou might also like: **${ru.entry.title}**`;
     return { text, sources: [src] };
   }
 
   // 7. Nothing matched. If it's short (probably a name), try online
-  if (online && q.split(/\s+/).length <= 4 && /[a-z]/i.test(q)) return await lookupOnline(q.replace(/[?!.]+$/, ""));
+  if (online && q.split(/\s+/).length <= 4 && /[a-z]/i.test(q)) return await lookupOnline(q.replace(/[?!.]+$/, ""), true);
   return {
-    text: `Hmm, I couldn't find that in my files. I know about:\n\n${topicsList()}\n\nTry asking about one of those, or give me a math problem!`,
+    text: `Hmm, I'm not sure about that one. Here's what I know best:\n\n${topicsList()}\n\nTry asking about one of those, or give me a math problem!`,
     sources: []
   };
 }
