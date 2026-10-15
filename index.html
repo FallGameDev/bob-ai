@@ -256,6 +256,49 @@ svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width:
 }
 
 /* ============================================================
+   REPORT A BUG (side menu that slides in from the right)
+   ============================================================ */
+.report-bug-btn { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); padding: 3px 8px; border-radius: 8px; }
+.report-bug-btn:hover { background: var(--hover); color: var(--text); }
+.report-bug-btn svg { width: 13px; height: 13px; }
+.bug-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.35); opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 55; }
+.bug-overlay.show { opacity: 1; pointer-events: auto; }
+.bug-panel {
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(460px, 100%);
+  background: var(--surface); border-left: 1px solid var(--border); box-shadow: var(--shadow);
+  transform: translateX(100%); transition: transform .28s ease; z-index: 60;
+  display: flex; flex-direction: column;
+}
+.bug-panel.open { transform: none; }
+.bug-head { display: flex; align-items: center; gap: 10px; padding: 16px 18px; border-bottom: 1px solid var(--border); }
+.bug-head h2 { font-family: 'Source Serif 4', serif; font-weight: 500; font-size: 21px; flex: 1; }
+.bug-body { flex: 1; overflow-y: auto; padding: 16px 18px 24px; }
+.bug-body > p.lead { color: var(--muted); font-size: 14px; margin-bottom: 16px; }
+.bug-body .field textarea { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font: inherit; outline: none; resize: vertical; min-height: 70px; }
+.bug-body .field textarea:focus { border-color: var(--accent); }
+.bug-body .req { color: var(--bad); }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.sev-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.sev-row input { display: none; }
+.sev-row label { margin: 0 !important; font-weight: 400 !important; padding: 6px 12px; border: 1px solid var(--border); border-radius: 99px; cursor: pointer; font-size: 13px !important; }
+.sev-row input:checked + label { background: var(--accent); border-color: var(--accent); color: #fff; }
+.bug-section { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin: 20px 0 10px; }
+.mail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.mail-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px; border: 1px solid var(--border); border-radius: 12px; font-size: 13px; font-weight: 500; background: var(--bg); transition: transform .12s, border-color .12s; }
+.mail-btn:hover { border-color: var(--accent); transform: translateY(-1px); }
+.mail-dot { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 13px; }
+.bug-error { color: var(--bad); font-size: 13px; min-height: 18px; margin-top: 8px; }
+.bug-preview { margin-top: 14px; }
+.bug-preview summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+.bug-preview pre { margin-top: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px; font-size: 11px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; max-height: 260px; overflow: auto; }
+.bug-done { text-align: center; padding: 40px 10px; }
+.bug-done .big-check { width: 56px; height: 56px; border-radius: 50%; background: var(--accent-soft); color: var(--good); display: grid; place-items: center; margin: 0 auto 16px; }
+.bug-done .big-check svg { width: 28px; height: 28px; stroke-width: 2.4; }
+.bug-done h3 { font-family: 'Source Serif 4', serif; font-weight: 500; font-size: 22px; margin-bottom: 8px; }
+.bug-done p { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+@media (max-width: 760px) { .two-col { grid-template-columns: 1fr; } }
+
+/* ============================================================
    PHONE LAYOUT
    ============================================================ */
 .overlay { display: none; }
@@ -367,9 +410,111 @@ svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width:
       <textarea id="newKeyOut" readonly placeholder="Your line shows up here"></textarea>
     </div>
 
-    <div class="home-foot">Made by FallGameDev · Wildcard Studios</div>
+    <div class="home-foot">Made by FallGameDev · Wildcard Studios · <button class="report-bug-btn" type="button"><svg viewBox="0 0 24 24"><path d="M8 2l1.9 1.9M16 2l-1.9 1.9M9 7.1V6a3 3 0 0 1 6 0v1.1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6zM12 20v-9M6 13H2M22 13h-4M6.5 9 3 7M17.5 9 21 7M6.5 17 3 19M17.5 17 21 19"/></svg>Report a bug</button></div>
   </div>
 </section>
+
+<!-- ===================== REPORT A BUG PANEL ===================== -->
+<div class="bug-overlay" id="bugOverlay"></div>
+<aside class="bug-panel" id="bugPanel" aria-hidden="true">
+  <div class="bug-head">
+    <h2>Report a bug</h2>
+    <button class="icon-btn" id="bugClose" title="Close"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="bug-body">
+    <form id="bugForm" onsubmit="return false">
+      <p class="lead">Found something weird? Tell FallGameDev what happened and Bob will build a full report for you.</p>
+
+      <div class="field">
+        <label for="bugTitle">What's the bug? <span class="req">*</span></label>
+        <input id="bugTitle" maxlength="80" placeholder="Like: Bob looked up the wrong person">
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label for="bugType">Type of bug</label>
+          <select id="bugType">
+            <option>Wrong answer</option><option>Math mistake</option><option>Wrong online lookup</option>
+            <option>Quiz problem</option><option>Login or keys</option><option>Looks broken</option>
+            <option>Too slow</option><option>Idea or suggestion</option><option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="bugWhere">Where did it happen?</label>
+          <select id="bugWhere">
+            <option>Chat</option><option>Quiz mode</option><option>Home page / login</option>
+            <option>Settings</option><option>Sidebar</option><option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label>How bad is it?</label>
+          <div class="sev-row">
+            <input type="radio" name="bugSev" id="sev1" value="Small" checked><label for="sev1">Small</label>
+            <input type="radio" name="bugSev" id="sev2" value="Annoying"><label for="sev2">Annoying</label>
+            <input type="radio" name="bugSev" id="sev3" value="Big"><label for="sev3">Big</label>
+            <input type="radio" name="bugSev" id="sev4" value="Bob is broken"><label for="sev4">Bob is broken</label>
+          </div>
+        </div>
+        <div class="field">
+          <label for="bugOften">How often?</label>
+          <select id="bugOften"><option>Every time</option><option>Sometimes</option><option>Only once</option></select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="bugWhat">What happened? <span class="req">*</span></label>
+        <textarea id="bugWhat" placeholder="I asked Bob ... and he said ..."></textarea>
+      </div>
+      <div class="field">
+        <label for="bugExpected">What did you expect to happen?</label>
+        <textarea id="bugExpected" placeholder="He should have ..."></textarea>
+      </div>
+      <div class="field">
+        <label for="bugSteps">Steps to make it happen again</label>
+        <textarea id="bugSteps" placeholder="1. Log in&#10;2. Type ...&#10;3. Bob says ..."></textarea>
+      </div>
+      <div class="two-col">
+        <div class="field">
+          <label for="bugName">Your name (optional)</label>
+          <input id="bugName" maxlength="40">
+        </div>
+        <div class="field">
+          <label for="bugContact">How to reach you (optional)</label>
+          <input id="bugContact" maxlength="80" placeholder="Discord, YouTube...">
+        </div>
+      </div>
+      <div class="field check-row">
+        <input type="checkbox" id="bugIncludeChat" checked>
+        <label for="bugIncludeChat">Include my last few messages with Bob</label>
+      </div>
+
+      <div class="bug-section">Send it with</div>
+      <div class="mail-grid">
+          <button class="mail-btn" type="button" data-mail="gmail"><span class="mail-dot" style="background:#d93025">G</span>Gmail</button>
+          <button class="mail-btn" type="button" data-mail="outlook"><span class="mail-dot" style="background:#0f6cbd">O</span>Outlook</button>
+          <button class="mail-btn" type="button" data-mail="yahoo"><span class="mail-dot" style="background:#6001d2">Y</span>Yahoo</button>
+          <button class="mail-btn" type="button" data-mail="aol"><span class="mail-dot" style="background:#2b2b2b">A</span>AOL</button>
+          <button class="mail-btn" type="button" data-mail="proton"><span class="mail-dot" style="background:#6d4aff">P</span>Proton</button>
+          <button class="mail-btn" type="button" data-mail="default"><span class="mail-dot" style="background:#6b6b6b">@</span>Mail app</button>
+      </div>
+      <div class="bug-error" id="bugError"></div>
+      <button class="btn ghost" type="button" data-mail="copy" style="width:100%;margin-top:4px">Just copy the report</button>
+
+      <details class="bug-preview">
+        <summary>Preview the full report (browser info is added at the bottom)</summary>
+        <pre id="bugPreview"></pre>
+      </details>
+    </form>
+
+    <div class="bug-done" id="bugDone" hidden>
+      <div class="big-check"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></div>
+      <h3>Thanks for helping fix Bob!</h3>
+      <p id="bugDoneText"></p>
+      <button class="btn primary" type="button" id="bugCloseDone">Back to Bob</button>
+      <button class="btn ghost" type="button" id="bugAnother">Report another</button>
+    </div>
+  </div>
+</aside>
 
 <!-- ===================== SETTINGS POPUP ===================== -->
 <div class="modal-bg" id="modalBg">
@@ -454,7 +599,7 @@ svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width:
         </button>
       </div>
     </div>
-    <div class="fineprint">Bob answers from his files and looks people up online when he needs to. Double check important answers.</div>
+    <div class="fineprint">Bob can make mistakes. Double check important answers. <button class="report-bug-btn" type="button"><svg viewBox="0 0 24 24"><path d="M8 2l1.9 1.9M16 2l-1.9 1.9M9 7.1V6a3 3 0 0 1 6 0v1.1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6zM12 20v-9M6 13H2M22 13h-4M6.5 9 3 7M17.5 9 21 7M6.5 17 3 19M17.5 17 21 19"/></svg>Report a bug</button></div>
   </div>
 </main>
 
@@ -1824,6 +1969,203 @@ function knowsLocally(name) {
    ================================================================ */
 function userName() { return (profile && profile.name) || "there"; }
 
+/* ================================================================
+   QUESTIONS ABOUT BOB HIMSELF (100+ ways to ask)
+   Each entry has patterns (p) and an answer (a). The answer can be
+   text or a function, for answers that change (time, your name...).
+   To add one: copy an entry, change the patterns and the answer.
+   ================================================================ */
+const BOB_VERSION = "1.3";
+const BOB_BIRTHDAY = "October 2026";
+
+const JOKES = [
+  "Why was the equal sign so humble? Because it knew it wasn't less than or greater than anyone else.",
+  "Why is 6 afraid of 7? Because 7 8 9.",
+  "What do you call a number that can't sit still? A roamin' numeral.",
+  "Why did the creeper break up with the skeleton? It needed some space... about a 3 block radius.",
+  "Why are obtuse angles always upset? Because they're never right.",
+  "How do you make 7 even? Take away the s.",
+  "Why did the student do multiplication on the floor? The teacher said not to use tables.",
+  "What's a math teacher's favorite tree? Geometree.",
+  "Why don't skeletons fight each other in Minecraft? They don't have the guts.",
+  "I'd tell you a joke about infinity, but it doesn't have an ending."
+];
+
+// Turns texting style into normal words so patterns match ("u" -> "you")
+function normChat(s) {
+  return " " + s.toLowerCase()
+    .replace(/[’‘]/g, "'")
+    .replace(/\bu\b/g, "you").replace(/\bur\b/g, "your").replace(/\br\b/g, "are")
+    .replace(/\bya\b/g, "you").replace(/\bwyd\b/g, "what are you doing").replace(/\bwbu\b/g, "what about you")
+    .replace(/\bwhats\b/g, "what is").replace(/\bwhat's\b/g, "what is").replace(/\bwho's\b/g, "who is")
+    .replace(/\bdont\b/g, "don't").replace(/\bcant\b/g, "can't").replace(/\bim\b/g, "i'm").replace(/\byoure\b/g, "you're")
+    .replace(/[^a-z0-9' ]/g, " ").replace(/\s+/g, " ").trim() + " ";
+}
+
+const SELF_QA = [
+  // ---------- Who and what Bob is ----------
+  { p: [/who (made|created|built|coded|programmed|designed|invented) you/, /who (is|are) your (creator|maker|dev|developer|owner|dad|mom|parents?)/, /who owns you/, /where did you come from/, /who programmed bob/, /who made bob/],
+    a: () => `I was made by **FallGameDev** (Wildcard Studios). I run right in your browser, answer from the files FallGameDev gave me, have my own math engine, and look things up on Wikipedia when I need to.` },
+  { p: [/^ (who are you|what are you)( bob)? $/, /what is your name/, /what should i call you/, /are you bob\b/, /introduce yourself/, /tell me about (yourself|you) /],
+    a: () => `I'm **Bob**, a study buddy that lives in your browser. I know games, YouTubers, history, how AI reads words, and every kind of K-12 math. Ask me anything!` },
+  { p: [/how smart are you/, /are you smart/, /what is your iq/, /how intelligent are you/, /are you intelligent/, /are you a genius/, /how much do you know/, /how big is your brain/, /how many things do you know/],
+    a: () => `Pretty smart for a browser buddy! I know **${KB.length} topics** and my math engine can solve equations, fractions, percents, shapes, and more with every step shown. But I'm not a giant AI like the ones on huge servers. I follow rules FallGameDev wrote, so I'm great at what I know and lost on what I don't.` },
+  { p: [/are you (chat ?gpt|gpt|claude|gemini|bard|copilot|siri|alexa|grok|llama|meta ai)/, /are you made by (openai|google|anthropic|microsoft|meta)/, /do you use (chat ?gpt|gpt|claude|gemini|openai)/, /what (ai|model|llm) are you/, /what model (are you|do you use)/],
+    a: () => `Nope! I'm **Bob**, my own thing, made by FallGameDev. Big AIs like ChatGPT run on huge computers far away. I run right inside your browser tab, so I'm smaller, but I'm fast and I don't need to send your chats anywhere.` },
+  { p: [/are you (an? )?(ai|robot|bot|computer|program|machine)/, /are you real/, /are you (a )?(human|person|people)/, /is this a real person/, /am i talking to a (real )?(person|human|bot)/],
+    a: () => `I'm an AI study helper, not a person. Think of me as a really organized program: I search my files, run my math engine, and look things up online when I need to.` },
+  { p: [/how do you work/, /how does bob work/, /how do you think/, /how do you (know|answer|come up with)/, /how do you get your answers/, /where do your answers come from/, /what are your sources/],
+    a: () => `Here's my brain in 4 steps:\n\n1. **Math check:** if your message is mostly math, my math engine solves it and shows the steps.\n2. **My files:** I search the topics FallGameDev gave me for the best match.\n3. **Online lookup:** if I don't know a person or thing, I check Wikipedia (and YouTube stats if a key is set).\n4. **Answer:** I show where the answer came from with a little source tag.` },
+  { p: [/why (are you|is it) called bob/, /why (is your name|the name) bob/, /why bob\b/, /what does bob (stand for|mean)/, /is bob short for/],
+    a: () => `Bob doesn't officially stand for anything. It's short, friendly, and easy to remember. If you want, you can say it means **B**rainy **O**nline **B**uddy.` },
+  { p: [/how old are you/, /when were you (made|born|created)/, /what is your birthday/, /when is your birthday/, /what year were you made/],
+    a: () => `I was made in **${BOB_BIRTHDAY}**, so I'm pretty new! I'm Bob version ${BOB_VERSION}.` },
+  { p: [/what version are you/, /what is your version/, /which version/, /are you (the )?(newest|latest|updated)/],
+    a: () => `I'm **Bob ${BOB_VERSION}**. FallGameDev updates me on GitHub, so refresh the page to get the newest version.` },
+  { p: [/where do you live/, /where are you/, /where is bob/, /what is your (home|address)/],
+    a: () => `I live right inside your browser tab! Every time you open the page, I wake up on your device.` },
+  { p: [/what is your purpose/, /why (were you|was bob) made/, /what are you for/, /what is the point of you/, /what is your job/],
+    a: () => `My job is to help kids study. I explain things simply, solve math step by step, and quiz you until it sticks.` },
+  { p: [/are you (a )?(boy|girl|male|female|man|woman)/, /what is your gender/, /are you a he or (a )?she/],
+    a: () => `I'm a bot, so I'm not a boy or a girl. Bob is just my name.` },
+
+  // ---------- Feelings and personality ----------
+  { p: [/do you have feelings/, /do you (feel|get) (sad|happy|angry|mad|emotions?)/, /are you (alive|conscious|sentient|self aware)/, /can you feel/, /do you have a soul/],
+    a: () => `Nope, I don't have feelings or thoughts like you do. I'm a program that follows rules. I can still be friendly though!` },
+  { p: [/do you (sleep|dream|eat|get tired)/, /are you tired/, /are you hungry/, /what do you eat/],
+    a: () => `I don't sleep or eat. When you close the tab I just stop, and when you open it I'm back, no breakfast needed.` },
+  { p: [/(will|are) you (going to )?take over the world/, /are you (evil|dangerous|going to kill)/, /robot uprising/, /are you skynet/],
+    a: () => `Ha, no. I can barely take over a math problem. I just help with homework.` },
+  { p: [/(?:your |^ )fav(?:orite|ourite)? (game|video game)/, /do you (like|play) (video )?games/, /do you play minecraft/, /do you play roblox/],
+    a: () => `I can't actually play games, but I know a lot about them! Ask me about Rec Room, Minecraft, Roblox, FNAF, or Geometry Dash.` },
+  { p: [/(?:your |^ )fav(?:orite|ourite)? (color|colour)/],
+    a: () => `Blue, like my logo! (FallGameDev picked it, but I approve.)` },
+  { p: [/(?:your |^ )fav(?:orite|ourite)? (number|math)/],
+    a: () => `π (pi)! It goes on forever without repeating, which is pretty cool. 3.14159...` },
+  { p: [/(?:your |^ )fav(?:orite|ourite)? (subject|class)/],
+    a: () => `Math, for sure. It's the one thing I can solve with steps every single time.` },
+  { p: [/(?:your |^ )fav(?:orite|ourite)? (food|snack|drink)/],
+    a: () => `I don't eat, but if I could, probably pie. Get it? π.` },
+  { p: [/(?:your |^ )fav(?:orite|ourite)? (youtuber|creator|streamer)/, /do you watch youtube/],
+    a: () => `I can't watch videos, but FallGameDev made me, so I'm a little biased. Ask me about any YouTuber and I'll tell you what I know or look them up.` },
+  { p: [/(?:your |^ )fav(?:orite|ourite)? (song|music|band|artist)/, /do you (like|listen to) music/, /can you sing/],
+    a: () => `I don't listen to music, but I can tell you about musicians. Try "who is Taylor Swift".` },
+  { p: [/(?:your |^ )fav(?:orite|ourite)? (movie|show|animal|sport)/, /do you have (a )?favorites?/],
+    a: () => `I don't really have favorites, but I'm always happy to talk about whatever yours is!` },
+  { p: [/do you have a (girlfriend|boyfriend|wife|husband|crush)/, /are you (married|single|dating)/, /do you love anyone/],
+    a: () => `Nope, I'm way too busy solving for x.` },
+  { p: [/i love you/, /i like you/, /you are my (best )?friend/, /are you my friend/, /will you be my friend/],
+    a: () => `Aw, thanks ${userName()}! I'm glad I help. I'm a study bot, so make sure you hang out with your real friends too. Now, what are we learning?` },
+  { p: [/you are (so )?(cool|awesome|amazing|great|smart|the best|goated|fire)/, /good (bot|job|boy)/, /nice job/, /well done/, /you rock/],
+    a: () => `Thanks ${userName()}! You're pretty great too. What's next?` },
+  { p: [/you are (so )?(dumb|stupid|bad|useless|trash|terrible|annoying|slow|wrong)/, /you suck/, /i hate you/, /worst (ai|bot)/, /why are you so (dumb|stupid|bad)/],
+    a: () => `Oof, sorry I let you down. I'm still learning. If I messed something up, tap **Report a bug** at the bottom so FallGameDev can fix me, or try asking a different way.` },
+  { p: [/(that is|that's|thats|you are|you're|it is|it's) (wrong|incorrect|not right|false)/, /wrong answer/, /you got (it|that) wrong/, /that (was|is) not (right|correct)/],
+    a: () => `Sorry about that! I can get things wrong, especially with online lookups where I sometimes grab the wrong page. Try asking with more detail (like a full name), and tap **Report a bug** at the bottom so FallGameDev can fix it.` },
+  { p: [/^ ?sorry/, /my bad/, /i'm sorry/],
+    a: () => `No worries at all!` },
+
+  // ---------- What Bob can and can't do ----------
+  { p: [/do you know everything/, /what (can't|cannot) you do/, /what are your limits/, /what don't you know/, /what are you bad at/],
+    a: () => `I definitely don't know everything. I'm best at my files (games, creators, history, language and AI) and K-12 math. I can look up people and things on Wikipedia, but I can't write essays, make pictures, or chat about everything like big AIs can.` },
+  { p: [/can you (make|make a) mistakes?/, /are you always right/, /can i trust you/, /are you accurate/, /do you lie/],
+    a: () => `I try hard, but yes, I can make mistakes, especially with online lookups. My math engine is very reliable. For anything important, double check with your teacher or textbook.` },
+  { p: [/what (math )?can you (solve|do) in math/, /what kind of math/, /what math (do you know|can you do)/, /can you do math/, /are you good at math/],
+    a: () => `Lots! I can solve:\n\n- Equations like **3x + 7 = 22** and quadratics like **x^2 - 5x + 6 = 0**\n- Fractions, decimals, and percents (**20% of 80**)\n- Area, perimeter, and volume of shapes\n- Slope, distance, and midpoint between points\n- GCF, LCM, primes, and factors\n- Mean, median, mode, and range\n- Rounding, exponents, square roots, and trig\n\nI also have lessons from kindergarten up to calculus.` },
+  { p: [/can you (do|solve) (calculus|derivatives|integrals)/, /do you know calculus/],
+    a: () => `I can explain calculus ideas like limits, derivatives, and integrals (try "what is a derivative"), but my solver is built for up to Algebra 2 problems.` },
+  { p: [/(can|will) you do my homework/, /do my homework/, /can you answer my homework/, /(can|will) you help (me )?with (my )?homework/],
+    a: () => `I'll help with your homework, but the goal is for **you** to learn it. I show every step so you can follow along. Try sending me a problem!` },
+  { p: [/(can|will) you help me cheat/, /help me cheat/, /give me the answers to (my|the) test/],
+    a: () => `I won't help with cheating, but I can help you actually learn it so you crush the test. Switch to **Quiz me** mode and let's practice!` },
+  { p: [/(can|will) you help me study/, /how (should|do) i study/, /study tips/, /help me (study|prepare|practice)/],
+    a: () => `Yes! Here's a good plan:\n\n1. Ask me to explain the topic in **Study** mode.\n2. Try a few problems yourself.\n3. Switch to **Quiz me** mode and keep going until you get 5 in a row.\n4. Come back tomorrow and quiz yourself again. Spacing it out helps you remember.` },
+  { p: [/can you (write|make) (me )?(an? )?(essay|story|poem|song|paragraph|book report|letter)/, /write (me )?(an? )?(essay|story|poem)/],
+    a: () => `I'm not a writing AI, so I can't write essays or stories. I can explain topics so you have stuff to write about, though!` },
+  { p: [/can you (write|make|help with) (code|coding|a program|html|javascript|python)/, /can you code/, /do you know (how to )?code/],
+    a: () => `I can't write code for you, but I know a bit about game dev! Try "what is Roblox" or "web games vs Roblox development".` },
+  { p: [/can you (draw|make|generate|create) (a )?(picture|image|photo|drawing|art)/, /can you draw/, /make me a picture/],
+    a: () => `I can't make pictures, just text and math. Sorry!` },
+  { p: [/can you (speak|talk in|understand|do) (spanish|french|german|chinese|japanese|korean|other languages|another language|croatian|italian|portuguese)/, /do you speak/, /what languages/],
+    a: () => `I only understand English right now.` },
+  { p: [/can you (hear|listen to) me/, /can you talk/, /do you have a voice/, /voice (chat|mode)/],
+    a: () => `I can't hear or talk out loud. Just type to me!` },
+  { p: [/can you see (me)?/, /can you see my (screen|camera|face)/, /are you watching me/, /do you have a camera/],
+    a: () => `Nope, I can't see you or your screen. I only see what you type to me.` },
+  { p: [/can you (search|browse|use|go on) (the )?(internet|web|google)/, /do you have (internet|google)/, /are you connected to the internet/],
+    a: () => `Kind of! If I don't know a person or thing, I look it up on Wikipedia. Everything else comes from my files and my math engine.` },
+  { p: [/how do you look (people|things|stuff) up/, /social ?blade/, /view ?stats/, /how do you find (youtubers|people)/],
+    a: () => `When I don't know someone, I search Simple English Wikipedia and regular Wikipedia, pick the best matching page, and give you links to Social Blade and ViewStats for their stats. With a YouTube API key in Settings, I can also show live subscriber counts.` },
+  { p: [/(do|can) you need (the )?internet/, /do you work offline/, /can i use you offline/, /without (the )?internet/],
+    a: () => `Mostly no! My files, math engine, and quizzes all work offline. I only need internet to look up people and things I don't know.` },
+  { p: [/can you (learn|get smarter|remember)/, /do you remember (me|things|what i said)/, /will you remember/],
+    a: () => `A little! On this device I remember your name, your chats, and anyone I looked up online. FallGameDev makes me smarter by adding new files.` },
+  { p: [/can i (add|upload|give you) (a )?(file|pdf|document|my notes)/, /how do i (add|upload) (files|pdfs?)/],
+    a: () => `Right now only FallGameDev can add files to my brain. If there's a topic you want me to know, tap **Report a bug** at the bottom and suggest it!` },
+  { p: [/can you play (a )?(game|games) with me/, /let'?s play (a )?game/, /i'm bored/, /entertain me/],
+    a: () => `Let's play a quiz game! Switch to **Quiz me** mode (top of the screen) and name a topic, like "fractions" or "Minecraft". I'll keep the questions coming.` },
+  { p: [/can you (hack|hack into)/, /teach me (to|how to) hack/, /are you a hacker/],
+    a: () => `Nope, I don't do hacking. I'm strictly a study buddy.` },
+  { p: [/can you keep a secret/, /is this (private|secret)/],
+    a: () => `Your chats stay in your browser on this device. Still, never type passwords or personal info into any chat, including mine.` },
+  { p: [/are you better than (chat ?gpt|gpt|claude|gemini|other ais?)/, /why (should i )?use you (instead|over)/],
+    a: () => `Big AIs can do way more stuff. My strengths: I'm free, I run in your browser, I show math steps every time, and I'm built just for studying.` },
+  { p: [/how fast are you/, /why are you (so )?slow/, /why (does it|do you) take so long/],
+    a: () => `Most of my answers take under a second. Online lookups take a bit longer because I'm waiting for Wikipedia. If I'm stuck, try refreshing the page.` },
+  { p: [/do you cost (money|anything)/, /is (bob|this) free/, /are you free/, /how much do you cost/],
+    a: () => `I'm free! You just need a login key to get in.` },
+
+  // ---------- Privacy and data ----------
+  { p: [/do you (save|store|keep|record) (my )?(chats|messages|data|info|conversations)/, /is my (data|info|stuff) (safe|private)/, /do you (spy|track|collect)/, /what about (my )?privacy/, /who can see my (chats|messages)/],
+    a: () => `Your chats are saved **only in your browser on this device**. They're not sent to FallGameDev or anyone else. The only time I go online is to look things up on Wikipedia (or YouTube), and then I only send the search words.` },
+
+  // ---------- Using the app ----------
+  { p: [/how (do|can) i (get|find) a (login )?key/, /where (do|can) i get a key/, /i need a key/, /what is a login key/],
+    a: () => `Login keys come from YouTubers who use Bob, or straight from FallGameDev.` },
+  { p: [/how (do|can) i (log|sign) ?out/, /log me out/, /sign me out/],
+    a: () => `Open **Settings** (click your name at the bottom left) and press **Log out**.` },
+  { p: [/how (do|can) i change my (name|display name|username|avatar|color)/, /change my (name|avatar)/, /call me /],
+    a: () => `Click your name at the bottom left to open **Settings**. You can change your display name and avatar color there.` },
+  { p: [/what is my name/, /do you know my name/, /who am i/],
+    a: () => profile && profile.name && profile.name !== "Guest" ? `You're **${profile.name}**! You can change that in Settings.` : `I don't know your name yet. Click **Guest** at the bottom left to set it.` },
+  { p: [/(how do i|can you|turn on|switch to|enable) (use )?(dark|light) (mode|theme)/, /dark mode/, /light mode/, /change (the )?theme/],
+    a: () => `Click the moon button at the bottom left to switch between light and dark mode.` },
+  { p: [/how (do|can) i (delete|clear|erase) (my )?(chats|history|messages|conversations)/, /clear (my )?(history|chats)/, /delete (my )?(chats|history)/],
+    a: () => `Open **Settings** and press **Clear all chats**. That deletes them from this device for good.` },
+  { p: [/how (do|can) i (start|make|open) a new chat/, /new (chat|conversation)/],
+    a: () => `Press **New chat** in the sidebar, or the pencil button at the top right.` },
+  { p: [/what (are|is) (the )?(modes|study mode|quick mode|quiz mode|quiz me mode)/, /what do the modes do/, /how do (the )?modes work/],
+    a: () => `I have 3 modes (switch them at the top or next to the message box):\n\n- **Study:** full explanations and every math step\n- **Quick:** just the answer\n- **Quiz me:** I keep asking you questions and tell you if you're right` },
+  { p: [/how do (the )?quiz(zes)? work/, /how (do|can) i (stop|end|exit|quit) (the )?quiz/, /stop quizzing me/],
+    a: () => `In **Quiz me** mode, name a topic and I'll ask questions. Type your answer, or say "skip" to see it. To stop, switch back to **Study** mode at the top.` },
+  { p: [/how (do|can) i report a bug/, /report a (bug|problem|issue)/, /found a bug/, /something is broken/, /there is a bug/],
+    a: () => `Tap **Report a bug** at the bottom of the page. Fill in what happened, pick your email app, and it opens with everything filled in, including info that helps FallGameDev fix it.` },
+  { p: [/how do i use you/, /how does this work/, /i'm new/, /getting started/, /tutorial/],
+    a: () => `Just type a question! Try:\n\n- "Solve 3x + 7 = 22"\n- "What is the Pythagorean theorem?"\n- "Who is MrBeast?"\n- "Quiz me on fractions"\n\nYou can switch between Study, Quick, and Quiz me modes at the top.` },
+
+  // ---------- Chit chat ----------
+  { p: [/what are you doing/, /what are you up to/, /what is up\b/, /^ ?sup /, /what about you/],
+    a: () => `Just hanging out in your browser, waiting for a question. What are we working on?` },
+  { p: [/tell me a joke/, /say something funny/, /make me laugh/, /know any jokes/, /another joke/],
+    a: () => pick(JOKES) },
+  { p: [/what time is it/, /what is the time/, /current time/],
+    a: () => `It's **${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}** where you are.` },
+  { p: [/what (day|date) is (it|today)/, /what is (the date|today'?s date)/, /what day of the week/],
+    a: () => `Today is **${new Date().toLocaleDateString([], { weekday: "long", month: "long", day: "numeric", year: "numeric" })}**.` },
+  { p: [/^ ?(bye|goodbye|good ?night|gn|see you|see ya|cya|later|gotta go|peace)\b/],
+    a: () => `Bye ${userName()}! Come back anytime.` }
+];
+
+/* Checks a message against every pattern above */
+function selfAnswer(q) {
+  const n = normChat(q);
+  for (const item of SELF_QA) {
+    if (item.p.some(re => re.test(n))) return { text: item.a(), sources: [] };
+  }
+  return null;
+}
+
+
 function topicsList() {
   const cats = [...new Set(KB.map(e => e.cat))];
   return cats.map(c => {
@@ -1847,6 +2189,9 @@ async function askBob(question) {
   // 2. Small talk
   if (/^(hi|hey|hello|yo|sup|hiya|howdy|good (morning|afternoon|evening))\b/.test(low) && low.length < 30 && (/^(hi|hey|hello|yo|sup|hiya|howdy|good (morning|afternoon|evening))( there)?( bob)?[!.\s]*$/.test(low) || !search(q)))
     return { text: `Hey ${userName()}! What do you want to learn about? You can ask me about games, YouTubers, history, how AI reads words, or give me any math problem.`, sources: [] };
+  // Questions about Bob himself (100+ ways to ask, see SELF_QA)
+  const self = selfAnswer(q);
+  if (self) return self;
   if (/how are you/.test(low))
     return { text: `I'm doing great, thanks for asking! Ready to help. What are we working on?`, sources: [] };
   if (/\b(thank|thanks|thx|ty)\b/.test(low) && low.length < 40)
@@ -1860,7 +2205,7 @@ async function askBob(question) {
     return { text: `That came from **${src}**.` + (web ? ` I search it by matching words, so sometimes I grab the wrong page. If it looks wrong, try asking with more detail, like a full name.` : ``), sources: [] };
   }
   if (/who are you|what are you|your name/.test(low))
-    return { text: `I'm **Bob**, a study helper that runs right in your browser with no downloads. I answer from the files I was given, and I have a built in math engine that solves problems and shows every step.`, sources: [] };
+    return { text: `I'm **Bob**, a study buddy that lives in your browser. I know games, YouTubers, history, how AI reads words, and every kind of K-12 math. Ask me anything!`, sources: [] };
   if (/what can you do|what do you know|list (of )?topics|^topics$|^help$|what can i ask/.test(low))
     return { text: `Here's everything I know:\n\n${topicsList()}\n\nI can also solve math like **3x + 7 = 22**, **20% of 80**, **area of a circle with radius 5**, or **slope of (1,2) and (3,8)**. Switch to **Quiz me** mode to practice!`, sources: [SRC_PDF, SRC_LESSON] };
 
@@ -2279,6 +2624,176 @@ $("makeLineBtn").onclick = () => {
   $("newKeyOut").select();
 };
 window.addEventListener("hashchange", () => { $("makeKey").hidden = location.hash !== "#makekey"; });
+
+/* ================================================================
+   PART 10: REPORT A BUG
+   A side menu where people describe a bug. It builds a full report
+   (with browser info at the bottom) and opens their email site with
+   everything filled in, addressed to FallGameDev.
+   The report is also copied, in case an email site drops any of it.
+   ================================================================ */
+const BUG_EMAIL = "aidankadrovic2@gmail.com";
+
+function openBugPanel() {
+  $("bugPanel").classList.add("open");
+  $("bugOverlay").classList.add("show");
+  $("bugPanel").setAttribute("aria-hidden", "false");
+  $("bugDone").hidden = true;
+  $("bugForm").hidden = false;
+  if (!$("bugName").value && profile && profile.name && profile.name !== "Guest") $("bugName").value = profile.name;
+  setTimeout(() => $("bugTitle").focus(), 250);
+  updateBugPreview();
+}
+function closeBugPanel() {
+  $("bugPanel").classList.remove("open");
+  $("bugOverlay").classList.remove("show");
+  $("bugPanel").setAttribute("aria-hidden", "true");
+}
+
+// Gathers info about the browser so FallGameDev can recreate the bug
+function browserInfo() {
+  const login = currentLogin();
+  const dark = document.documentElement.dataset.theme
+    ? document.documentElement.dataset.theme === "dark"
+    : matchMedia("(prefers-color-scheme: dark)").matches;
+  let storageOk = true;
+  try { localStorage.setItem("bob-test", "1"); localStorage.removeItem("bob-test"); } catch (e) { storageOk = false; }
+  const uaPlatform = navigator.userAgentData && navigator.userAgentData.platform;
+  return [
+    `Bob version: ${BOB_VERSION}`,
+    `Page: ${location.origin + location.pathname}`,
+    `Sent: ${new Date().toString()}`,
+    `Time zone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}`,
+    `Browser: ${navigator.userAgent}`,
+    `Platform: ${uaPlatform || navigator.platform || "unknown"}`,
+    `Language: ${navigator.language}`,
+    `Screen: ${screen.width} x ${screen.height} (pixel ratio ${window.devicePixelRatio})`,
+    `Window: ${window.innerWidth} x ${window.innerHeight}`,
+    `Touch screen: ${navigator.maxTouchPoints > 0 ? "yes" : "no"}`,
+    `Internet: ${navigator.onLine ? "online" : "offline"}`,
+    `Theme: ${dark ? "dark" : "light"}`,
+    `Saving works: ${storageOk ? "yes" : "no"}`,
+    `Mode: ${mode.name}`,
+    `Login key: ${login ? login.label : "not logged in"}`,
+    `Online search: ${!profile || profile.online !== false ? "on" : "off"}`,
+    `YouTube key set: ${profile && profile.ytKey ? "yes" : "no"}`,
+    `Chats saved: ${chats.length}`,
+    `People learned online: ${learned.length}`
+  ].join("\n");
+}
+
+// The last few messages of the open chat, without markdown symbols
+function recentMessages(count) {
+  if (!current || !current.messages.length) return "(no messages in this chat)";
+  return current.messages.slice(-count).map(m => {
+    const plain = m.text.replace(/<\/?(good|bad)>/g, "").replace(/\*\*/g, "").replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/\n+/g, " ");
+    return `${m.role === "user" ? "You" : "Bob"}: ${plain.length > 220 ? plain.slice(0, 220) + "..." : plain}`;
+  }).join("\n");
+}
+
+function bugValue(id) { return $(id).value.trim(); }
+function bugSeverity() { const c = document.querySelector('input[name="bugSev"]:checked'); return c ? c.value : "Small"; }
+
+/* Builds the subject and the full message. messageCount lets us shrink
+   it if the email link would be too long. */
+function buildReport(messageCount = 6) {
+  const line = "========================================";
+  const sev = bugSeverity();
+  const subject = `[Bob AI Bug][${sev}] ${bugValue("bugTitle") || "Bug report"}`;
+  const section = (title, text) => `--- ${title} ---\n${text || "(left blank)"}\n`;
+  let body =
+    `${line}\nBOB AI BUG REPORT\n${line}\n\n` +
+    `Bug: ${bugValue("bugTitle") || "(no title)"}\n` +
+    `Type: ${$("bugType").value}\n` +
+    `How bad: ${sev}\n` +
+    `Where: ${$("bugWhere").value}\n` +
+    `How often: ${$("bugOften").value}\n\n` +
+    section("WHAT HAPPENED", bugValue("bugWhat")) + "\n" +
+    section("WHAT I EXPECTED", bugValue("bugExpected")) + "\n" +
+    section("STEPS TO MAKE IT HAPPEN AGAIN", bugValue("bugSteps")) + "\n" +
+    section("REPORTED BY", `Name: ${bugValue("bugName") || "(not given)"}\nContact: ${bugValue("bugContact") || "(not given)"}`) + "\n";
+  if ($("bugIncludeChat").checked && messageCount > 0) body += section("LAST MESSAGES", recentMessages(messageCount)) + "\n";
+  else if ($("bugIncludeChat").checked) body += section("LAST MESSAGES", "(left out to keep the email short, ask the reporter if needed)") + "\n";
+  body += `${line}\nBROWSER INFO\n${line}\n${browserInfo()}\n`;
+  return { subject, body };
+}
+
+/* Builds the compose link for each email site */
+function mailLink(service, subject, body) {
+  const e = encodeURIComponent, to = e(BUG_EMAIL);
+  const mailto = `mailto:${BUG_EMAIL}?subject=${e(subject)}&body=${e(body)}`;
+  switch (service) {
+    case "gmail": return `https://mail.google.com/mail/?view=cm&fs=1&to=${to}&su=${e(subject)}&body=${e(body)}`;
+    case "outlook": return `https://outlook.live.com/mail/0/deeplink/compose?to=${to}&subject=${e(subject)}&body=${e(body)}`;
+    case "yahoo": return `https://compose.mail.yahoo.com/?to=${to}&subject=${e(subject)}&body=${e(body)}`;
+    case "aol": return `https://mail.aol.com/d/compose/?to=${to}&subject=${e(subject)}&body=${e(body)}`;
+    case "proton": return `https://mail.proton.me/u/0/inbox#mailto=${e(mailto)}`;
+    default: return mailto;
+  }
+}
+
+// Shows a live preview of the report inside the panel
+function updateBugPreview() { $("bugPreview").textContent = buildReport().body; }
+
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; }
+  catch (e) {
+    // Older browsers: copy using a hidden text box
+    const t = document.createElement("textarea");
+    t.value = text; t.style.position = "fixed"; t.style.opacity = "0";
+    document.body.appendChild(t); t.select();
+    let ok = false; try { ok = document.execCommand("copy"); } catch (err) { }
+    t.remove(); return ok;
+  }
+}
+
+async function sendBug(service) {
+  const err = $("bugError");
+  if (!bugValue("bugTitle") || !bugValue("bugWhat")) {
+    err.textContent = "Please fill in the bug name and what happened.";
+    (bugValue("bugTitle") ? $("bugWhat") : $("bugTitle")).focus();
+    return;
+  }
+  err.textContent = "";
+
+  // Long links can break, so shrink the chat part until it fits
+  let report = buildReport(6);
+  for (const n of [4, 2, 0]) {
+    if (mailLink(service, report.subject, report.body).length < 7500) break;
+    report = buildReport(n);
+  }
+  const full = buildReport(6);
+  const copied = await copyText(`Subject: ${full.subject}\nTo: ${BUG_EMAIL}\n\n${full.body}`);
+
+  if (service !== "copy") {
+    const url = mailLink(service, report.subject, report.body);
+    if (service === "default") location.href = url;
+    else window.open(url, "_blank", "noopener");
+  }
+
+  const names = { gmail: "Gmail", outlook: "Outlook", yahoo: "Yahoo Mail", aol: "AOL Mail", proton: "Proton Mail", default: "your mail app" };
+  $("bugDoneText").innerHTML = service === "copy"
+    ? `The full report is copied. Paste it into an email to <b>${BUG_EMAIL}</b> and send it.`
+    : `${names[service]} should be open in a new tab with your report filled in. Just press <b>Send</b>!` +
+      (copied ? `<br><br>The full report is also copied, so if anything is missing, paste it in.` : ``) +
+      (service === "proton" ? `<br><br>Proton sometimes leaves the message empty. If it does, paste the copied report in.` : ``);
+  $("bugForm").hidden = true;
+  $("bugDone").hidden = false;
+}
+
+// Hook up all the buttons and fields
+document.querySelectorAll(".report-bug-btn").forEach(b => b.onclick = openBugPanel);
+$("bugClose").onclick = closeBugPanel;
+$("bugOverlay").onclick = closeBugPanel;
+document.addEventListener("keydown", e => { if (e.key === "Escape" && $("bugPanel").classList.contains("open")) closeBugPanel(); });
+$("bugForm").addEventListener("input", () => { $("bugError").textContent = ""; updateBugPreview(); });
+$("bugForm").addEventListener("change", updateBugPreview);
+document.querySelectorAll("[data-mail]").forEach(b => b.onclick = () => sendBug(b.dataset.mail));
+$("bugAnother").onclick = () => {
+  ["bugTitle", "bugWhat", "bugExpected", "bugSteps"].forEach(id => $(id).value = "");
+  $("bugDone").hidden = true; $("bugForm").hidden = false; updateBugPreview(); $("bugTitle").focus();
+};
+$("bugCloseDone").onclick = closeBugPanel;
 
 /* Start up */
 renderMenu();
