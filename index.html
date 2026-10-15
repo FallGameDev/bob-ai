@@ -1633,8 +1633,11 @@ const tidy = text => text.replace(/\s*\u2014\s*/g, ", ").replace(/\s+\u2013\s+/g
 
 /* Searches Simple English Wikipedia (easier to read) and regular
    Wikipedia, then picks the page that best matches the name. */
-async function wikiLookup(name, isPerson) {
-  const words = name.toLowerCase().split(/\s+/).filter(w => w.length > 1);
+const NAME_FILLER = new Set("the a an of who what is are was you your me my i and or to in on at for with did do does made make".split(" "));
+
+async function wikiLookup(name, isPerson, strict) {
+  const words = name.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(w => w.length > 1 && !NAME_FILLER.has(w));
+  if (!words.length) return null;
   const searches = [
     ["simple.wikipedia.org", name],
     ["en.wikipedia.org", name],
@@ -1653,9 +1656,12 @@ async function wikiLookup(name, isPerson) {
   // Score every page we found
   const hits = results.flat().map(h => {
     const t = h.title.toLowerCase();
+    // Match whole words only, so "you" no longer matches "YouTuber"
+    const titleWords = t.replace(/[^a-z0-9\s]/g, " ").split(/\s+/);
     let sc = 0;
-    const matched = words.filter(w => t.includes(w)).length;
+    const matched = words.filter(w => titleWords.some(tw => tw === w || (w.length >= 4 && tw.startsWith(w)))).length;
     if (!matched) return { h, sc: -99 };
+    if (strict && matched < words.length) return { h, sc: -99 }; // strict: every word must match
     sc += matched * 2;
     if (matched === words.length) sc += 2;
     if (t === name.toLowerCase()) sc += 3;
@@ -1721,9 +1727,9 @@ function statLinks(name, handle) {
 
 /* The main lookup: runs Wikipedia and YouTube at the same time.
    isPerson = true for "who is" questions (YouTube stats only make sense for people). */
-async function lookupOnline(name, isPerson = true) {
+async function lookupOnline(name, isPerson = true, strict = false) {
   const key = isPerson && profile && profile.ytKey;
-  const [w, y] = await Promise.allSettled([wikiLookup(name, isPerson), key ? ytLookup(name, key) : Promise.resolve(null)]);
+  const [w, y] = await Promise.allSettled([wikiLookup(name, isPerson, strict), key ? ytLookup(name, key) : Promise.resolve(null)]);
   const offline = w.status === "rejected";
   let wiki = w.status === "fulfilled" ? w.value : null;
   let yt = y.status === "fulfilled" ? y.value : null;
@@ -1791,6 +1797,14 @@ function personQuestion(q) {
   return { name, force: !!m[1], isPerson: true };
 }
 
+/* A short message with no questions words or "you/me" style words
+   is probably just a name, like "Kai Cenat" or "Dream". */
+function looksLikeName(q) {
+  const words = q.toLowerCase().replace(/[^a-z0-9\s']/g, " ").split(/\s+/).filter(Boolean);
+  const NOT_NAME = /^(you|your|you're|youre|u|ur|i|i'm|im|me|my|we|us|our|it|its|it's|this|that|these|those|is|are|was|were|do|does|did|can|could|would|should|will|how|why|where|when|what|who|which|and|or|but|lol|bro|bruh|ok|okay|yes|no|nah|yeah|the|a|an|to|of|why|get|got|from|asked|ask|wrong|stupid|dumb)$/;
+  return words.length > 0 && words.length <= 4 && /[a-z]/.test(q.toLowerCase()) && !words.some(w => NOT_NAME.test(w));
+}
+
 /* True if Bob has this exact name in his files. People he learned
    online don't count, so he refreshes them (and gets live stats). */
 function knowsLocally(name) {
@@ -1837,6 +1851,14 @@ async function askBob(question) {
     return { text: `I'm doing great, thanks for asking! Ready to help. What are we working on?`, sources: [] };
   if (/\b(thank|thanks|thx|ty)\b/.test(low) && low.length < 40)
     return { text: `You're welcome, ${userName()}! Anything else?`, sources: [] };
+  if (/\b(who|what)\b.*\b(made|make|created|create|built|build|coded|programmed|owns|invented|designed)\b.*\byou\b|\byour (creator|maker|dev|developer|owner|dad)\b/.test(low))
+    return { text: `I was made by **FallGameDev** (Wildcard Studios). I run right in your browser, answer from the files FallGameDev gave me, have my own math engine, and look things up on Wikipedia when I need to.`, sources: [] };
+  if (/where (did|do) you get (that|this|it)|where('s| is| was) (that|this) from|what('s| is| was) (your|the) source|how do you know (that|this)|^sources?\??$/.test(low)) {
+    const src = lastReply && lastReply.sources && lastReply.sources.length ? lastReply.sources.join(" and ") : null;
+    if (!src) return { text: `That one came from me, not a file or website. Math answers come from my own math engine.`, sources: [] };
+    const web = /wikipedia|youtube/i.test(src);
+    return { text: `That came from **${src}**.` + (web ? ` I search it by matching words, so sometimes I grab the wrong page. If it looks wrong, try asking with more detail, like a full name.` : ``), sources: [] };
+  }
   if (/who are you|what are you|your name/.test(low))
     return { text: `I'm **Bob**, a study helper that runs right in your browser with no downloads. I answer from the files I was given, and I have a built in math engine that solves problems and shows every step.`, sources: [] };
   if (/what can you do|what do you know|list (of )?topics|^topics$|^help$|what can i ask/.test(low))
@@ -1869,7 +1891,7 @@ async function askBob(question) {
   }
 
   // 7. Nothing matched. If it's short (probably a name), try online
-  if (online && q.split(/\s+/).length <= 4 && /[a-z]/i.test(q)) return await lookupOnline(q.replace(/[?!.]+$/, ""), true);
+  if (online && looksLikeName(q)) return await lookupOnline(q.replace(/[?!.]+$/, ""), true, true);
   return {
     text: `Hmm, I'm not sure about that one. Here's what I know best:\n\n${topicsList()}\n\nTry asking about one of those, or give me a math problem!`,
     sources: []
@@ -1974,6 +1996,7 @@ function renderChat() {
   const empty = !current || current.messages.length === 0;
   $("welcome").style.display = empty ? "block" : "none";
   if (current) current.messages.forEach(m => addMessage(m.role, m.text, m.sources, false));
+  lastReply = current ? [...current.messages].reverse().find(m => m.role === "bot") || null : null;
   renderList();
 }
 function renderList() {
@@ -1989,6 +2012,7 @@ function renderList() {
 
 /* Sending a message */
 let busy = false;
+let lastReply = null; // Bob's last answer, so he can say where it came from
 async function send(text) {
   text = (text || $("input").value).trim();
   if (!text || busy) return;
@@ -2006,6 +2030,7 @@ async function send(text) {
   try { reply = await askBob(text); }
   catch (e) { reply = { text: "Oops, something went wrong on my end. Try asking another way!", sources: [] }; }
   $("typing").remove();
+  lastReply = reply;
 
   current.messages.push({ role: "bot", text: reply.text, sources: reply.sources });
   await addMessage("bot", reply.text, reply.sources, true);
