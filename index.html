@@ -344,6 +344,10 @@ svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width:
 .viz .mean { stroke: var(--bad); stroke-width: 2; stroke-dasharray: 6 4; }
 .viz-cap { text-align: center; font-size: 12px; color: var(--muted); margin-top: 4px; }
 .viz-steps { max-width: 420px; }
+.viz-map { padding: 0; overflow: hidden; max-width: 460px; }
+.viz-map iframe { display: block; width: 100%; height: 230px; border: 0; }
+.viz-map .viz-cap { padding: 6px 8px 8px; margin: 0; }
+.viz-map .viz-cap a { color: var(--muted); }
 .vstep { display: flex; gap: 12px; align-items: flex-start; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; }
 .vnum { width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 12px; font-weight: 600; display: grid; place-items: center; flex-shrink: 0; }
 .veq { font-family: ui-monospace, Menlo, monospace; font-size: 15px; font-weight: 600; word-break: break-word; }
@@ -673,6 +677,11 @@ svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width:
         <button type="button" data-v="cute">Cute</button>
       </div>
       <small id="gistHelp"></small>
+    </div>
+    <div class="field">
+      <label for="cityInput">Your city (optional)</label>
+      <input id="cityInput" maxlength="60" placeholder="Like: Chicago, IL">
+      <small>Used when you ask for places like "pizza near me" or "Walmart hours".</small>
     </div>
     <div class="field check-row">
       <input type="checkbox" id="onlineInput" checked>
@@ -2337,6 +2346,8 @@ const SELF_QA = [
     a: () => `Nope, I can't see you or your screen. I only see what you type to me.` },
   { p: [/can you (search|browse|use|go on) (the )?(internet|web|google)/, /do you have (internet|google)/, /are you connected to the internet/],
     a: () => `Kind of! If I don't know a person or thing, I look it up on Wikipedia. Everything else comes from my files and my math engine.` },
+  { p: [/(can|do) you (find|search|look up) (businesses|places|stores|restaurants)/, /google business/, /how do (i|you) find (a )?(place|business|store|restaurant)/],
+    a: () => `Yep! Ask things like **"pizza near me"**, **"find Walmart in Orlando"**, **"Starbucks hours"**, or **"phone number for Target in Miami"**. I check OpenStreetMap for the address, hours, phone, and website, then give you a button to open the full Google Business profile on Google Maps. Set **Your city** in Settings so you don't have to type it every time.` },
   { p: [/(can|do) you (search|check|look (at|on)|use|go on) (instagram|facebook|linkedin|reddit|anywho|tiktok|twitter|x\b|snapchat|discord|social media)/, /why (can't|don't) you (search|check|use) (instagram|facebook|linkedin|reddit|anywho|social media)/],
     a: () => `I look people up on **Wikipedia** and **Wikidata** (plus **YouTube** stats if a key is set in Settings). Sites like Instagram, Facebook, and LinkedIn block other websites from reading them, and I don't use people-finder sites or Reddit, because I don't dig up info on private people and I keep things kid friendly. If someone is famous, Wikipedia or Wikidata usually knows them!` },
   { p: [/how do you look (people|things|stuff) up/, /social ?blade/, /view ?stats/, /how do you find (youtubers|people)/],
@@ -2480,8 +2491,12 @@ async function askBob(question) {
     return { text, sources: [SRC_ENGINE], kind: "math", math: m };
   }
 
-  // 5. A person or thing Bob doesn't know? Look it up online
+  // 5. Looking for a business or place? ("pizza near me", "Walmart hours")
   const online = !profile || profile.online !== false;
+  const biz = online ? businessQuestion(q) : null;
+  if (biz) return await businessLookup(biz);
+
+  // 6. A person or thing Bob doesn't know? Look it up online
   const who = personQuestion(q);
   if (who && online && (who.force || !knowsLocally(who.name))) return await lookupOnline(who.name, who.isPerson);
 
@@ -2793,6 +2808,7 @@ function openSettings(isFirst) {
   $("nameInput").value = (profile && profile.name) || "";
   $("colorInput").value = (profile && profile.color) || "#c96a3c";
   $("onlineInput").checked = !profile || profile.online !== false;
+  $("cityInput").value = (profile && profile.city) || "";
   document.querySelectorAll(".seg").forEach(seg => setSeg(seg, pref(seg.dataset.pref)));
   $("ytKeyInput").value = (profile && profile.ytKey) || "";
   updatePreview();
@@ -2810,6 +2826,7 @@ $("saveBtn").onclick = () => {
     name: $("nameInput").value.trim() || "Guest",
     color: $("colorInput").value,
     online: $("onlineInput").checked,
+    city: $("cityInput").value.trim(),
     len: segValue("len"), rtype: segValue("rtype"), gist: segValue("gist"),
     ytKey: $("ytKeyInput").value.trim()
   };
@@ -3168,7 +3185,7 @@ function applyTone(reply) {
   let text = reply.text;
   if (reply.kind === "quiz") {
     text = text.replace(/<good>Correct!<\/good>/g, `<good>${T.correct}</good>`).replace(/<bad>Not quite\.<\/bad>/g, `<bad>${T.wrong}</bad>`);
-  } else if (["topic", "math", "web"].includes(reply.kind) && T.intro.length) {
+  } else if (["topic", "math", "web", "places"].includes(reply.kind) && T.intro.length) {
     text = `${pick(T.intro)}\n\n${text}\n\n${pick(T.outro)}`;
   } else if (reply.kind === "chat" && !reply.noTone) {
     text = text.replace(/\s*$/, "") + pick(T.chatTail);
@@ -3521,7 +3538,9 @@ async function decorate(reply, question) {
   const type = pref("rtype");
   if (type === "explain" || !reply.kind) return reply;
   const parts = [];
-  if (reply.kind === "math" && reply.math) {
+  if (reply.kind === "places" && reply.mapHtml) {
+    parts.push(reply.mapHtml);
+  } else if (reply.kind === "math" && reply.math) {
     if (type === "visual") parts.push(stepCards(reply.math));
     parts.push(mathDiagram(question, reply.math));
   } else if (reply.directImages) {
@@ -3806,6 +3825,146 @@ function editMessage(m, div) {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); }
     if (e.key === "Escape") renderChat();
   };
+}
+
+/* ================================================================
+   PART 14: BUSINESS FINDER (like Google Business)
+   Google's own business data needs a paid key, so Bob uses
+   OpenStreetMap (free, public) for name, address, hours, phone and
+   website, then links to Google Maps for the full Google Business
+   profile (reviews, photos, live hours).
+   Only named places like shops and restaurants are shown, never
+   home addresses.
+   ================================================================ */
+const BIZ_WORDS = /\b(restaurants?|food|pizza|pizzeria|burgers?|tacos?|sushi|cafe|coffee|starbucks|mcdonald'?s|chick ?fil ?a|wendy'?s|subway|dunkin|stores?|shops?|mall|market|grocery|groceries|walmart|target|costco|publix|business|company|dentist|doctor|hospital|pharmacy|cvs|walgreens|gym|bank|hotel|motel|gas( station)?|library|park|salon|barber|bakery|diner|theater|theatre|cinema|movies|arcade|museum|zoo|aquarium|clinic|vet|mechanic|ice cream|donuts?|bowling|skate ?park|trampoline|mini ?golf)\b/;
+// OpenStreetMap groups that count as businesses or public places
+const POI_CLASSES = /^(amenity|shop|office|tourism|leisure|craft|healthcare|historic|club|sport)$/;
+
+/* Figures out if a message is asking for a business, and pulls out
+   what to look for and where. Returns null if it's not that kind of question. */
+function businessQuestion(q) {
+  let low = q.toLowerCase().trim().replace(/[?!.]+$/, "").replace(/[’‘]/g, "'");
+  const explicit = /^(google business|google maps|business)( for| on| info for| info on)?\s+/.test(low);
+  const trigger = /^(find|look up|search for|where(?:'s| is| are)|wheres|show me|any|good)\s/.test(low);
+  const askHours = /\b(hours|what time does .+ (open|close)|(is|are) .+ open( now| today)?$|open (now|today|right now)|still open)\b/.test(low);
+  const askPhone = /\bphone( number)?\b|\bcall\b/.test(low);
+  const askAddress = /\baddress\b|\bdirections\b/.test(low);
+  const near = /\bnear( me|by)?\b|\bnearest\b|\bclosest\b|\baround here\b/.test(low);
+  if (!(explicit || ((trigger || near || askHours || askPhone || askAddress) && BIZ_WORDS.test(low)) || (near && /\bnear me\b|\bnearest\b|\bclosest\b/.test(low)))) return null;
+
+  const nearMe = /\bnear me\b|\bnearby\b|\bnearest\b|\bclosest\b|\baround here\b/.test(low);
+  let where = null;
+  // "pizza in Jacksonville" or "Walmart near Orlando, FL"
+  const m = low.match(/^(.+?)\s+(?:in|near|around|by|at)\s+(?!me\b|here\b)([a-z][a-z .,'-]+)$/);
+  if (m && !nearMe) { low = m[1]; where = m[2].trim(); }
+  const what = low
+    .replace(/^(google business|google maps|business)( for| on| info for| info on)?\s+/, "")
+    .replace(/^(find|look up|search for|where(?:'s| is| are)|wheres|show me|any|good)\s+/, "")
+    .replace(/^(the )?(phone number|number|address|hours|directions)( for| of| to)?\s+/, "")
+    .replace(/^what time does\s+|\s+(open|close)$/g, "")
+    .replace(/^(is|are)\s+|\s+(open( now| today| right now)?|still open)$/g, "")
+    .replace(/\b(the )?(nearest|closest)\s+/, "").replace(/\s+(near me|nearby|around here)$/, "")
+    .replace(/\s+(hours|phone( number)?|address)$/, "").replace(/^(a|an|the|some)\s+/, "").replace(/'s$/, "").trim();
+  if (!what || what.length < 2) return null;
+  return { what, where, nearMe, want: askHours ? "hours" : askPhone ? "phone" : askAddress ? "address" : "all" };
+}
+
+/* Asks the browser for your location (only for "near me", and the browser asks you first) */
+function getLocation() {
+  return new Promise(resolve => {
+    if (!navigator.geolocation) return resolve(null);
+    navigator.geolocation.getCurrentPosition(
+      p => resolve({ lat: p.coords.latitude, lon: p.coords.longitude }),
+      () => resolve(null), { timeout: 10000, maximumAge: 600000 });
+  });
+}
+
+// Distance in miles between two map points
+function milesBetween(a, b) {
+  const R = 3958.8, rad = x => x * Math.PI / 180;
+  const dLat = rad(b.lat - a.lat), dLon = rad(b.lon - a.lon);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+// OpenStreetMap hours look like "Mo-Fr 08:00-17:00"; make them friendlier
+function prettyHours(h) {
+  if (!h) return null;
+  if (h.trim() === "24/7") return "Open 24/7";
+  const days = { Mo: "Mon", Tu: "Tue", We: "Wed", Th: "Thu", Fr: "Fri", Sa: "Sat", Su: "Sun", PH: "Holidays" };
+  return h.replace(/\b(Mo|Tu|We|Th|Fr|Sa|Su|PH)\b/g, d => days[d]).replace(/;\s*/g, ", ").replace(/\boff\b/g, "closed")
+    .replace(/(\d{2}):(\d{2})/g, (x, hh, mm) => { const n = +hh % 24, ap = n < 12 ? "am" : "pm", h12 = n % 12 || 12; return mm === "00" ? `${h12}${ap}` : `${h12}:${mm}${ap}`; });
+}
+
+function addressOf(r) {
+  const a = r.address || {};
+  const street = [a.house_number, a.road].filter(Boolean).join(" ");
+  const city = a.city || a.town || a.village || a.hamlet || a.suburb || a.county;
+  return [street, city, [a.state, a.postcode].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+}
+const linkText = s => String(s).replace(/[\[\]()]/g, ""); // keeps [text](link) from breaking
+
+async function businessLookup(b) {
+  const city = profile && profile.city;
+  let loc = null;
+  let url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&extratags=1&limit=10&q=`;
+  if (b.nearMe) {
+    loc = await getLocation();
+    if (!loc && !city) {
+      return { text: `I need to know where you are to find **${b.what}** near you. Either allow location when your browser asks, or say a city, like "**${b.what} in Chicago**". You can also set **Your city** in Settings.`, sources: [], kind: "chat", noTone: true };
+    }
+  }
+  const place = b.where || (!loc && city) || "";
+  url += encodeURIComponent(b.what + (place ? ", " + place : ""));
+  // "Near me": only search a box about 10 miles around you
+  if (loc) url += `&viewbox=${loc.lon - 0.15},${loc.lat + 0.15},${loc.lon + 0.15},${loc.lat - 0.15}&bounded=1`;
+
+  let results;
+  try { results = await getJSON(url, 9000); }
+  catch (e) {
+    return { text: `I couldn't reach the map right now. Here's a Google Maps search instead: [Search Google Maps](https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(b.what + (place ? " " + place : ""))})`, sources: [], kind: "chat", noTone: true };
+  }
+  let places = (results || []).filter(r => r.name && POI_CLASSES.test(r.category));
+  if (loc) places.forEach(r => r.miles = milesBetween(loc, { lat: +r.lat, lon: +r.lon }));
+  if (loc) places.sort((x, y) => x.miles - y.miles);
+  places = places.slice(0, 3);
+
+  const gSearch = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(b.what + (place ? " " + place : ""))}`;
+  if (!places.length) {
+    return { text: `I couldn't find **${b.what}**${place ? ` in ${place}` : loc ? " near you" : ""} on the map. Try adding a city, like "**${b.what} in Orlando**", or check [Google Maps](${gSearch}).`, sources: [], kind: "chat", noTone: true };
+  }
+
+  const L = lenPref();
+  const where = place ? ` in **${place}**` : loc ? " near you" : "";
+  let text = places.length === 1 ? `Here's what I found${where}:` : `Here are the top ${places.length} I found${where}:`;
+  places.forEach((r, i) => {
+    const t = r.extratags || {};
+    const kind = (r.type || "").replace(/_/g, " ");
+    const addr = addressOf(r);
+    const phone = t.phone || t["contact:phone"];
+    const site = t.website || t["contact:website"];
+    const hours = prettyHours(t.opening_hours);
+    const gmaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.name + (addr ? ", " + addr : ""))}`;
+    text += `\n\n**${i + 1}. ${r.name}**${kind && kind !== "yes" ? ` (${kind})` : ""}`;
+    const lines = [];
+    if (r.miles !== undefined) lines.push(`- **Distance:** about ${r.miles < 0.2 ? "less than 0.2" : r.miles.toFixed(1)} miles away`);
+    if (addr && (L !== "summary" || b.want === "address")) lines.push(`- **Address:** ${addr}`);
+    if (hours && (L !== "summary" || b.want === "hours")) lines.push(`- **Hours:** ${hours}`);
+    else if (b.want === "hours") lines.push(`- **Hours:** not listed on the map, check Google Maps`);
+    if (phone && (L !== "summary" || b.want === "phone")) lines.push(`- **Phone:** ${phone}`);
+    else if (b.want === "phone") lines.push(`- **Phone:** not listed on the map, check Google Maps`);
+    if (site && L !== "summary") lines.push(`- **Website:** [${linkText(site.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, ""))}](${/^https?:/.test(site) ? site : "https://" + site})`);
+    lines.push(`- [Open on Google Maps](${gmaps}) · [OpenStreetMap](https://www.openstreetmap.org/${r.osm_type}/${r.osm_id})`);
+    text += "\n" + lines.join("\n");
+  });
+  if (L !== "summary") text += `\n\nGoogle Maps has the full Google Business profile with reviews, photos, and live hours. Map info can be out of date, so double check hours before you go.`;
+
+  // A small map of the first result for Visual and Both modes
+  const f = places[0], lat = +f.lat, lon = +f.lon;
+  const mapHtml = `<div class="viz viz-map"><iframe title="Map of ${esc(f.name)}" loading="lazy" referrerpolicy="no-referrer" ` +
+    `src="https://www.openstreetmap.org/export/embed.html?bbox=${lon - 0.01},${lat - 0.006},${lon + 0.01},${lat + 0.006}&layer=mapnik&marker=${lat},${lon}"></iframe>` +
+    `<div class="viz-cap">${esc(f.name)} · Map © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</div></div>`;
+  return { text, sources: ["OpenStreetMap"], kind: "places", mapHtml };
 }
 
 /* Start up */
