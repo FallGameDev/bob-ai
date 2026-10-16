@@ -896,10 +896,10 @@ const KB = [
   { cat: "Math", grade: "3", title: "Area and Perimeter", names: ["area", "perimeter"], keys: "rectangle square length width around inside", quiz: "area",
     text: `Perimeter is the distance around a shape, so you add up all the sides. Area is how much space is inside, measured in square units. For a rectangle, Area = length × width and Perimeter = 2 × (length + width).`,
     example: `A 5 by 3 rectangle: Area = 15 square units, Perimeter = 2 × (5 + 3) = 16 units.` },
-  { cat: "Math", grade: "3", title: "Rounding", names: ["round"], keys: "nearest ten hundred estimate",
+  { cat: "Math", grade: "3", title: "Rounding", names: ["round", "rounding numbers"], keys: "nearest ten hundred estimate",
     text: `Rounding makes a number simpler. Look at the digit just to the right of the place you are rounding to. If it is 5 or more, round up. If it is 4 or less, round down.`,
     example: `Round 347 to the nearest ten: the ones digit is 7, so round up to 350.` },
-  { cat: "Math", grade: "4", title: "Factors and Multiples", names: ["factor", "multiple", "prime", "composite"], keys: "prime numbers divisible",
+  { cat: "Math", grade: "4", title: "Factors and Multiples", names: ["factor", "multiple", "prime", "composite", "prime number", "composite number", "factors"], keys: "prime numbers divisible",
     text: `Factors are numbers that divide evenly into a number. Multiples are what you get when you multiply a number by 1, 2, 3, and so on. A prime number has exactly two factors: 1 and itself.`,
     example: `Factors of 12: 1, 2, 3, 4, 6, 12. Multiples of 4: 4, 8, 12, 16. 7 is prime.` },
   { cat: "Math", grade: "4", title: "Equivalent Fractions", names: ["simplify fractions", "simplest form", "reduce fractions"], keys: "equal fractions same value", quiz: "frac",
@@ -934,7 +934,7 @@ const KB = [
   { cat: "Math", grade: "6", title: "Percents", names: ["percent", "percentage", "%"], keys: "out of 100 discount tip sale", quiz: "pct",
     text: `Percent means "out of 100." To find a percent of a number, change the percent to a decimal (divide by 100) and multiply.`,
     example: `20% of 80 = 0.20 × 80 = 16. You can also ask Bob things like "15 is what percent of 60."` },
-  { cat: "Math", grade: "6", title: "Integers and Negative Numbers", names: ["integers", "negative numbers", "negatives"], keys: "below zero number line opposite absolute value", quiz: "neg",
+  { cat: "Math", grade: "6", title: "Integers and Negative Numbers", names: ["integers", "negative numbers", "negatives", "absolute value"], keys: "below zero number line opposite absolute value", quiz: "neg",
     text: `Integers are whole numbers and their negatives. On a number line, negatives are left of zero. Adding a negative is like subtracting. Two negatives multiplied or divided make a positive. Absolute value is the distance from zero, so |-5| = 5.`,
     example: `-3 + 8 = 5. -4 × -2 = 8. -6 × 3 = -18.` },
   { cat: "Math", grade: "6", title: "Exponents", names: ["exponent", "powers", "squared", "cubed"], keys: "base power repeated multiplication", quiz: "exp",
@@ -1087,9 +1087,19 @@ function learn(entry) {
   KB.push(entry);
 }
 
+// Words that show a question is about math
+const MATH_CONTEXT = /\b(math|maths|solve|solving|equation|formula|calculate|homework|algebra|geometry|calculus|arithmetic|fraction|fractions|decimal|decimals|percent|graph|plus|minus|multiply|multiplication|divide|division|add|adding|subtract|subtraction|number|numbers|integer|integers|theorem|grade \d+|\d+(st|nd|rd|th) grade|quiz me|practice|lesson|explain how to|how do (i|you) (find|solve|do|calculate|work out))\b|\d\s*[+*/^=%×÷]\s*\d|[√|]/;
+// "what is the mode", "explain slope", "how does rounding work" -> "mode", "slope", "rounding"
+function lessonSubject(low) {
+  return low.trim().replace(/[?!.]+$/, "")
+    .replace(/^(what('s| is| are| does)|whats|explain|define|how (do|does)|teach me( about)?|tell me about|help( me)? with)\s+/, "")
+    .replace(/^(a|an|the)\s+/, "").replace(/\s+(mean|in math|work|works)$/, "").trim();
+}
+
 function search(question) {
   const low = " " + question.toLowerCase() + " ";
-  const qt = [...new Set(tok(question))];
+  const mathContext = MATH_CONTEXT.test(question.toLowerCase());
+  const qt = [...new Set(tok(question))].filter(w => !/^\d+$/.test(w));
   const scored = KB.map(e => {
     let s = 0;
     qt.forEach(w => {
@@ -1097,10 +1107,19 @@ function search(question) {
       else if (e.keyT.has(w)) s += 3;
       else if (e.textT.has(w)) s += 1;
     });
-    // Big bonus if the full name appears in the question
+    // Big bonus if the full name appears in the question as whole words
+    // (so "model" doesn't count as "mode")
+    let named = false;
     [e.title, ...e.names].forEach(n => {
-      if (n.length > 2 && low.includes(n.toLowerCase())) s += 10;
+      if (n.length > 2 && new RegExp("(^|[^a-z0-9])" + n.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "s?([^a-z0-9]|$)").test(low)) { s += 10; named = true; }
     });
+    // Math lessons only win when the question is actually about math.
+    // Words like "range", "mode", "time", "power" or "table" alone aren't enough.
+    // Without math words, the question has to be just the lesson's name ("what is the mode")
+    if (e.cat === "Math" && !mathContext) {
+      const subj = lessonSubject(low);
+      if (![e.title, ...e.names].some(n => { n = n.toLowerCase(); return subj === n || subj === n + "s" || subj + "s" === n; })) s = 0;
+    }
     return { entry: e, score: s };
   }).sort((a, b) => b.score - a.score);
   if (scored[0].score < 3) return null;
@@ -1257,7 +1276,7 @@ function parse(str) {
     if (tk.k === "num") { p++; return ["num", tk.v]; }
     if (tk.k === "var") { p++; return ["var", tk.v]; }
     if (tk.k === "const") { p++; return ["const", tk.v]; }
-    if (tk.k === "fn") { p++; return ["fn", tk.v, peek() === "(" ? primary() : power()]; }
+    if (tk.k === "fn") { p++; return ["fn", tk.v, peek() === "(" ? primary() : unary()]; }
     if (tk.k === "√") { p++; return ["fn", "sqrt", power()]; }
     if (tk.k === "(") {
       p++; const n = expr();
@@ -1349,9 +1368,13 @@ function varsIn(n, set = new Set()) {
 
 /* ---------- 3d. Turning words into math symbols ---------- */
 function normMath(s) {
+  // Absolute value bars: |-14| becomes abs(-14). Repeats so |3 - |-5|| works too.
+  let prev;
+  do { prev = s; s = s.replace(/\|([^|]+)\|/, "abs($1)"); } while (s !== prev);
   s = s.toLowerCase()
     .replace(/[×✕]/g, "*").replace(/÷/g, "/").replace(/[−–]/g, "-")
     .replace(/²/g, "^2").replace(/³/g, "^3")
+    .replace(/(the )?absolute value of\s*/g, "abs ")
     .replace(/square root of/g, "sqrt ").replace(/cube root of/g, "cbrt ")
     .replace(/to the power of/g, "^").replace(/\bsquared\b/g, "^2").replace(/\bcubed\b/g, "^3")
     .replace(/\bmultiplied by\b/g, "*").replace(/\btimes\b/g, "*").replace(/\bdivided by\b/g, "/")
@@ -1665,7 +1688,7 @@ const MATH_HANDLERS = [
       if (/perimeter/.test(low) && n.length >= 3) return say("Perimeter of a triangle", "side + side + side", `${n[0]} + ${n[1]} + ${n[2]}`, n[0] + n[1] + n[2], "units");
       if (n.length >= 2) return say("Area of a triangle", "(base × height) ÷ 2", `(${fmt(n[0])} × ${fmt(n[1])}) ÷ 2`, n[0] * n[1] / 2, "square units");
     }
-    if (/square/.test(low) || n.length === 1) {
+    if (/square/.test(low)) {
       if (/perimeter/.test(low)) return say("Perimeter of a square", "4 × side", `4 × ${fmt(n[0])}`, 4 * n[0], "units");
       return say("Area of a square", "side × side", `${fmt(n[0])} × ${fmt(n[0])}`, n[0] * n[0], "square units");
     }
@@ -1736,7 +1759,7 @@ const MATH_WORDS = new Set(("what whats is are the of a an to for and or by from
   "thousand tenth hundredth thousandth decimal decimals place places whole number numbers integer fraction fractions convert as into " +
   "even odd greater bigger more larger less smaller fewer than count up skip table multiplication power squared cubed pythagorean " +
   "theorem increase decrease change x y z n value base height length width side sides units total sum product difference quotient " +
-  "remainder bob hey yo ok okay so").split(" "));
+  "remainder absolute abs bob hey yo ok okay so").split(" "));
 
 function isMostlyMath(q) {
   const low = q.toLowerCase();
@@ -1789,7 +1812,11 @@ function mathEngine(question) {
     if (!isFinite(v)) return ans("**Undefined**", `**${pretty(s)}** is undefined (you can't divide by zero).`);
     const result = exact && exact.d !== 1 ? `${fmtFrac(exact)} = ${fmt(exact.val())}` : fmt(v);
     const hasTrig = /sin|cos|tan/.test(s);
-    const out = ans(`**${result}**`, `**${pretty(s)} = ${result}**` + (hasTrig ? `\n\n(Trig is in degrees.)` : /[+\-].*[*/]|[*/].*[+\-]/.test(s) ? `\n\nRemember PEMDAS: multiply and divide before you add and subtract.` : ""));
+    // Absolute value reads better as |x| than "abs x"
+    const shownExpr = /abs/.test(s) ? showTree(markFractions(tree)) : pretty(s);
+    const out = ans(`**${result}**`, `**${shownExpr} = ${result}**` + (hasTrig ? `\n\n(Trig is in degrees.)` : /[+\-].*[*/]|[*/].*[+\-]/.test(s) ? `\n\nRemember PEMDAS: multiply and divide before you add and subtract.` : ""));
+    if (/abs/.test(s)) out.steps += `\n\nAbsolute value is how far a number is from zero, so it's never negative. Example: |-14| = 14 and |14| = 14.`;
+    out.steps = out.steps.replace(/abs\(([^()]*)\)/g, "|$1|"); // show |x| instead of abs(x)
     out.exprSteps = exprSteps(tree); // used by step cards in Visual mode
     out.frac = exact;
     if (out.exprSteps.length > 2 && mode.id !== "quick") {
@@ -2178,7 +2205,7 @@ function wikidataAnswer(wd, name, isPerson) {
    force = true for "look up" / "search", which always goes online. */
 function personQuestion(q) {
   const t = q.trim();
-  const w = t.match(/^(?:what(?:'s|s| is| are| was| were)|define|what does .+? mean|explain|what do you mean by)\s+(.+?)[\s?.!]*$/i);
+  const w = t.match(/^what does (.+?) mean[\s?.!]*$/i) || t.match(/^(?:what(?:'s|s| is| are| was| were)|define|explain|what do you mean by)\s+(.+?)[\s?.!]*$/i);
   if (w) {
     const thing = w[1].replace(/^(a|an|the)\s+/i, "").replace(/\s+mean$/i, "").trim();
     if (thing.length < 2 || thing.split(/\s+/).length > 6) return null;
@@ -2208,8 +2235,10 @@ function knowsLocally(name) {
   const n = name.toLowerCase();
   return KB.some(e => e.cat !== "Learned online" && [e.title, ...e.names].some(t => {
     t = t.toLowerCase();
-    if (t === n) return true;
-    if (t.length >= 4 && new RegExp("\\b" + t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b").test(n)) return true;
+    if (t === n || t + "s" === n || t === n + "s") return true;
+    // One word names ("range", "mode", "jack") must match exactly, or "range rover" would count
+    if (!t.includes(" ")) return false;
+    if (new RegExp("\\b" + t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b").test(n)) return true;
     return n.length >= 5 && t.startsWith(n);
   }));
 }
@@ -3421,7 +3450,7 @@ function mathDiagram(q, m) {
       if (/circle|radius|diameter/.test(low)) return drawCircle(r, /diameter/.test(low), "Circle");
       if (/trapezoid/.test(low) && n.length >= 3) return drawTrapezoid(n[0], n[1], n[2], "Trapezoid");
       if (/triangle/.test(low) && n.length >= 2) return drawTriangle(n[0], n[1], "Triangle");
-      if (/square/.test(low) || n.length === 1) return drawRect(n[0], n[0], "Square");
+      if (/square/.test(low)) return drawRect(n[0], n[0], "Square");
       if (n.length >= 2) return drawRect(n[0], n[1], "Rectangle");
     }
     let pm = low.match(/(-?\d+(?:\.\d+)?)\s*(?:%|percent) of/);
@@ -3462,7 +3491,7 @@ function showTree(n) {
     case "neg": return "-" + (prec(n[1]) < 4 ? `(${showTree(n[1])})` : showTree(n[1]));
     case "pct": return showTree(n[1]) + "%";
     case "fact": return showTree(n[1]) + "!";
-    case "fn": return `${n[1] === "sqrt" ? "√" : n[1]}(${showTree(n[2])})`;
+    case "fn": return n[1] === "abs" ? `|${showTree(n[2])}|` : `${n[1] === "sqrt" ? "√" : n[1]}(${showTree(n[2])})`;
     case "bin": {
       const p = P[n[1]], sym = { "*": " × ", "/": " ÷ ", "+": " + ", "-": " - ", "^": "^" }[n[1]];
       let l = showTree(n[2]), r = showTree(n[3]);
@@ -3496,7 +3525,9 @@ function reduceOnce(n) {
   }
   // All children are numbers now, so work this one out
   const names = { "+": "Add", "-": "Subtract", "*": "Multiply", "/": "Divide", "^": "Do the exponent" };
-  const note = n[0] === "bin" ? `${names[n[1]]}: ${showTree(n)}` : `Work out ${showTree(n)}`;
+  const note = n[0] === "bin" ? `${names[n[1]]}: ${showTree(n)}`
+    : n[0] === "fn" && n[1] === "abs" ? `Absolute value: ${showTree(n[2])} is ${fmt(Math.abs(evalF(n[2])))} away from zero`
+    : `Work out ${showTree(n)}`;
   let node;
   try { node = ["q", evalQ(n)]; }
   catch (e) { node = ["num", String(parseFloat(evalF(n).toPrecision(10)))]; }
@@ -3517,7 +3548,7 @@ function exprSteps(tree) {
 
 /* Which lesson goes with a math question (for Detailed answers) */
 const MATH_LESSON_MAP = [
-  [/x\^2|x²|quadratic/, "Quadratic Formula"], [/=/, "Solving Equations"], [/percent|%/, "Percents"],
+  [/abs\(|absolute/, "Integers and Negative Numbers"], [/x\^2|x²|quadratic/, "Quadratic Formula"], [/=/, "Solving Equations"], [/percent|%/, "Percents"],
   [/gcf|gcd|lcm|common (factor|multiple)/, "GCF and LCM"], [/prime|factor/, "Factors and Multiples"],
   [/pythag|hypotenuse/, "Pythagorean Theorem"], [/slope|\(.*,.*\)/, "Slope"], [/circle|radius|diameter|circumference/, "Circles"],
   [/volume/, "Volume"], [/surface area/, "Surface Area"], [/area|perimeter/, "Area and Perimeter"],
