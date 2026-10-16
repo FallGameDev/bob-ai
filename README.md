@@ -9,7 +9,7 @@ Everything lives in one file: `index.html`.
 - **K-12 math:** lessons from counting to calculus, plus a solver that shows every step (equations, quadratics, fractions, percents, area and volume, slope, GCF and LCM, primes, stats, trig, and more)
 - **Games, creators, history, and language/AI topics** from the training corpus PDF
 - **Quiz mode:** keeps asking questions and grades your answers
-- **Online lookups:** if Bob doesn't know a person or thing, he checks Wikipedia (and YouTube, if you add a free API key in Settings) and links to Social Blade and ViewStats
+- **Online lookups:** if Bob doesn't know a person or thing, he checks Wikipedia, then Wikidata (and YouTube, if you add a free API key in Settings) and links to Social Blade and ViewStats
 - **Response settings:** length (Summary, On point, Detailed), type (Explanatory, Visual, Both), and gist (Serious, Calm, Slang, Cute)
 - **Visuals:** pictures from the topic's Wikipedia article, plus math diagrams Bob draws himself (step cards, shapes, graphs, fraction bars, percent grids, bar charts)
 - **Saved answers:** answers are cached on your device, so asking again is instant

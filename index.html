@@ -2032,6 +2032,58 @@ function statLinks(name, handle) {
   return `[Social Blade](${sb}) · [ViewStats](${vs}) · [YouTube](https://www.youtube.com/results?search_query=${q})`;
 }
 
+/* Wikidata: Wikipedia's fact database. It knows lots of creators and
+   public figures that don't have a full article yet (job, birthday,
+   country, YouTube channel, photo). Used when Wikipedia finds nothing.
+   It only has notable people, so it can't be used to find private info. */
+async function wikidataLookup(name) {
+  const words = name.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(w => w.length > 1 && !NAME_FILLER.has(w));
+  if (!words.length) return null;
+  const api = "https://www.wikidata.org/w/api.php?format=json&origin=*&";
+  const s = await getJSON(api + `action=wbsearchentities&search=${encodeURIComponent(name)}&language=en&uselang=en&type=item&limit=7`);
+  const hits = (s.search || []).filter(h => h.description && !/disambiguation|wikimedia|family name|given name|surname|name$/i.test(h.description))
+    .map(h => {
+      const text = ((h.label || "") + " " + ((h.match && h.match.text) || "")).toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/);
+      const all = words.every(w => text.includes(w));
+      return { h, sc: all ? 5 + (CREATOR_WORDS.test(h.description) ? 3 : 0) : -99 };
+    }).sort((a, b) => b.sc - a.sc);
+  if (!hits.length || hits[0].sc < 0) return null;
+  const id = hits[0].h.id;
+
+  const e = (await getJSON(api + `action=wbgetentities&ids=${id}&props=labels|descriptions|claims&languages=en`)).entities[id];
+  const claim = p => ((e.claims && e.claims[p]) || []).map(c => c.mainsnak && c.mainsnak.datavalue && c.mainsnak.datavalue.value).filter(Boolean);
+  const isHuman = claim("P31").some(v => v.id === "Q5");
+  // Turn Q-codes (like Q937857) into words (like "YouTuber")
+  const ids = [...claim("P106").slice(0, 4), ...claim("P27").slice(0, 1)].map(v => v.id);
+  let labels = {};
+  if (ids.length) {
+    const l = await getJSON(api + `action=wbgetentities&ids=${ids.join("|")}&props=labels&languages=en`);
+    Object.entries(l.entities || {}).forEach(([k, v]) => { labels[k] = v.labels && v.labels.en && v.labels.en.value; });
+  }
+  const date = t => {
+    if (!t) return null;
+    const m = t.time.match(/^\+?(\d{4})-(\d{2})-(\d{2})/);
+    if (!m) return null;
+    if (t.precision < 11) return { text: m[1], year: +m[1] };
+    return { text: new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" }), year: +m[1], d: new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])) };
+  };
+  const born = date(claim("P569")[0]), died = date(claim("P570")[0]);
+  let age = null;
+  if (born && born.d && !died) { const n = new Date(); age = n.getUTCFullYear() - born.d.getUTCFullYear() - (n < new Date(Date.UTC(n.getUTCFullYear(), born.d.getUTCMonth(), born.d.getUTCDate())) ? 1 : 0); }
+  const img = claim("P18")[0];
+  return {
+    title: (e.labels.en && e.labels.en.value) || hits[0].h.label,
+    desc: (e.descriptions.en && e.descriptions.en.value) || hits[0].h.description,
+    isHuman,
+    jobs: claim("P106").slice(0, 4).map(v => labels[v.id]).filter(Boolean),
+    country: claim("P27")[0] && labels[claim("P27")[0].id],
+    born, died, age,
+    youtube: claim("P2397")[0] || null, // YouTube channel id
+    image: img ? `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(img.replace(/ /g, "_"))}?width=480` : null,
+    url: `https://www.wikidata.org/wiki/${id}`
+  };
+}
+
 /* The main lookup: runs Wikipedia and YouTube at the same time.
    isPerson = true for "who is" questions (YouTube stats only make sense for people). */
 async function lookupOnline(name, isPerson = true, strict = false) {
@@ -2044,6 +2096,13 @@ async function lookupOnline(name, isPerson = true, strict = false) {
 
   // If Wikipedia found someone who is NOT a creator, the YouTube match is probably a random channel
   if (wiki && yt && !CREATOR_WORDS.test(wiki.desc + " " + wiki.text)) yt = null;
+
+  // Wikipedia and YouTube found nothing? Try Wikidata next
+  if (!wiki && !yt && !offline) {
+    let wd = null;
+    try { wd = await wikidataLookup(name); } catch (e) { }
+    if (wd) return wikidataAnswer(wd, name, isPerson);
+  }
 
   if (!wiki && !yt) {
     // No internet? Use the copy Bob saved last time, if there is one
@@ -2081,6 +2140,27 @@ async function lookupOnline(name, isPerson = true, strict = false) {
   if (ytBroke) text += `\n\n(Your YouTube API key didn't work, so I skipped live stats. Check it in Settings.)`;
   else if (!key && isCreator && lenPref() !== "summary") text += `\n\nTip: add a free YouTube API key in Settings to see live subscriber counts here.`;
   return { text, sources, kind: "web", imgTitle: wiki && wiki.title, imgHost: wiki && wiki.host, leadImage: wiki && wiki.image };
+}
+
+/* Builds Bob's answer from a Wikidata result */
+function wikidataAnswer(wd, name, isPerson) {
+  const L = lenPref(), lines = [];
+  const isCreator = !!wd.youtube || CREATOR_WORDS.test(wd.desc + " " + wd.jobs.join(" "));
+  if (wd.jobs.length) lines.push(`- **Known for:** ${wd.jobs.join(", ")}`);
+  if (wd.born) lines.push(`- **Born:** ${wd.born.text}${wd.age !== null ? ` (${wd.age} years old)` : ""}`);
+  if (wd.died) lines.push(`- **Died:** ${wd.died.text}`);
+  if (wd.country) lines.push(`- **From:** ${wd.country}`);
+  if (wd.youtube) lines.push(`- **YouTube:** [their channel](https://www.youtube.com/channel/${encodeURIComponent(wd.youtube)})`);
+  let text = `**${wd.title}** (${tidy(wd.desc)})`;
+  if (L !== "summary" && lines.length) text += `\n\n${lines.join("\n")}`;
+  if (isCreator && L !== "summary") {
+    const sb = wd.youtube ? `[Social Blade](https://socialblade.com/youtube/channel/${encodeURIComponent(wd.youtube)})` : null;
+    text += `\n\n**More stats:** ` + (sb ? `${sb} · ` + statLinks(name).split(" · ").slice(1).join(" · ") : statLinks(name));
+  }
+  text += `\n\n[See all the facts on Wikidata](${wd.url})`;
+  // Remember the basics for next time
+  learn({ cat: "Learned online", title: wd.title, names: [name], keys: wd.desc, text: `${wd.title} is ${/^(a|an|the) /i.test(wd.desc) ? "" : /^[aeiou]/i.test(wd.desc) ? "an " : "a "}${tidy(wd.desc)}.` + (wd.jobs.length ? ` Known for: ${wd.jobs.join(", ")}.` : ""), src: "Wikidata", url: wd.url, creator: isCreator });
+  return { text, sources: ["Wikidata"], kind: "web", directImages: wd.image ? [{ src: wd.image, caption: wd.title }] : null, imgPage: wd.url };
 }
 
 /* Spots "look it up" questions and pulls out the thing being asked about:
@@ -2257,8 +2337,10 @@ const SELF_QA = [
     a: () => `Nope, I can't see you or your screen. I only see what you type to me.` },
   { p: [/can you (search|browse|use|go on) (the )?(internet|web|google)/, /do you have (internet|google)/, /are you connected to the internet/],
     a: () => `Kind of! If I don't know a person or thing, I look it up on Wikipedia. Everything else comes from my files and my math engine.` },
+  { p: [/(can|do) you (search|check|look (at|on)|use|go on) (instagram|facebook|linkedin|reddit|anywho|tiktok|twitter|x\b|snapchat|discord|social media)/, /why (can't|don't) you (search|check|use) (instagram|facebook|linkedin|reddit|anywho|social media)/],
+    a: () => `I look people up on **Wikipedia** and **Wikidata** (plus **YouTube** stats if a key is set in Settings). Sites like Instagram, Facebook, and LinkedIn block other websites from reading them, and I don't use people-finder sites or Reddit, because I don't dig up info on private people and I keep things kid friendly. If someone is famous, Wikipedia or Wikidata usually knows them!` },
   { p: [/how do you look (people|things|stuff) up/, /social ?blade/, /view ?stats/, /how do you find (youtubers|people)/],
-    a: () => `When I don't know someone, I search Simple English Wikipedia and regular Wikipedia, pick the best matching page, and give you links to Social Blade and ViewStats for their stats. With a YouTube API key in Settings, I can also show live subscriber counts.` },
+    a: () => `When I don't know someone, I search Simple English Wikipedia and regular Wikipedia, then Wikidata if those come up empty. I pick the best matching page, and give you links to Social Blade and ViewStats for their stats. With a YouTube API key in Settings, I can also show live subscriber counts.` },
   { p: [/(do|can) you need (the )?internet/, /do you work offline/, /can i use you offline/, /without (the )?internet/],
     a: () => `Mostly no! My files, math engine, and quizzes all work offline. I only need internet to look up people and things I don't know.` },
   { p: [/do you (save|cache|remember) (your )?answers/, /why (was|is) (that|it) (so )?(fast|instant)/, /(clear|delete) (the )?(cache|saved answers)/],
@@ -3442,6 +3524,9 @@ async function decorate(reply, question) {
   if (reply.kind === "math" && reply.math) {
     if (type === "visual") parts.push(stepCards(reply.math));
     parts.push(mathDiagram(question, reply.math));
+  } else if (reply.directImages) {
+    const imgs = reply.directImages.slice(0); imgs.page = reply.imgPage;
+    parts.push(imageGrid(imgs).replace(">Wikipedia</a>", ">Wikimedia Commons</a>"));
   } else if ((reply.kind === "topic" || reply.kind === "web") && reply.imgTitle) {
     const imgs = await wikiImages(reply.imgTitle, type === "visual" ? 3 : 1, reply.imgHost, reply.leadImage);
     parts.push(imageGrid(imgs));
