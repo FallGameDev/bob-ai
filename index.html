@@ -256,6 +256,57 @@ svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width:
 }
 
 /* ============================================================
+   SETTINGS: segmented buttons + scrolling popup
+   ============================================================ */
+.modal { max-height: calc(100vh - 32px); overflow-y: auto; }
+.seg { display: flex; background: var(--bg); border: 1px solid var(--border); border-radius: 11px; padding: 3px; gap: 3px; }
+.seg button { flex: 1; padding: 7px 4px; border-radius: 8px; font-size: 13px; color: var(--muted); white-space: nowrap; }
+.seg button:hover { color: var(--text); }
+.seg button.on { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.seg button em { font-style: normal; font-size: 10px; font-weight: 600; color: var(--accent); background: var(--accent-soft); padding: 1px 5px; border-radius: 6px; margin-left: 3px; vertical-align: 1px; }
+
+/* ============================================================
+   VISUALS (pictures, diagrams, step cards)
+   ============================================================ */
+.visual-block { margin: 4px 0 12px; }
+.visual-block > * + * { margin-top: 10px; }
+.viz { background: var(--bg); border: 1px solid var(--border); border-radius: 14px; padding: 10px; max-width: 420px; }
+.viz svg { width: 100%; height: auto; display: block; }
+.viz svg text { fill: var(--text); font: 500 13px Inter, system-ui, sans-serif; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; paint-order: stroke; }
+.viz svg text.small { font-size: 11px; fill: var(--muted); }
+.viz svg text.big { font-size: 26px; font-weight: 600; }
+.viz svg text.hl { fill: var(--accent); font-weight: 600; }
+.viz .shape { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; }
+.viz .shape.side { fill: var(--surface); }
+.viz .edge { stroke: var(--accent); stroke-width: 2.5; fill: none; }
+.viz .edge.thin { stroke-width: 1.5; }
+.viz .guide { stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 5 4; fill: none; }
+.viz .grid { stroke: var(--border); stroke-width: 1; }
+.viz .axis { stroke: var(--muted); stroke-width: 1.5; }
+.viz .curve { stroke: var(--accent); stroke-width: 3; fill: none; }
+.viz .dot { fill: var(--accent); }
+.viz .cell { fill: var(--surface); stroke: var(--border); }
+.viz .cell.on { fill: var(--accent); stroke: var(--accent); }
+.viz .mean { stroke: var(--bad); stroke-width: 2; stroke-dasharray: 6 4; }
+.viz-cap { text-align: center; font-size: 12px; color: var(--muted); margin-top: 4px; }
+.viz-steps { max-width: 420px; }
+.vstep { display: flex; gap: 12px; align-items: flex-start; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; }
+.vnum { width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 12px; font-weight: 600; display: grid; place-items: center; flex-shrink: 0; }
+.veq { font-family: ui-monospace, Menlo, monospace; font-size: 15px; font-weight: 600; word-break: break-word; }
+.vnote { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.varrow { text-align: center; color: var(--muted); font-size: 14px; line-height: 1.4; }
+.viz-imgs { display: grid; gap: 8px; max-width: 520px; }
+.viz-imgs.n1 { max-width: 320px; }
+.viz-imgs.n2 { grid-template-columns: 1fr 1fr; }
+.viz-imgs.n3 { grid-template-columns: 1.4fr 1fr; grid-template-rows: 1fr 1fr; }
+.viz-imgs.n3 figure:first-child { grid-row: span 2; }
+.viz-imgs figure { margin: 0; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); background: var(--bg); position: relative; }
+.viz-imgs img { width: 100%; height: 100%; max-height: 260px; object-fit: cover; display: block; min-height: 110px; }
+.viz-imgs figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 8px 5px; font-size: 11px; color: #fff; background: linear-gradient(transparent, rgba(0,0,0,.65)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.viz-credit { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.viz-credit a { color: var(--muted); text-decoration: underline; font-weight: 400; }
+
+/* ============================================================
    REPORT A BUG (side menu that slides in from the right)
    ============================================================ */
 .report-bug-btn { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); padding: 3px 8px; border-radius: 8px; }
@@ -539,6 +590,33 @@ svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width:
         <option value="#d6457a">Pink</option>
       </select>
     </div>
+    <div class="field">
+      <label>Response length</label>
+      <div class="seg" data-pref="len">
+        <button type="button" data-v="summary">Summary</button>
+        <button type="button" data-v="onpoint">On point</button>
+        <button type="button" data-v="detailed">Detailed</button>
+      </div>
+    </div>
+    <div class="field">
+      <label>Response type</label>
+      <div class="seg" data-pref="rtype">
+        <button type="button" data-v="explain">Explanatory</button>
+        <button type="button" data-v="visual">Visual</button>
+        <button type="button" data-v="both">Both <em>Best</em></button>
+      </div>
+      <small id="rtypeHelp"></small>
+    </div>
+    <div class="field">
+      <label>Response gist</label>
+      <div class="seg" data-pref="gist">
+        <button type="button" data-v="serious">Serious</button>
+        <button type="button" data-v="calm">Calm</button>
+        <button type="button" data-v="slang">Slang</button>
+        <button type="button" data-v="cute">Cute</button>
+      </div>
+      <small id="gistHelp"></small>
+    </div>
     <div class="field check-row">
       <input type="checkbox" id="onlineInput" checked>
       <label for="onlineInput">Search online when Bob doesn't know someone</label>
@@ -550,6 +628,7 @@ svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width:
     </div>
     <div class="modal-btns">
       <button class="btn danger" id="clearBtn">Clear all chats</button>
+      <button class="btn ghost" id="clearCacheBtn">Clear saved answers</button>
       <button class="btn ghost" id="logoutBtn">Log out</button>
       <button class="btn ghost" id="cancelBtn">Cancel</button>
       <button class="btn primary" id="saveBtn">Save</button>
@@ -1130,6 +1209,8 @@ function evalF(n, x) {
   const R = Math.PI / 180;
   switch (n[0]) {
     case "num": return parseFloat(n[1]);
+    case "q": return n[1].val(); // a fraction made during step by step work
+    case "fr": return n[1] / n[2]; // a written fraction like 1/2
     case "var": if (x === undefined) throw "variable"; return x;
     case "const": return n[1];
     case "neg": return -evalF(n[1], x);
@@ -1155,6 +1236,8 @@ function evalF(n, x) {
 /* Same as evalF but keeps exact fractions. Throws if it can't (like sin or pi). */
 function evalQ(n) {
   switch (n[0]) {
+    case "q": return n[1];
+    case "fr": return new Frac(n[1], n[2]);
     case "num": {
       const [w, d = ""] = n[1].split(".");
       return new Frac(parseInt((w || "0") + d, 10), Math.pow(10, d.length));
@@ -1254,6 +1337,10 @@ function solveEquation(text, L, Rt, v) {
     }
     const ans = -c / b;
     return {
+      // eqSteps feed the step cards in Visual mode
+      eqSteps: [[shown, "Start with the equation"],
+        [`${polyStr([0, b, 0], v)} = ${fmtExact(-c)}`, `Get the ${v} terms on one side and the numbers on the other`],
+        ...(Math.abs(b - 1) < 1e-12 ? [] : [[`${v} = ${fmtExact(ans)}`, `Divide both sides by ${fmtExact(b)}`]])],
       short: `**${v} = ${fmtWithApprox(ans)}**`,
       steps: `**Solving: ${shown}**\n\n` +
         `1. Get all the ${v} terms on one side and the plain numbers on the other. It simplifies to: **${polyStr([0, b, 0], v)} = ${fmtExact(-c)}**\n` +
@@ -1289,7 +1376,14 @@ function solveEquation(text, L, Rt, v) {
         out += `\n\nTip: this one factors nicely as (${v} ${lo > 0 ? "-" : "+"} ${Math.abs(lo)})(${v} ${hi > 0 ? "-" : "+"} ${Math.abs(hi)}) = 0.`;
       }
     }
-    return { short, steps: out };
+    const roots = D < -1e-12 ? [] : Math.abs(D) < 1e-12 ? [clean(-b / (2 * a))] : [clean((-b - Math.sqrt(D)) / (2 * a)), clean((-b + Math.sqrt(D)) / (2 * a))].sort((p, q) => p - q);
+    return {
+      short, steps: out,
+      quad: { a, b, c, roots, v },
+      eqSteps: [[shown, "Start with the equation"], [`${polyStr([a, b, c], v)} = 0`, "Move everything to one side"],
+        [`b² - 4ac = ${fmtExact(D)}`, "Find the discriminant"],
+        [roots.length ? roots.map(r => `${v} = ${fmtExact(r)}`).join("  or  ") : "No real answers", "Use the quadratic formula"]]
+    };
   }
 
   // HARDER EQUATIONS: search for answers numerically between -100 and 100
@@ -1627,7 +1721,13 @@ function mathEngine(question) {
     if (!isFinite(v)) return ans("**Undefined**", `**${pretty(s)}** is undefined (you can't divide by zero).`);
     const result = exact && exact.d !== 1 ? `${fmtFrac(exact)} = ${fmt(exact.val())}` : fmt(v);
     const hasTrig = /sin|cos|tan/.test(s);
-    return ans(`**${result}**`, `**${pretty(s)} = ${result}**` + (hasTrig ? `\n\n(Trig is in degrees.)` : /[+\-].*[*/]|[*/].*[+\-]/.test(s) ? `\n\nRemember PEMDAS: multiply and divide before you add and subtract.` : ""));
+    const out = ans(`**${result}**`, `**${pretty(s)} = ${result}**` + (hasTrig ? `\n\n(Trig is in degrees.)` : /[+\-].*[*/]|[*/].*[+\-]/.test(s) ? `\n\nRemember PEMDAS: multiply and divide before you add and subtract.` : ""));
+    out.exprSteps = exprSteps(tree); // used by step cards in Visual mode
+    out.frac = exact;
+    if (out.exprSteps.length > 2 && mode.id !== "quick") {
+      out.steps += `\n\n**Step by step:**\n` + out.exprSteps.slice(1).map((st, i) => `${i + 1}. ${st[1]} → **${st[0]}**`).join("\n");
+    }
+    return out;
   };
 
   try { return attempt(expr); } catch (e) { }
@@ -1670,7 +1770,7 @@ let pendingQuiz = null; // the question Bob is waiting for you to answer
 function startMathQuiz(g, intro = true) {
   const p = g.gen();
   pendingQuiz = { kind: "num", gen: g, answer: p.a, why: p.why };
-  return { text: `${intro ? `**${g.name} quiz!** ` : ""}${p.q}\n\nType your answer, or say "skip".`, sources: [SRC_ENGINE] };
+  return { text: `${intro ? `**${g.name} quiz!** ` : ""}${p.q}\n\nType your answer, or say "skip".`, sources: [SRC_ENGINE], kind: "quiz" };
 }
 
 function startChoiceQuiz(entry) {
@@ -1684,7 +1784,8 @@ function startChoiceQuiz(entry) {
   pendingQuiz = { kind: "choice", entry, opts, letter: letters[opts.indexOf(entry)] };
   return {
     text: `**Who or what am I describing?**\n\n"${clue}"\n\n` + opts.map((o, i) => `- **${letters[i]}.** ${o.title}`).join("\n") + `\n\nType A, B, or C.`,
-    sources: [entry.src || SRC_PDF]
+    sources: [entry.src || SRC_PDF],
+    kind: "quiz"
   };
 }
 
@@ -1742,7 +1843,7 @@ function gradeQuiz(input) {
     const next = q.kind === "num" ? startMathQuiz(q.gen, false) : startChoiceQuiz(pick(KB.filter(e => e.cat === q.entry.cat)));
     text += `\n\n**Next question:** ` + next.text;
   }
-  return { text, sources: [q.kind === "num" ? SRC_ENGINE : SRC_PDF] };
+  return { text, sources: [q.kind === "num" ? SRC_ENGINE : SRC_PDF], kind: "quiz" };
 }
 
 /* ================================================================
@@ -1824,6 +1925,8 @@ async function wikiLookup(name, isPerson, strict) {
       if (sum.type === "disambiguation" || !sum.extract) continue;
       return {
         title: sum.title,
+        image: sum.thumbnail && sum.thumbnail.source, // lead picture, used by Visual mode
+        host: h.host,
         desc: sum.description || "",
         text: tidy(sum.extract),
         url: safeUrl((sum.content_urls && sum.content_urls.desktop && sum.content_urls.desktop.page) || `https://${h.host}/wiki/${encodeURIComponent(sum.title)}`),
@@ -1900,7 +2003,8 @@ async function lookupOnline(name, isPerson = true, strict = false) {
   let text = "";
   const isCreator = !!yt || (wiki && CREATOR_WORDS.test(wiki.desc + " " + wiki.text));
   if (wiki) {
-    text += `**${wiki.title}**${wiki.desc ? " (" + tidy(wiki.desc) + ")" : ""}\n\n${shorten(wiki.text, mode.id === "quick" ? 1 : 4)}`;
+    const L = lenPref(), count = L === "summary" ? 1 : L === "detailed" ? 12 : 3;
+    text += `**${wiki.title}**${wiki.desc ? " (" + tidy(wiki.desc) + ")" : ""}\n\n${shorten(wiki.text, count)}`;
     sources.push(wiki.simple ? "Simple Wikipedia" : "Wikipedia");
     // Remember who they are for next time (stats are left out since they go stale)
     learn({ cat: "Learned online", title: wiki.title, names: [name], keys: wiki.desc, text: shorten(wiki.text, 4), src: sources[0], url: wiki.url, creator: isCreator });
@@ -1916,8 +2020,8 @@ async function lookupOnline(name, isPerson = true, strict = false) {
   if (isCreator) text += `\n\n**More stats:** ${statLinks(name, yt && yt.handle)}`;
   if (wiki) text += `\n\n[Read the full article](${wiki.url})`;
   if (ytBroke) text += `\n\n(Your YouTube API key didn't work, so I skipped live stats. Check it in Settings.)`;
-  else if (!key && isCreator) text += `\n\nTip: add a free YouTube API key in Settings to see live subscriber counts here.`;
-  return { text, sources };
+  else if (!key && isCreator && lenPref() !== "summary") text += `\n\nTip: add a free YouTube API key in Settings to see live subscriber counts here.`;
+  return { text, sources, kind: "web", imgTitle: wiki && wiki.title, imgHost: wiki && wiki.host, leadImage: wiki && wiki.image };
 }
 
 /* Spots "look it up" questions and pulls out the thing being asked about:
@@ -1975,7 +2079,7 @@ function userName() { return (profile && profile.name) || "there"; }
    text or a function, for answers that change (time, your name...).
    To add one: copy an entry, change the patterns and the answer.
    ================================================================ */
-const BOB_VERSION = "1.3";
+const BOB_VERSION = "1.4";
 const BOB_BIRTHDAY = "October 2026";
 
 const JOKES = [
@@ -2098,6 +2202,8 @@ const SELF_QA = [
     a: () => `When I don't know someone, I search Simple English Wikipedia and regular Wikipedia, pick the best matching page, and give you links to Social Blade and ViewStats for their stats. With a YouTube API key in Settings, I can also show live subscriber counts.` },
   { p: [/(do|can) you need (the )?internet/, /do you work offline/, /can i use you offline/, /without (the )?internet/],
     a: () => `Mostly no! My files, math engine, and quizzes all work offline. I only need internet to look up people and things I don't know.` },
+  { p: [/do you (save|cache|remember) (your )?answers/, /why (was|is) (that|it) (so )?(fast|instant)/, /(clear|delete) (the )?(cache|saved answers)/],
+    a: () => `I save my answers on this device, so if you ask the same thing again (with the same settings) I answer instantly, even offline. Looked up answers refresh after a week. You can clear them in **Settings** with **Clear saved answers**.` },
   { p: [/can you (learn|get smarter|remember)/, /do you remember (me|things|what i said)/, /will you remember/],
     a: () => `A little! On this device I remember your name, your chats, and anyone I looked up online. FallGameDev makes me smarter by adding new files.` },
   { p: [/can i (add|upload|give you) (a )?(file|pdf|document|my notes)/, /how do i (add|upload) (files|pdfs?)/],
@@ -2142,6 +2248,9 @@ const SELF_QA = [
     a: () => `Tap **Report a bug** at the bottom of the page. Fill in what happened, pick your email app, and it opens with everything filled in, including info that helps FallGameDev fix it.` },
   { p: [/how do i use you/, /how does this work/, /i'm new/, /getting started/, /tutorial/],
     a: () => `Just type a question! Try:\n\n- "Solve 3x + 7 = 22"\n- "What is the Pythagorean theorem?"\n- "Who is MrBeast?"\n- "Quiz me on fractions"\n\nYou can switch between Study, Quick, and Quiz me modes at the top.` },
+
+  { p: [/how (do|can) i (change|make) (how you (talk|respond|answer|explain)|your (answers?|responses?|tone|style))/, /(make|can) (you|your answers?) (shorter|longer|more detailed|less wordy)/, /talk (like|in) (gen z|slang|a kid|cute)/, /(can you|show me) (pictures|images|visuals)/, /response (length|type|gist|style)/],
+    a: () => `Open **Settings** (click your name at the bottom left). You can pick:\n\n- **Response length:** Summary, On point, or Detailed\n- **Response type:** Explanatory (text), Visual (pictures and step by step visuals), or Both\n- **Response gist:** Serious, Calm, Slang, or Cute` },
 
   // ---------- Chit chat ----------
   { p: [/what are you doing/, /what are you up to/, /what is up\b/, /^ ?sup /, /what about you/],
@@ -2188,7 +2297,7 @@ async function askBob(question) {
 
   // 2. Small talk
   if (/^(hi|hey|hello|yo|sup|hiya|howdy|good (morning|afternoon|evening))\b/.test(low) && low.length < 30 && (/^(hi|hey|hello|yo|sup|hiya|howdy|good (morning|afternoon|evening))( there)?( bob)?[!.\s]*$/.test(low) || !search(q)))
-    return { text: `Hey ${userName()}! What do you want to learn about? You can ask me about games, YouTubers, history, how AI reads words, or give me any math problem.`, sources: [] };
+    return { text: tone().hello(userName()), sources: [], kind: "chat", noTone: true };
   // Questions about Bob himself (100+ ways to ask, see SELF_QA)
   const self = selfAnswer(q);
   if (self) return self;
@@ -2214,7 +2323,15 @@ async function askBob(question) {
 
   // 4. Math problems
   const m = isMostlyMath(q) ? mathEngine(q) : null;
-  if (m) return { text: mode.id === "quick" ? m.short : m.steps, sources: [SRC_ENGINE] };
+  if (m) {
+    const L = lenPref();
+    let text = L === "summary" ? m.short : m.steps;
+    if (L === "detailed") {
+      const lesson = lessonFor(q);
+      if (lesson) text += `\n\n**The idea behind it (${lesson.title}):** ${lesson.text}` + (lesson.example ? `\n\n**Another example:** ${lesson.example}` : "");
+    }
+    return { text, sources: [SRC_ENGINE], kind: "math", math: m };
+  }
 
   // 5. A person or thing Bob doesn't know? Look it up online
   const online = !profile || profile.online !== false;
@@ -2226,13 +2343,29 @@ async function askBob(question) {
   if (hit) {
     const e = hit.entry;
     const src = e.src || (e.cat === "Math" ? `${SRC_LESSON}${e.grade ? " (Grade " + e.grade + ")" : ""}` : SRC_PDF);
-    if (mode.id === "quick") return { text: e.text.split(/(?<=\.)\s/)[0], sources: [src] };
+    const L = lenPref();
+    const extra = { kind: "topic", imgTitle: wikiTitleFor(e), imgHost: e.url ? new URL(e.url).host : "en.wikipedia.org" };
+    if (L === "summary") return { text: `**${e.title}:** ${firstSentence(e.text)}`, sources: [src], ...extra };
     let text = `**${e.title}**\n\n${e.text}`;
     if (e.example) text += `\n\n**Example:** ${e.example}`;
     if (e.url) text += `\n\n[Read the full article](${e.url})` + (e.creator ? ` · ${statLinks(e.names[0] || e.title)}` : "");
     const ru = hit.runnerUp;
-    if (ru && ru.score >= 4 && ru.entry.cat === e.cat) text += `\n\nYou might also like: **${ru.entry.title}**`;
-    return { text, sources: [src] };
+    if (L === "detailed") {
+      // Extra facts from Wikipedia (skipped quietly if offline)
+      const wt = wikiTitleFor(e), online = !profile || profile.online !== false;
+      if (wt && online && e.cat !== "Learned online") {
+        try {
+          const sum = await getJSON(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(wt.replace(/ /g, "_"))}`, 5000);
+          if (sum.extract && sum.type !== "disambiguation") {
+            text += `\n\n**More from Wikipedia:** ${shorten(tidy(sum.extract), 4)}`;
+            if (!e.url && sum.content_urls) text += ` [Read more](${safeUrl(sum.content_urls.desktop.page)})`;
+          }
+        } catch (err) { }
+      }
+      if (ru && ru.score >= 3) text += `\n\n**Related: ${ru.entry.title}.** ${firstSentence(ru.entry.text)}`;
+      if (e.cat === "Math") text += `\n\n**Practice it:** say "quiz me on ${e.title.toLowerCase()}" and I'll give you problems.`;
+    } else if (ru && ru.score >= 4 && ru.entry.cat === e.cat) text += `\n\nYou might also like: **${ru.entry.title}**`;
+    return { text, sources: [src], ...extra };
   }
 
   // 7. Nothing matched. If it's short (probably a name), try online
@@ -2292,7 +2425,7 @@ function inline(s) {
 }
 
 /* Adds a message. If animate is true, Bob "types" it out word by word. */
-async function addMessage(role, text, sources, animate) {
+async function addMessage(role, text, sources, animate, extra = {}) {
   const div = document.createElement("div");
   div.className = "msg " + role;
   if (role === "user") {
@@ -2303,6 +2436,8 @@ async function addMessage(role, text, sources, animate) {
     return;
   }
   div.innerHTML = `<div class="logo">b</div><div class="bot-body"><div class="content"></div></div>`;
+  // Pictures and diagrams: above the text in Visual mode, below it in Both mode
+  if (extra.visual) div.querySelector(".bot-body").insertAdjacentHTML(extra.visualPos === "top" ? "afterbegin" : "beforeend", `<div class="visual-block">${extra.visual}</div>`);
   $("thread").appendChild(div);
   const content = div.querySelector(".content"), body = div.querySelector(".bot-body");
 
@@ -2340,7 +2475,7 @@ function renderChat() {
   pendingQuiz = null;
   const empty = !current || current.messages.length === 0;
   $("welcome").style.display = empty ? "block" : "none";
-  if (current) current.messages.forEach(m => addMessage(m.role, m.text, m.sources, false));
+  if (current) current.messages.forEach(m => addMessage(m.role, m.text, m.sources, false, m));
   lastReply = current ? [...current.messages].reverse().find(m => m.role === "bot") || null : null;
   renderList();
 }
@@ -2372,13 +2507,24 @@ async function send(text) {
 
   showTyping();
   let reply;
-  try { reply = await askBob(text); }
-  catch (e) { reply = { text: "Oops, something went wrong on my end. Try asking another way!", sources: [] }; }
+  const saved = cacheGet(text);
+  if (saved) { reply = saved; await sleep(250); } // already answered this before
+  else {
+    try { reply = await askBob(text); }
+    catch (e) { reply = { text: "Oops, something went wrong on my end. Try asking another way!", sources: [] }; }
+  }
+  if (!reply.kind) reply.kind = "chat";
+  if (!reply.cached) {
+    try { reply = await decorate(reply, text); } catch (e) { /* pictures are a bonus, never block the answer */ }
+    cacheSet(text, reply);
+  }
   $("typing").remove();
   lastReply = reply;
 
-  current.messages.push({ role: "bot", text: reply.text, sources: reply.sources });
-  await addMessage("bot", reply.text, reply.sources, true);
+  const msg = { role: "bot", text: reply.text, sources: reply.sources };
+  if (reply.visual) { msg.visual = reply.visual; msg.visualPos = reply.visualPos; }
+  current.messages.push(msg);
+  await addMessage("bot", reply.text, reply.sources, true, msg);
   save();
   busy = false; updateSend();
 }
@@ -2465,6 +2611,21 @@ $("nameInput").addEventListener("input", updatePreview);
 $("colorInput").addEventListener("change", updatePreview);
 $("nameInput").addEventListener("keydown", e => { if (e.key === "Enter") $("saveBtn").click(); });
 
+/* Segmented buttons for length, type and gist */
+const SEG_HELP = {
+  rtype: { explain: "Text only.", visual: "Pictures and step by step visuals first, then text.", both: "Text, plus a picture or diagram when it helps. Recommended!" },
+  gist: { serious: "Straight to the point. No emoji.", calm: "Friendly and clear.", slang: "Talks like Gen Z and Gen Alpha, no cap.", cute: "Extra sweet, with cute emoji." }
+};
+function setSeg(seg, v) {
+  seg.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.v === v));
+  const help = SEG_HELP[seg.dataset.pref];
+  if (help) $(seg.dataset.pref + "Help").textContent = help[v] || "";
+}
+function segValue(k) { const on = document.querySelector(`.seg[data-pref="${k}"] .on`); return on ? on.dataset.v : PREF_DEFAULTS[k]; }
+document.querySelectorAll(".seg").forEach(seg => seg.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (b) setSeg(seg, b.dataset.v);
+}));
+
 let firstTime = false;
 function openSettings(isFirst) {
   firstTime = isFirst;
@@ -2473,10 +2634,13 @@ function openSettings(isFirst) {
   $("cancelBtn").style.display = isFirst ? "none" : "";
   $("clearBtn").style.display = isFirst ? "none" : "";
   $("logoutBtn").style.display = isFirst ? "none" : "";
+  $("clearCacheBtn").style.display = isFirst ? "none" : "";
+  $("clearCacheBtn").textContent = `Clear saved answers (${cacheCount()})`;
   $("saveBtn").textContent = isFirst ? "Let's go" : "Save";
   $("nameInput").value = (profile && profile.name) || "";
   $("colorInput").value = (profile && profile.color) || "#c96a3c";
   $("onlineInput").checked = !profile || profile.online !== false;
+  document.querySelectorAll(".seg").forEach(seg => setSeg(seg, pref(seg.dataset.pref)));
   $("ytKeyInput").value = (profile && profile.ytKey) || "";
   updatePreview();
   $("modalBg").classList.add("open");
@@ -2493,9 +2657,14 @@ $("saveBtn").onclick = () => {
     name: $("nameInput").value.trim() || "Guest",
     color: $("colorInput").value,
     online: $("onlineInput").checked,
+    len: segValue("len"), rtype: segValue("rtype"), gist: segValue("gist"),
     ytKey: $("ytKeyInput").value.trim()
   };
   saveProfile(); applyProfile(); closeSettings();
+};
+$("clearCacheBtn").onclick = () => {
+  try { localStorage.removeItem(CACHE_KEY); } catch (e) { }
+  $("clearCacheBtn").textContent = "Saved answers cleared";
 };
 $("clearBtn").onclick = () => {
   if (!confirm("Delete every chat? This cannot be undone.")) return;
@@ -2794,6 +2963,467 @@ $("bugAnother").onclick = () => {
   $("bugDone").hidden = true; $("bugForm").hidden = false; updateBugPreview(); $("bugTitle").focus();
 };
 $("bugCloseDone").onclick = closeBugPanel;
+
+/* ================================================================
+   PART 11: RESPONSE SETTINGS (length, type, gist)
+     length: summary | onpoint (default) | detailed
+     type:   explain (default) | visual | both (recommended)
+     gist:   serious | calm (default) | slang | cute
+   Length is used while Bob builds an answer. Type and gist are
+   added on top of the finished answer by decorate() below.
+   ================================================================ */
+const PREF_DEFAULTS = { len: "onpoint", rtype: "explain", gist: "calm" };
+function pref(k) { return (profile && profile[k]) || PREF_DEFAULTS[k]; }
+// Quick mode always means a short answer
+function lenPref() { return mode.id === "quick" ? "summary" : pref("len"); }
+
+// Safe text for HTML
+const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const firstSentence = t => t.split(/(?<=[.!?])\s+/)[0];
+
+/* ---------- Gist: how Bob talks ---------- */
+const TONES = {
+  serious: {
+    intro: [], outro: [], chatTail: [""],
+    correct: "Correct.", wrong: "Incorrect.",
+    hello: n => `Hello ${n}. What would you like to study?`
+  },
+  calm: {
+    intro: [], outro: [], chatTail: [""],
+    correct: "Correct!", wrong: "Not quite.",
+    hello: n => `Hey ${n}! What do you want to learn about? You can ask me about games, YouTubers, history, how AI reads words, or give me any math problem.`
+  },
+  slang: {
+    intro: ["Ok bet, here's the tea:", "Say less, I got you:", "Alright, lock in:", "No cap, this one's easy:", "Bet. Let's cook:"],
+    outro: ["You got this fr 🔥", "Lowkey easy once you see it.", "Big W for asking 🙌", "Now you're cooking 🍳", "That's the whole vibe. Any more q's?"],
+    chatTail: [" fr", " 🤙", " no cap", ""],
+    correct: "W answer! 🔥", wrong: "Ehh, not quite. Small L, you'll get the next one.",
+    hello: n => `Yooo ${n}! What we learning today? Hit me with games, YouTubers, history, or any math problem 🔥`
+  },
+  cute: {
+    intro: ["Ooh, great question! 🌸", "Yay, let's figure this out together! ✨", "Hehe, I love this one! 💕", "Ooh ooh, I know this! 🐣"],
+    outro: ["You're doing amazing! 🌟", "Keep going, you've got this! 🐣", "Proud of you for learning! 💖", "Yay, learning time is the best! ✨"],
+    chatTail: [" ✨", " 🌸", " 💕"],
+    correct: "Yay, you got it! 🎉", wrong: "Aww, so close! 🌷",
+    hello: n => `Hiii ${n}! 🌸 What should we learn today? Games, YouTubers, history, or math, I'm ready! ✨`
+  }
+};
+const tone = () => TONES[pref("gist")] || TONES.calm;
+
+function applyTone(reply) {
+  const g = pref("gist"), T = tone();
+  let text = reply.text;
+  if (reply.kind === "quiz") {
+    text = text.replace(/<good>Correct!<\/good>/g, `<good>${T.correct}</good>`).replace(/<bad>Not quite\.<\/bad>/g, `<bad>${T.wrong}</bad>`);
+  } else if (["topic", "math", "web"].includes(reply.kind) && T.intro.length) {
+    text = `${pick(T.intro)}\n\n${text}\n\n${pick(T.outro)}`;
+  } else if (reply.kind === "chat" && !reply.noTone) {
+    text = text.replace(/\s*$/, "") + pick(T.chatTail);
+  }
+  if (g === "serious") {
+    // Serious mode: no emoji, calmer punctuation in Bob's own chit chat
+    text = text.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, "").replace(/ +\n/g, "\n");
+    if (reply.kind === "chat") text = text.replace(/(?<=[a-z)])!(?=\s|$)/gi, ".");
+  }
+  return { ...reply, text };
+}
+
+/* ---------- Pictures from Wikipedia ----------
+   Uses the pictures inside the Wikipedia article itself, so they
+   match the topic (and are safer than a random image search). */
+const IMG_SKIP = /logo|icon|flag|symbol|commons-|wikipedia|wiktionary|edit-|question_book|ambox|padlock|disambig|portal|stub|signature|blank|placeholder|\.svg$/i;
+const imgCache = {};
+
+async function wikiImages(title, count, host = "en.wikipedia.org", lead = null) {
+  const key = host + "|" + title + "|" + count;
+  if (imgCache[key]) return imgCache[key];
+  const out = [];
+  let pageTitle = title;
+  try {
+    if (!lead) {
+      const sum = await getJSON(`https://${host}/api/rest_v1/page/summary/${encodeURIComponent(title.replace(/ /g, "_"))}`, 5000);
+      if (sum.type === "disambiguation") return [];
+      pageTitle = sum.title || title;
+      lead = sum.thumbnail && sum.thumbnail.source;
+    }
+    if (lead) out.push({ src: lead, caption: pageTitle });
+    if (count > 1) {
+      const list = await getJSON(`https://${host}/w/api.php?action=query&titles=${encodeURIComponent(pageTitle)}&prop=images&imlimit=40&redirects=1&format=json&origin=*`, 5000);
+      const page = Object.values((list.query && list.query.pages) || {})[0] || {};
+      const leadName = lead ? decodeURIComponent(lead.split("/").pop()).replace(/^\d+px-/, "").toLowerCase() : "";
+      const files = (page.images || []).map(i => i.title)
+        .filter(t => /\.(jpe?g|png|webp|gif)$/i.test(t) && !IMG_SKIP.test(t) && !leadName.includes(t.replace(/^File:/, "").replace(/ /g, "_").toLowerCase()))
+        .slice(0, 8);
+      if (files.length) {
+        const info = await getJSON(`https://${host}/w/api.php?action=query&titles=${files.map(encodeURIComponent).join("|")}&prop=imageinfo&iiprop=url|size&iiurlwidth=480&format=json&origin=*`, 5000);
+        Object.values((info.query && info.query.pages) || {}).forEach(p => {
+          const ii = p.imageinfo && p.imageinfo[0];
+          if (out.length < count && ii && ii.thumburl && ii.width >= 150 && ii.height >= 100) {
+            out.push({ src: ii.thumburl, caption: p.title.replace(/^File:/, "").replace(/\.[a-z]+$/i, "").replace(/[_-]+/g, " ") });
+          }
+        });
+      }
+    }
+  } catch (e) { /* no internet or blocked: just skip the pictures */ }
+  imgCache[key] = out;
+  out.page = `https://${host}/wiki/${encodeURIComponent(pageTitle.replace(/ /g, "_"))}`;
+  return out;
+}
+
+function imageGrid(imgs) {
+  if (!imgs.length) return "";
+  return `<div class="viz-imgs n${imgs.length}">` + imgs.map(i =>
+    `<figure><img src="${esc(i.src)}" alt="${esc(i.caption)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('figure').remove()"><figcaption>${esc(i.caption)}</figcaption></figure>`
+  ).join("") + `</div><div class="viz-credit">Pictures from <a href="${esc(imgs.page || "https://wikipedia.org")}" target="_blank" rel="noopener">Wikipedia</a></div>`;
+}
+
+/* Which Wikipedia page has the right picture for each topic in Bob's files.
+   false = no good page, so no picture. */
+const WIKI_TITLES = {
+  "Rec Room": "Rec Room (video game)", "Overwatch": "Overwatch (video game)", "Snaptic": false,
+  "brissanna": false, "FallGameDev": false, "Flamingo": "Flamingo (YouTuber)", "Penguinz0": "Penguinz0",
+  "Parts of Speech Tagging": "Part-of-speech tagging", "Dependency Trees": "Dependency grammar",
+  "BPE Tokenization": "Byte pair encoding", "Procedural Noise": "Perlin noise", "Web Games vs Roblox Development": false,
+  "Shapes": "Shape", "Comparing Numbers": "Inequality (mathematics)", "Telling Time": "Clock face", "Money": "Coin",
+  "Even and Odd Numbers": "Parity (mathematics)", "Area and Perimeter": "Area", "Factors and Multiples": "Divisor",
+  "Adding and Subtracting Fractions": "Fraction", "Multiplying and Dividing Fractions": "Fraction",
+  "Ratios and Rates": "Ratio", "Percents": "Percentage", "Integers and Negative Numbers": "Integer",
+  "Mean, Median, Mode, and Range": "Average", "Variables and Expressions": "Expression (mathematics)",
+  "GCF and LCM": "Greatest common divisor", "Solving Equations": "Equation solving", "Circles": "Circle",
+  "Pythagorean Theorem": "Pythagorean theorem", "Linear Functions": "Linear function", "Square Roots": "Square root",
+  "Triangle Angle Sum": "Sum of angles of a triangle", "Similar and Congruent Shapes": "Similarity (geometry)",
+  "Geometric Proofs": "Mathematical proof", "Sequences": "Arithmetic progression", "Exponential Growth and Decay": "Exponential growth",
+  "Quadratic Formula": "Quadratic formula", "Coordinate Plane": "Cartesian coordinate system"
+};
+function wikiTitleFor(entry) {
+  if (entry.url && entry.cat === "Learned online") return entry.title;
+  const t = WIKI_TITLES[entry.title];
+  return t === false ? null : (t || entry.title);
+}
+
+/* ---------- Math pictures (drawn by Bob, no internet needed) ---------- */
+const svgBox = (inner, cap, h = 210) =>
+  `<div class="viz"><svg viewBox="0 0 320 ${h}" role="img" aria-label="${esc(cap || "diagram")}">${inner}</svg>${cap ? `<div class="viz-cap">${esc(cap)}</div>` : ""}</div>`;
+const tx = (x, y, s, anchor = "middle", cls = "") => `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="${anchor}" class="${cls}">${esc(s)}</text>`;
+const n2 = v => fmt(+(+v).toFixed(2));
+
+function drawRect(l, w, cap) {
+  const s = Math.min(230 / l, 130 / w), W = l * s, H = w * s, x = (320 - W) / 2, y = (200 - H) / 2 + 6;
+  return svgBox(`<rect class="shape" x="${x}" y="${y}" width="${W}" height="${H}" rx="3"/>` +
+    tx(160, y - 8, n2(l)) + tx(x + W + 8, y + H / 2 + 4, n2(w), "start"), cap);
+}
+function drawTriangle(b, h, cap) {
+  const s = Math.min(230 / b, 150 / h), B = b * s, H = h * s, x0 = (320 - B) / 2, y0 = 190, ax = x0 + B * 0.35;
+  return svgBox(`<polygon class="shape" points="${x0},${y0} ${x0 + B},${y0} ${ax},${y0 - H}"/>` +
+    `<line class="guide" x1="${ax}" y1="${y0 - H}" x2="${ax}" y2="${y0}"/>` +
+    tx(160, y0 + 16, "base " + n2(b)) + tx(ax + 6, y0 - H / 2, "height " + n2(h), "start"), cap, 215);
+}
+function drawCircle(r, isDiameter, cap) {
+  const R = 78, cx = 160, cy = 105;
+  const line = isDiameter
+    ? `<line class="edge" x1="${cx - R}" y1="${cy}" x2="${cx + R}" y2="${cy}"/>` + tx(cx, cy - 8, "diameter " + n2(r * 2))
+    : `<line class="edge" x1="${cx}" y1="${cy}" x2="${cx + R}" y2="${cy}"/>` + tx(cx + R / 2, cy - 8, "r = " + n2(r));
+  return svgBox(`<circle class="shape" cx="${cx}" cy="${cy}" r="${R}"/><circle class="dot" cx="${cx}" cy="${cy}" r="3.5"/>` + line, cap);
+}
+function drawBox(l, w, h, cap) {
+  const s = Math.min(150 / l, 100 / h, 90 / w), L = l * s, H = h * s, dx = w * s * 0.6, dy = w * s * 0.45;
+  const x = (320 - L - dx) / 2, y = 30 + dy;
+  return svgBox(
+    `<polygon class="shape" points="${x},${y} ${x + L},${y} ${x + L + dx},${y - dy} ${x + dx},${y - dy}"/>` +
+    `<polygon class="shape side" points="${x + L},${y} ${x + L + dx},${y - dy} ${x + L + dx},${y - dy + H} ${x + L},${y + H}"/>` +
+    `<rect class="shape" x="${x}" y="${y}" width="${L}" height="${H}"/>` +
+    tx(x + L / 2, y + H + 16, "length " + n2(l)) + tx(x + L + dx / 2 + 6, y + H - dy / 2 + 14, "width " + n2(w), "start") + tx(x - 6, y + H / 2, "height " + n2(h), "end"), cap, 220);
+}
+function drawTrapezoid(a, b, h, cap) {
+  const s = Math.min(240 / Math.max(a, b), 140 / h), A = a * s, B = b * s, H = h * s, y0 = 185;
+  const bx = (320 - B) / 2, ax = (320 - A) / 2;
+  return svgBox(`<polygon class="shape" points="${bx},${y0} ${bx + B},${y0} ${ax + A},${y0 - H} ${ax},${y0 - H}"/>` +
+    `<line class="guide" x1="${ax}" y1="${y0 - H}" x2="${ax}" y2="${y0}"/>` +
+    tx(160, y0 - H - 8, n2(a)) + tx(160, y0 + 16, n2(b)) + tx(ax - 6, y0 - H / 2, "h " + n2(h), "end"), cap);
+}
+function drawCylinder(r, h, cap) {
+  const s = Math.min(70 / r, 130 / h), R = r * s, H = h * s, cx = 160, top = (210 - H) / 2;
+  return svgBox(`<path class="shape" d="M${cx - R},${top} L${cx - R},${top + H} A${R},${R * 0.3} 0 0 0 ${cx + R},${top + H} L${cx + R},${top} Z"/>` +
+    `<ellipse class="shape side" cx="${cx}" cy="${top}" rx="${R}" ry="${R * 0.3}"/>` +
+    `<line class="edge" x1="${cx}" y1="${top}" x2="${cx + R}" y2="${top}"/>` + tx(cx + R / 2, top - 8, "r " + n2(r)) +
+    tx(cx + R + 8, top + H / 2, "h " + n2(h), "start"), cap);
+}
+function drawSphere(r, cap) {
+  return svgBox(`<circle class="shape" cx="160" cy="105" r="78"/><ellipse class="guide" cx="160" cy="105" rx="78" ry="22" fill="none"/>` +
+    `<line class="edge" x1="160" y1="105" x2="238" y2="105"/>` + tx(199, 97, "r = " + n2(r)), cap);
+}
+
+function drawRightTriangle(a, b, c, cap) {
+  const s = Math.min(210 / a, 150 / b), A = a * s, B = b * s, x0 = (320 - A) / 2 - 10, y0 = 185;
+  return svgBox(`<polygon class="shape" points="${x0},${y0} ${x0 + A},${y0} ${x0},${y0 - B}"/>` +
+    `<polyline class="edge thin" points="${x0 + 12},${y0} ${x0 + 12},${y0 - 12} ${x0},${y0 - 12}" fill="none"/>` +
+    tx(x0 + A / 2, y0 + 17, "a = " + n2(a)) + tx(x0 - 8, y0 - B / 2, "b = " + n2(b), "end") +
+    tx(x0 + A / 2 + 12, y0 - B / 2 - 8, "c = " + n2(c), "start", "hl"), cap, 215);
+}
+
+// Graph helper: turns math coordinates into picture coordinates
+function plotFrame(xmin, xmax, ymin, ymax) {
+  const X = x => 40 + (x - xmin) / (xmax - xmin) * 250, Y = y => 185 - (y - ymin) / (ymax - ymin) * 165;
+  let g = "";
+  const stepX = Math.max(1, Math.ceil((xmax - xmin) / 12)), stepY = Math.max(1, Math.ceil((ymax - ymin) / 10));
+  for (let x = Math.ceil(xmin / stepX) * stepX; x <= xmax; x += stepX) g += `<line class="grid" x1="${X(x)}" y1="20" x2="${X(x)}" y2="185"/>`;
+  for (let y = Math.ceil(ymin / stepY) * stepY; y <= ymax; y += stepY) g += `<line class="grid" x1="40" y1="${Y(y)}" x2="290" y2="${Y(y)}"/>`;
+  if (xmin <= 0 && xmax >= 0) g += `<line class="axis" x1="${X(0)}" y1="20" x2="${X(0)}" y2="185"/>`;
+  if (ymin <= 0 && ymax >= 0) g += `<line class="axis" x1="40" y1="${Y(0)}" x2="290" y2="${Y(0)}"/>`;
+  return { X, Y, g, clip: `<clipPath id="clip${Math.random().toString(36).slice(2, 8)}"><rect x="40" y="20" width="250" height="165"/></clipPath>` };
+}
+function drawLine(p1, p2, cap) {
+  const xs = [p1[0], p2[0], 0], ys = [p1[1], p2[1], 0];
+  const pad = v => Math.max(1, (Math.max(...v) - Math.min(...v)) * 0.25);
+  const xmin = Math.min(...xs) - pad(xs), xmax = Math.max(...xs) + pad(xs), ymin = Math.min(...ys) - pad(ys), ymax = Math.max(...ys) + pad(ys);
+  const f = plotFrame(xmin, xmax, ymin, ymax), id = f.clip.match(/id="([^"]+)"/)[1];
+  let line;
+  if (p1[0] === p2[0]) line = `<line class="edge" x1="${f.X(p1[0])}" y1="20" x2="${f.X(p1[0])}" y2="185"/>`;
+  else {
+    const m = (p2[1] - p1[1]) / (p2[0] - p1[0]), yAt = x => p1[1] + m * (x - p1[0]);
+    line = `<line class="edge" x1="${f.X(xmin)}" y1="${f.Y(yAt(xmin))}" x2="${f.X(xmax)}" y2="${f.Y(yAt(xmax))}"/>`;
+    // Rise and run helper lines
+    line += `<line class="guide" x1="${f.X(p1[0])}" y1="${f.Y(p1[1])}" x2="${f.X(p2[0])}" y2="${f.Y(p1[1])}"/><line class="guide" x1="${f.X(p2[0])}" y1="${f.Y(p1[1])}" x2="${f.X(p2[0])}" y2="${f.Y(p2[1])}"/>`;
+  }
+  const pts = [p1, p2].map(p => `<circle class="dot" cx="${f.X(p[0])}" cy="${f.Y(p[1])}" r="5"/>` + tx(f.X(p[0]) + 8, f.Y(p[1]) - 8, `(${n2(p[0])}, ${n2(p[1])})`, "start", "small")).join("");
+  return svgBox(`<defs>${f.clip}</defs>${f.g}<g clip-path="url(#${id})">${line}</g>${pts}`, cap);
+}
+function drawParabola(a, b, c, roots, v, cap) {
+  const vx = -b / (2 * a), spread = roots.length > 1 ? Math.abs(roots[1] - roots[0]) : 4;
+  const xmin = vx - Math.max(3, spread), xmax = vx + Math.max(3, spread);
+  const ys = []; for (let i = 0; i <= 60; i++) { const x = xmin + (xmax - xmin) * i / 60; ys.push(a * x * x + b * x + c); }
+  let ymin = Math.min(...ys, 0), ymax = Math.max(...ys, 0);
+  const pad = (ymax - ymin) * 0.1 || 1; ymin -= pad; ymax += pad;
+  const f = plotFrame(xmin, xmax, ymin, ymax), id = f.clip.match(/id="([^"]+)"/)[1];
+  const d = ys.map((y, i) => `${i ? "L" : "M"}${f.X(xmin + (xmax - xmin) * i / 60).toFixed(1)},${f.Y(y).toFixed(1)}`).join(" ");
+  const dots = roots.map(r => `<circle class="dot" cx="${f.X(r)}" cy="${f.Y(0)}" r="5"/>` + tx(f.X(r), f.Y(0) + 18, `${v} = ${n2(r)}`, "middle", "small hl")).join("");
+  return svgBox(`<defs>${f.clip}</defs>${f.g}<g clip-path="url(#${id})"><path class="curve" d="${d}"/></g>${dots}`, cap);
+}
+
+function drawPercentGrid(p, cap) {
+  const filled = Math.round(Math.min(100, Math.max(0, p)));
+  let cells = "";
+  for (let i = 0; i < 100; i++) {
+    const x = 20 + (i % 10) * 17, y = 20 + Math.floor(i / 10) * 17;
+    cells += `<rect class="${i < filled ? "cell on" : "cell"}" x="${x}" y="${y}" width="15" height="15" rx="2"/>`;
+  }
+  return svgBox(cells + tx(205, 90, `${n2(p)}%`, "start", "big") + tx(205, 115, `= ${filled} out of 100`, "start", "small"), cap);
+}
+function drawFractionBars(n, d, cap) {
+  const bars = Math.max(1, Math.ceil(n / d)), h = 34;
+  let g = "";
+  for (let b = 0; b < bars; b++) {
+    const y = 20 + b * (h + 14);
+    for (let i = 0; i < d; i++) {
+      const w = 260 / d, on = b * d + i < n;
+      g += `<rect class="${on ? "cell on" : "cell"}" x="${30 + i * w}" y="${y}" width="${w - 2}" height="${h}" rx="3"/>`;
+    }
+  }
+  const H = 20 + bars * (h + 14) + 24;
+  return svgBox(g + tx(160, H - 10, `${n}/${d} means ${n} pieces of size 1/${d}`, "middle", "small"), cap, H);
+}
+function drawBars(data, cap) {
+  const vals = data.slice(0, 12), max = Math.max(...vals, 0), min = Math.min(...vals, 0), mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+  const Y = v => 180 - (v - min) / ((max - min) || 1) * 150, w = 250 / vals.length;
+  let g = vals.map((v, i) => `<rect class="cell on" x="${40 + i * w + 3}" y="${Math.min(Y(v), Y(0))}" width="${w - 6}" height="${Math.abs(Y(v) - Y(0)) || 1}" rx="3"/>` + tx(40 + i * w + w / 2, Math.min(Y(v), Y(0)) - 5, n2(v), "middle", "small")).join("");
+  g += `<line class="mean" x1="36" y1="${Y(mean)}" x2="294" y2="${Y(mean)}"/>` + tx(294, Y(mean) - 6, "mean " + n2(mean), "end", "small hl");
+  return svgBox(`<line class="axis" x1="36" y1="${Y(0)}" x2="294" y2="${Y(0)}"/>` + g, cap);
+}
+
+/* Picks a picture for a math answer, if one would help */
+function mathDiagram(q, m) {
+  const low = q.toLowerCase(), n = nums(low).filter(x => x > 0);
+  try {
+    if (m.quad) return drawParabola(m.quad.a, m.quad.b, m.quad.c, m.quad.roots, m.quad.v, "The answers are where the curve crosses the line y = 0");
+    if (/pythag|hypotenuse|missing leg/.test(low) && n.length >= 2) {
+      let a = n[0], b = n[1], c = Math.hypot(a, b);
+      if (/missing leg|find the leg|other leg|leg if/.test(low)) { c = Math.max(n[0], n[1]); a = Math.min(n[0], n[1]); b = Math.sqrt(c * c - a * a); }
+      return drawRightTriangle(a, b, c, "a² + b² = c²");
+    }
+    const pts = [...low.matchAll(/\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)/g)].map(x => [+x[1], +x[2]]);
+    if (pts.length >= 2) return drawLine(pts[0], pts[1], /distance/.test(low) ? "Distance is the length between the dots" : /midpoint/.test(low) ? "The midpoint is halfway between the dots" : "Rise (up) over run (across)");
+    if (/\b(area|perimeter|circumference|volume)\b/.test(low) && n.length) {
+      const r = /diameter/.test(low) ? n[0] / 2 : n[0];
+      if (/sphere|ball/.test(low)) return drawSphere(r, "Sphere");
+      if (/cylinder|can\b/.test(low) && n[1]) return drawCylinder(r, n[1], "Cylinder");
+      if (/cube/.test(low)) return drawBox(n[0], n[0], n[0], "Cube");
+      if ((/prism|box/.test(low) || /volume/.test(low)) && n.length >= 3) return drawBox(n[0], n[1], n[2], "Box (rectangular prism)");
+      if (/circle|radius|diameter/.test(low)) return drawCircle(r, /diameter/.test(low), "Circle");
+      if (/trapezoid/.test(low) && n.length >= 3) return drawTrapezoid(n[0], n[1], n[2], "Trapezoid");
+      if (/triangle/.test(low) && n.length >= 2) return drawTriangle(n[0], n[1], "Triangle");
+      if (/square/.test(low) || n.length === 1) return drawRect(n[0], n[0], "Square");
+      if (n.length >= 2) return drawRect(n[0], n[1], "Rectangle");
+    }
+    let pm = low.match(/(-?\d+(?:\.\d+)?)\s*(?:%|percent) of/);
+    if (pm) return drawPercentGrid(+pm[1], `${pm[1]}% shaded`);
+    pm = low.match(/(-?\d+(?:\.\d+)?) is what (?:percent|%) of (-?\d+(?:\.\d+)?)/);
+    if (pm) return drawPercentGrid(+pm[1] / +pm[2] * 100, "Part of 100 squares");
+    if (/\b(mean|average|median|mode|range)\b/.test(low) && nums(low).length >= 2) return drawBars(nums(low), "Your numbers as bars");
+    if (m.frac && m.frac.d !== 1 && m.frac.d <= 24 && m.frac.n > 0 && m.frac.n / m.frac.d <= 3) return drawFractionBars(m.frac.n, m.frac.d, "Fraction bars");
+  } catch (e) { }
+  return "";
+}
+
+/* Step cards: every math answer, shown as numbered boxes */
+function stepCards(m) {
+  let steps = m.eqSteps || (m.exprSteps && m.exprSteps.length > 1 ? m.exprSteps : null);
+  if (!steps) {
+    // Turn the numbered lines of the written answer into cards
+    const lines = (m.steps || "").split("\n").map(l => l.match(/^\d+\. (.*)/)).filter(Boolean).map(x => [x[1].replace(/\*\*/g, ""), ""]);
+    if (lines.length >= 2) steps = lines;
+  }
+  if (!steps) return "";
+  return `<div class="viz-steps">` + steps.map((s, i) =>
+    `<div class="vstep"><span class="vnum">${i + 1}</span><div><div class="veq">${esc(s[0])}</div>${s[1] ? `<div class="vnote">${esc(s[1])}</div>` : ""}</div></div>`
+  ).join(`<div class="varrow">↓</div>`) + `</div>`;
+}
+
+/* Arithmetic, one PEMDAS step at a time: 3 + 4 × 2 -> 3 + 8 -> 11 */
+function showTree(n) {
+  const P = { "+": 1, "-": 1, "*": 2, "/": 2, "^": 3 };
+  const prec = x => x[0] === "bin" ? P[x[1]] : x[0] === "neg" ? 4 : 5;
+  const isNegLeaf = x => (x[0] === "num" && x[1].startsWith("-")) || (x[0] === "q" && x[1].n < 0);
+  switch (n[0]) {
+    case "num": return n[1];
+    case "q": return n[1].d === 1 ? String(n[1].n) : `${n[1].n}/${n[1].d}`;
+    case "fr": return `${n[1]}/${n[2]}`;
+    case "var": return n[1];
+    case "const": return Math.abs(n[1] - Math.PI) < 1e-12 ? "π" : String(n[1]);
+    case "neg": return "-" + (prec(n[1]) < 4 ? `(${showTree(n[1])})` : showTree(n[1]));
+    case "pct": return showTree(n[1]) + "%";
+    case "fact": return showTree(n[1]) + "!";
+    case "fn": return `${n[1] === "sqrt" ? "√" : n[1]}(${showTree(n[2])})`;
+    case "bin": {
+      const p = P[n[1]], sym = { "*": " × ", "/": " ÷ ", "+": " + ", "-": " - ", "^": "^" }[n[1]];
+      let l = showTree(n[2]), r = showTree(n[3]);
+      if (prec(n[2]) < p || (n[1] === "^" && prec(n[2]) <= p) || (n[1] === "^" && isNegLeaf(n[2]))) l = `(${l})`;
+      if (prec(n[3]) < p || (prec(n[3]) === p && /[-/]/.test(n[1])) || (isNegLeaf(n[3]) && n[1] !== "^")) r = `(${r})`;
+      // Fractions only need brackets next to ×, ÷ or exponents
+      const isFrac = x => x[0] === "fr" || (x[0] === "q" && x[1].d !== 1);
+      if (p >= 2 && isFrac(n[2])) l = `(${l})`;
+      if (p >= 2 && isFrac(n[3])) r = `(${r})`;
+      return l + sym + r;
+    }
+  }
+  return "?";
+}
+const isLeaf = n => n[0] === "num" || n[0] === "q" || n[0] === "fr" || n[0] === "const";
+// Turns written fractions like 1/2 (that don't divide evenly) into fraction pieces
+function markFractions(n) {
+  if (!Array.isArray(n)) return n;
+  if (n[0] === "bin" && n[1] === "/" && n[2][0] === "num" && n[3][0] === "num" && /^\d+$/.test(n[2][1]) && /^\d+$/.test(n[3][1]) && +n[3][1] !== 0 && +n[2][1] % +n[3][1] !== 0)
+    return ["fr", +n[2][1], +n[3][1]];
+  // A minus sign right on a number (like -3) is just a negative number, not a step
+  if (n[0] === "neg" && n[1][0] === "num") return ["num", "-" + n[1][1]];
+  return n.map(markFractions);
+}
+function reduceOnce(n) {
+  if (isLeaf(n) || n[0] === "var") return null;
+  const kids = n[0] === "bin" ? [2, 3] : n[0] === "fn" ? [2] : [1];
+  for (const k of kids) {
+    const r = reduceOnce(n[k]);
+    if (r) { const copy = n.slice(); copy[k] = r.node; return { node: copy, note: r.note }; }
+  }
+  // All children are numbers now, so work this one out
+  const names = { "+": "Add", "-": "Subtract", "*": "Multiply", "/": "Divide", "^": "Do the exponent" };
+  const note = n[0] === "bin" ? `${names[n[1]]}: ${showTree(n)}` : `Work out ${showTree(n)}`;
+  let node;
+  try { node = ["q", evalQ(n)]; }
+  catch (e) { node = ["num", String(parseFloat(evalF(n).toPrecision(10)))]; }
+  return { node, note };
+}
+function exprSteps(tree) {
+  let t = markFractions(tree);
+  const steps = [[showTree(t), "Start"]];
+  for (let i = 0; i < 10; i++) {
+    const r = reduceOnce(t);
+    if (!r) break;
+    t = r.node;
+    const shown = showTree(t);
+    if (shown !== steps[steps.length - 1][0]) steps.push([shown, r.note]); // skip steps that look the same
+  }
+  return steps;
+}
+
+/* Which lesson goes with a math question (for Detailed answers) */
+const MATH_LESSON_MAP = [
+  [/x\^2|x²|quadratic/, "Quadratic Formula"], [/=/, "Solving Equations"], [/percent|%/, "Percents"],
+  [/gcf|gcd|lcm|common (factor|multiple)/, "GCF and LCM"], [/prime|factor/, "Factors and Multiples"],
+  [/pythag|hypotenuse/, "Pythagorean Theorem"], [/slope|\(.*,.*\)/, "Slope"], [/circle|radius|diameter|circumference/, "Circles"],
+  [/volume/, "Volume"], [/surface area/, "Surface Area"], [/area|perimeter/, "Area and Perimeter"],
+  [/mean|median|mode|range|average/, "Mean, Median, Mode, and Range"], [/round/, "Rounding"],
+  [/sqrt|square root|√/, "Square Roots"], [/\^|squared|cubed|power/, "Exponents"], [/sin|cos|tan/, "Trigonometry"],
+  [/decimal/, "Decimals"], [/\d\s*\/\s*\d/, "Fractions"], [/times table|\*|×|times/, "Multiplication"],
+  [/÷|divided/, "Division"], [/[+\-]/, "Order of Operations"]
+];
+function lessonFor(q) {
+  const low = normMath(q);
+  for (const [re, title] of MATH_LESSON_MAP) if (re.test(low)) return KB.find(e => e.title === title);
+  return null;
+}
+
+/* ---------- Put it all together ---------- */
+async function decorate(reply, question) {
+  reply = applyTone(reply);
+  const type = pref("rtype");
+  if (type === "explain" || !reply.kind) return reply;
+  const parts = [];
+  if (reply.kind === "math" && reply.math) {
+    if (type === "visual") parts.push(stepCards(reply.math));
+    parts.push(mathDiagram(question, reply.math));
+  } else if ((reply.kind === "topic" || reply.kind === "web") && reply.imgTitle) {
+    const imgs = await wikiImages(reply.imgTitle, type === "visual" ? 3 : 1, reply.imgHost, reply.leadImage);
+    parts.push(imageGrid(imgs));
+  }
+  const visual = parts.filter(Boolean).join("");
+  return visual ? { ...reply, visual, visualPos: type === "visual" ? "top" : "bottom" } : reply;
+}
+
+/* ================================================================
+   PART 12: ANSWER CACHE
+   Good answers get saved in localStorage ("bob-cache"). Ask the same
+   thing again (with the same settings) and Bob reuses it instantly,
+   even offline. Only facts and math are saved, not quizzes, jokes,
+   the time, or chit chat. Saved answers expire, and a new Bob
+   version starts fresh.
+   ================================================================ */
+const CACHE_KEY = "bob-cache", CACHE_MAX = 200;
+const CACHE_DAYS = { web: 7, topic: 30, math: 30 }; // online answers expire sooner since info changes
+
+function loadCache() { try { return JSON.parse(localStorage.getItem(CACHE_KEY)) || {}; } catch (e) { return {}; } }
+function saveCache(c) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify(c)); }
+  catch (e) {
+    // Storage full: throw out the oldest half and try once more
+    const keys = Object.keys(c).sort((a, b) => c[a].at - c[b].at);
+    keys.slice(0, Math.ceil(keys.length / 2)).forEach(k => delete c[k]);
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(c)); } catch (err) { }
+  }
+}
+// Same question + same settings = same key ("Who is MrBeast?" matches "who is mrbeast")
+function cacheKey(q) {
+  const clean = normChat(q).trim().replace(/\s+/g, " ");
+  return [BOB_VERSION, mode.id, pref("len"), pref("rtype"), pref("gist"), clean].join("|");
+}
+function cacheGet(q) {
+  if (pendingQuiz || mode.id === "quiz") return null;
+  const c = loadCache(), hit = c[cacheKey(q)];
+  if (!hit) return null;
+  if (Date.now() - hit.at > (CACHE_DAYS[hit.reply.kind] || 7) * 864e5) return null; // too old
+  return { ...hit.reply, cached: true };
+}
+function cacheSet(q, reply) {
+  // Only save real answers that came from somewhere (not errors or chit chat)
+  if (!["topic", "web", "math"].includes(reply.kind) || !reply.sources || !reply.sources.length) return;
+  if (pendingQuiz || mode.id === "quiz") return;
+  const c = loadCache();
+  const { text, sources, kind, visual, visualPos } = reply;
+  c[cacheKey(q)] = { at: Date.now(), reply: { text, sources, kind, visual, visualPos } };
+  const keys = Object.keys(c);
+  if (keys.length > CACHE_MAX) keys.sort((a, b) => c[a].at - c[b].at).slice(0, keys.length - CACHE_MAX).forEach(k => delete c[k]);
+  saveCache(c);
+}
+function cacheCount() { return Object.keys(loadCache()).length; }
 
 /* Start up */
 renderMenu();
