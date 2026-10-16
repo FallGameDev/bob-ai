@@ -13,6 +13,7 @@ Everything lives in one file: `index.html`.
 - **Response settings:** length (Summary, On point, Detailed), type (Explanatory, Visual, Both), and gist (Serious, Calm, Slang, Cute)
 - **Visuals:** pictures from the topic's Wikipedia article, plus math diagrams Bob draws himself (step cards, shapes, graphs, fraction bars, percent grids, bar charts)
 - **Saved answers:** answers are cached on your device, so asking again is instant
+- **Chats and projects:** rename, delete, or move chats into project folders, and edit your messages to get a new answer
 - **Report a bug:** builds a full report and opens Gmail, Outlook, Yahoo, AOL, or Proton
 
 ## Login keys
@@ -34,6 +35,7 @@ This is a fun lock, not real security. Since everything runs in the browser, som
 | --- | --- |
 | `bob-login` | Which login key you used |
 | `bob-profile` | Display name, avatar color, response settings, online search setting, YouTube API key |
-| `bob-chats` | Your chat history |
+| `bob-chats` | Your chat history (and which project each chat is in) |
+| `bob-projects` | Your project folders |
 | `bob-learned` | People and things Bob looked up online |
 | `bob-cache` | Saved answers (up to 200, cleared when Bob's version changes) |

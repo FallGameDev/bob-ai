@@ -79,9 +79,52 @@ svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width:
 .new-chat:hover { background: var(--hover); }
 .side-label { font-size: 12px; color: var(--muted); padding: 18px 10px 6px; font-weight: 500; }
 .chat-list { flex: 1; overflow-y: auto; }
-.chat-item { display: block; width: 100%; text-align: left; padding: 7px 10px; border-radius: 8px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.chat-item:hover { background: var(--hover); }
-.chat-item.active { background: var(--hover); font-weight: 500; }
+.chat-item { display: block; flex: 1; min-width: 0; text-align: left; padding: 7px 10px; border-radius: 8px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Chat rows and projects in the sidebar */
+.chat-row { display: flex; align-items: center; border-radius: 8px; }
+.chat-row:hover, .chat-row.active { background: var(--hover); }
+.chat-row.active .chat-item { font-weight: 500; }
+.row-more { opacity: 0; padding: 4px 6px; margin-right: 3px; border-radius: 6px; color: var(--muted); display: grid; place-items: center; }
+.row-more svg { width: 16px; height: 16px; }
+.chat-row:hover .row-more, .chat-row.active .row-more, .proj-row:hover .row-more { opacity: 1; }
+.row-more:hover { background: var(--border); color: var(--text); }
+@media (hover: none) { .row-more { opacity: 1; } }
+.side-label.row { display: flex; align-items: center; justify-content: space-between; padding-right: 4px; }
+.side-add { padding: 3px; border-radius: 6px; color: var(--muted); display: grid; place-items: center; }
+.side-add:hover { background: var(--hover); color: var(--text); }
+.side-add svg { width: 15px; height: 15px; }
+.proj-row { display: flex; align-items: center; gap: 7px; padding: 5px 4px 5px 6px; border-radius: 8px; font-size: 14px; cursor: pointer; user-select: none; }
+.proj-row:hover { background: var(--hover); }
+.proj-chev { color: var(--muted); display: grid; transition: transform .15s; }
+.proj-chev svg { width: 13px; height: 13px; }
+.proj-row.open .proj-chev { transform: rotate(90deg); }
+.proj-icon { display: grid; }
+.proj-icon svg { width: 16px; height: 16px; fill: currentColor; fill-opacity: .18; }
+.proj-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+.proj-count { font-size: 12px; color: var(--muted); }
+.proj-row:hover .proj-count { display: none; }
+.proj-chats { margin: 2px 0 6px 14px; border-left: 1px solid var(--border); padding-left: 6px; }
+.proj-empty { font-size: 12px; color: var(--muted); padding: 4px 10px 6px; }
+.side-input { width: 100%; padding: 6px 9px; margin: 2px 0; border-radius: 8px; border: 1px solid var(--accent); background: var(--surface); color: var(--text); font: inherit; font-size: 14px; outline: none; }
+
+/* Pop up menu */
+.ctx { position: fixed; z-index: 70; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); padding: 5px; min-width: 200px; max-height: 70vh; overflow-y: auto; display: none; }
+.ctx.open { display: block; animation: pop .15s ease; }
+.ctx button { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; font-size: 14px; }
+.ctx button:hover { background: var(--hover); }
+.ctx .ctx-label { flex: 1; }
+.ctx svg { width: 16px; height: 16px; }
+.ctx .danger { color: var(--bad); }
+.ctx .ctx-check { color: var(--accent); display: grid; }
+.ctx .sep { height: 1px; background: var(--border); margin: 4px 2px; }
+.ctx .ctx-title { font-size: 12px; color: var(--muted); padding: 6px 10px 2px; }
+
+/* Project chip in the top bar and welcome screen */
+.head-proj { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); padding: 3px 10px; border: 1px solid var(--border); border-radius: 99px; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.head-proj[hidden] { display: none; }
+.head-proj svg { width: 14px; height: 14px; fill: currentColor; fill-opacity: .18; }
+.welcome-proj { margin: 0 auto 12px; }
 .side-bottom { border-top: 1px solid var(--border); padding-top: 10px; display: flex; align-items: center; gap: 4px; }
 .avatar { width: 30px; height: 30px; border-radius: 50%; background: #c96a3c; color: #fff; display: grid; place-items: center; font-size: 13px; font-weight: 600; flex-shrink: 0; }
 .user-btn { display: flex; align-items: center; gap: 10px; flex: 1; padding: 6px; border-radius: 10px; text-align: left; min-width: 0; }
@@ -126,7 +169,18 @@ svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width:
 .msg { margin: 22px 0; animation: pop .25s ease; }
 @keyframes pop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .msg.user { display: flex; justify-content: flex-end; }
-.msg.user .bubble { background: var(--user-bubble); padding: 10px 16px; border-radius: 18px; max-width: 80%; white-space: pre-wrap; word-wrap: break-word; }
+.msg.user .bubble { background: var(--user-bubble); padding: 10px 16px; border-radius: 18px; white-space: pre-wrap; word-wrap: break-word; }
+/* Your messages: bubble plus Edit and Copy buttons */
+.user-wrap { display: flex; flex-direction: column; align-items: flex-end; max-width: 80%; }
+.user-actions { display: flex; gap: 2px; margin-top: 3px; opacity: 0; transition: opacity .2s; }
+.msg.user:hover .user-actions { opacity: 1; }
+@media (hover: none) { .user-actions { opacity: 1; } }
+.user-actions .icon-btn { padding: 5px; }
+.user-actions svg { width: 15px; height: 15px; }
+.edit-box { width: min(560px, 80vw); background: var(--surface); border: 1px solid var(--accent); border-radius: 18px; padding: 10px 12px; box-shadow: var(--shadow); }
+.edit-box textarea { width: 100%; border: none; outline: none; resize: none; background: transparent; color: var(--text); font: inherit; }
+.edit-btns { display: flex; justify-content: flex-end; gap: 6px; margin-top: 6px; }
+.edit-btns .btn { padding: 6px 14px; }
 .msg.bot { display: flex; gap: 14px; }
 .msg.bot .logo { flex-shrink: 0; margin-top: 2px; }
 .bot-body { flex: 1; min-width: 0; }
@@ -361,7 +415,7 @@ svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width:
   .welcome h1 { font-size: 27px; }
   .thread, .welcome { padding-left: 16px; padding-right: 16px; }
   .composer-wrap { padding: 0 12px 12px; }
-  .msg.user .bubble { max-width: 88%; }
+  .user-wrap { max-width: 88%; }
 }
 </style>
 </head>
@@ -378,7 +432,7 @@ svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width:
   <button class="new-chat" id="newChat">
     <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New chat
   </button>
-  <div class="side-label">Recent</div>
+  <!-- Projects and chats are drawn here by renderList() -->
   <div class="chat-list" id="chatList"></div>
   <div class="side-bottom">
     <button class="user-btn" id="userBtn" title="Settings">
@@ -567,6 +621,9 @@ svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width:
   </div>
 </aside>
 
+<!-- Pop up menu for chats and projects (filled in by openCtx) -->
+<div class="ctx" id="ctx"></div>
+
 <!-- ===================== SETTINGS POPUP ===================== -->
 <div class="modal-bg" id="modalBg">
   <div class="modal">
@@ -646,6 +703,7 @@ svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width:
       <span>Bob 1</span> <small id="modelTag">Study</small>
       <svg viewBox="0 0 24 24" style="width:14px;height:14px"><path d="m6 9 6 6 6-6"/></svg>
     </button>
+    <span class="head-proj" id="headProj" hidden></span>
     <div class="spacer"></div>
     <button class="icon-btn" id="newChat2" title="New chat">
       <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
@@ -657,6 +715,7 @@ svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width:
   <div class="scroll" id="scroll">
     <section class="welcome" id="welcome">
       <div class="logo big-logo">b</div>
+      <div class="head-proj welcome-proj" id="welcomeProj" hidden></div>
       <h1 id="greeting">Good evening</h1>
       <p>I know games, creators, history, word science, and every kind of K-12 math.</p>
       <div class="cards" id="cards"></div>
@@ -2236,6 +2295,12 @@ const SELF_QA = [
     a: () => profile && profile.name && profile.name !== "Guest" ? `You're **${profile.name}**! You can change that in Settings.` : `I don't know your name yet. Click **Guest** at the bottom left to set it.` },
   { p: [/(how do i|can you|turn on|switch to|enable) (use )?(dark|light) (mode|theme)/, /dark mode/, /light mode/, /change (the )?theme/],
     a: () => `Click the moon button at the bottom left to switch between light and dark mode.` },
+  { p: [/how (do|can) i (delete|remove|rename) (a|one|this|that) chat/, /(delete|remove|rename) (a|this) chat/],
+    a: () => `Hover over a chat in the sidebar and click the **⋯** button. You can **Rename** it, **Move to project**, or **Delete chat**.` },
+  { p: [/how (do|can) i (make|create|use|add) (a )?(project|folder)s?/, /what (are|is) (a )?projects?/, /how do projects work/, /(put|move|add) (a |this )?chat (in|into|to) (a )?(project|folder)/],
+    a: () => `Projects are folders for your chats. Press **+** next to **Projects** in the sidebar to make one. To put a chat in it, click the chat's **⋯** button and pick **Move to project**. A project's **⋯** menu can also start a new chat right inside it.` },
+  { p: [/how (do|can) i (edit|change|fix) (my )?(message|question|prompt)/, /edit (my )?(message|prompt|question)/],
+    a: () => `Hover over one of your messages and click the **pencil**. Change it, press **Send**, and I'll answer the new version (everything after it gets replaced).` },
   { p: [/how (do|can) i (delete|clear|erase) (my )?(chats|history|messages|conversations)/, /clear (my )?(history|chats)/, /delete (my )?(chats|history)/],
     a: () => `Open **Settings** and press **Clear all chats**. That deletes them from this device for good.` },
   { p: [/how (do|can) i (start|make|open) a new chat/, /new (chat|conversation)/],
@@ -2429,9 +2494,17 @@ async function addMessage(role, text, sources, animate, extra = {}) {
   const div = document.createElement("div");
   div.className = "msg " + role;
   if (role === "user") {
+    const wrap = document.createElement("div");
+    wrap.className = "user-wrap";
     const b = document.createElement("div");
     b.className = "bubble"; b.textContent = text;
-    div.appendChild(b);
+    wrap.appendChild(b);
+    wrap.insertAdjacentHTML("beforeend", `<div class="user-actions">
+      <button class="icon-btn" data-act="edit" title="Edit">${ICONS.pencil}</button>
+      <button class="icon-btn" data-act="copy" title="Copy">${ICONS.copy}</button></div>`);
+    wrap.querySelector('[data-act="edit"]').onclick = () => editMessage(extra, div);
+    wrap.querySelector('[data-act="copy"]').onclick = () => { try { navigator.clipboard.writeText(text); } catch (e) { } };
+    div.appendChild(wrap);
     $("thread").appendChild(div); scrollDown();
     return;
   }
@@ -2478,16 +2551,7 @@ function renderChat() {
   if (current) current.messages.forEach(m => addMessage(m.role, m.text, m.sources, false, m));
   lastReply = current ? [...current.messages].reverse().find(m => m.role === "bot") || null : null;
   renderList();
-}
-function renderList() {
-  $("chatList").innerHTML = "";
-  chats.forEach(c => {
-    const b = document.createElement("button");
-    b.className = "chat-item" + (c === current ? " active" : "");
-    b.textContent = c.title;
-    b.onclick = () => { current = c; renderChat(); closeMobileSide(); };
-    $("chatList").appendChild(b);
-  });
+  updateProjectChips();
 }
 
 /* Sending a message */
@@ -2497,13 +2561,20 @@ async function send(text) {
   text = (text || $("input").value).trim();
   if (!text || busy) return;
   busy = true;
-  if (!current) { current = { title: text.slice(0, 40), messages: [] }; chats.unshift(current); }
+  if (!current) {
+    current = { id: uid(), title: text.slice(0, 40), messages: [], projectId: pendingProjectId };
+    chats.unshift(current);
+    pendingProjectId = null;
+  } else if (chats[0] !== current) {
+    chats.splice(chats.indexOf(current), 1); chats.unshift(current); // newest chat goes to the top
+  }
   $("welcome").style.display = "none";
   $("input").value = ""; resizeInput();
 
-  current.messages.push({ role: "user", text });
-  addMessage("user", text);
-  renderList(); save();
+  const userMsg = { role: "user", text };
+  current.messages.push(userMsg);
+  addMessage("user", text, null, false, userMsg);
+  renderList(); updateProjectChips(); save();
 
   showTyping();
   let reply;
@@ -2537,7 +2608,7 @@ $("input").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftK
 $("send").onclick = () => send();
 
 /* New chat */
-function newChat() { current = null; renderChat(); $("input").focus(); closeMobileSide(); }
+function newChat() { current = null; pendingProjectId = null; renderChat(); $("input").focus(); closeMobileSide(); }
 $("newChat").onclick = newChat;
 $("newChat2").onclick = newChat;
 
@@ -3424,6 +3495,233 @@ function cacheSet(q, reply) {
   saveCache(c);
 }
 function cacheCount() { return Object.keys(loadCache()).length; }
+
+/* ================================================================
+   PART 13: PROJECTS, CHAT MENU, AND EDITING MESSAGES
+   - Projects are folders for chats, saved in localStorage ("bob-projects")
+   - Every chat has a ⋯ menu: Rename, Move to project, Delete
+   - Your own messages have an Edit button: change it and Bob answers again
+   ================================================================ */
+const ICONS = {
+  folder: '<svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
+  pencil: '<svg viewBox="0 0 24 24"><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+  trash: '<svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>',
+  move: '<svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M10 13h6M13 10l3 3-3 3"/></svg>',
+  plus: '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  chat: '<svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>',
+  back: '<svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>',
+  check: '<svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>',
+  more: '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></svg>',
+  copy: '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>',
+  chevron: '<svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>'
+};
+const PROJECT_COLORS = ["#3b6df0", "#e0703a", "#2f9e6e", "#9b4fd6", "#d6457a", "#c49a12", "#1a9bb5"];
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+// Older chats (from before projects) get an id so they can be moved around
+chats.forEach(c => { if (!c.id) c.id = uid(); });
+
+let projects = [];
+try { projects = JSON.parse(localStorage.getItem("bob-projects")) || []; } catch (e) { }
+function saveProjects() { try { localStorage.setItem("bob-projects", JSON.stringify(projects)); } catch (e) { } }
+const projectById = id => projects.find(p => p.id === id) || null;
+
+let pendingProjectId = null;  // "New chat in project" sets this until the first message
+let creatingProject = null;   // { moveChat } while the "new project" box is open
+let renaming = null;          // the chat or project being renamed
+
+/* ---------- Sidebar (replaces the simple list from before) ---------- */
+function renderList() {
+  const list = $("chatList");
+  list.innerHTML = "";
+
+  // Projects header
+  list.insertAdjacentHTML("beforeend", `<div class="side-label row"><span>Projects</span><button class="side-add" id="addProject" title="New project">${ICONS.plus}</button></div>`);
+  $("addProject").onclick = () => { creatingProject = { moveChat: null }; renderList(); };
+
+  if (creatingProject) list.appendChild(inlineInput("Project name", "", name => {
+    const p = { id: uid(), name, color: PROJECT_COLORS[projects.length % PROJECT_COLORS.length], open: true };
+    projects.push(p); saveProjects();
+    if (creatingProject.moveChat) { creatingProject.moveChat.projectId = p.id; save(); }
+    creatingProject = null; renderList(); updateProjectChips();
+  }, () => { creatingProject = null; renderList(); }));
+
+  if (!projects.length && !creatingProject) list.insertAdjacentHTML("beforeend", `<div class="proj-empty">Group chats into folders with the + button.</div>`);
+
+  projects.forEach(p => {
+    const inside = chats.filter(c => c.projectId === p.id);
+    const row = document.createElement("div");
+    row.className = "proj-row" + (p.open ? " open" : "");
+    if (renaming === p) {
+      row.appendChild(inlineInput("Project name", p.name, name => { p.name = name; renaming = null; saveProjects(); renderList(); updateProjectChips(); }, () => { renaming = null; renderList(); }));
+    } else {
+      row.innerHTML = `<span class="proj-chev">${ICONS.chevron}</span><span class="proj-icon" style="color:${p.color}">${ICONS.folder}</span>` +
+        `<span class="proj-name">${esc(p.name)}</span><span class="proj-count">${inside.length}</span>` +
+        `<button class="row-more" title="Project options">${ICONS.more}</button>`;
+      row.onclick = e => { if (e.target.closest(".row-more")) return; p.open = !p.open; saveProjects(); renderList(); };
+      row.querySelector(".row-more").onclick = e => { e.stopPropagation(); projectMenu(p, e.currentTarget); };
+    }
+    list.appendChild(row);
+    if (p.open) {
+      const box = document.createElement("div");
+      box.className = "proj-chats";
+      if (!inside.length) box.innerHTML = `<div class="proj-empty">No chats yet</div>`;
+      inside.forEach(c => box.appendChild(chatRow(c)));
+      list.appendChild(box);
+    }
+  });
+
+  // Chats that aren't in a project
+  const loose = chats.filter(c => !c.projectId || !projectById(c.projectId));
+  list.insertAdjacentHTML("beforeend", `<div class="side-label">Recent</div>`);
+  if (!loose.length) list.insertAdjacentHTML("beforeend", `<div class="proj-empty">No chats yet</div>`);
+  loose.forEach(c => list.appendChild(chatRow(c)));
+  // Put the cursor in a naming box right away so no typing gets lost
+  const box = list.querySelector(".side-input");
+  if (box) { box.focus(); box.select(); }
+}
+
+function chatRow(c) {
+  const row = document.createElement("div");
+  row.className = "chat-row" + (c === current ? " active" : "");
+  if (renaming === c) {
+    row.appendChild(inlineInput("Chat name", c.title, t => { c.title = t; renaming = null; save(); renderList(); }, () => { renaming = null; renderList(); }));
+    return row;
+  }
+  row.innerHTML = `<button class="chat-item">${esc(c.title)}</button><button class="row-more" title="Chat options">${ICONS.more}</button>`;
+  row.querySelector(".chat-item").onclick = () => { current = c; pendingProjectId = null; renderChat(); closeMobileSide(); };
+  row.querySelector(".row-more").onclick = e => { e.stopPropagation(); chatMenu(c, e.currentTarget); };
+  return row;
+}
+
+// A text box inside the sidebar (for naming and renaming)
+function inlineInput(placeholder, value, onSave, onCancel) {
+  const input = document.createElement("input");
+  input.className = "side-input"; input.placeholder = placeholder; input.value = value; input.maxLength = 50;
+  let done = false;
+  const finish = ok => {
+    if (done) return; done = true;
+    const v = input.value.trim();
+    if (ok && v) onSave(v); else onCancel();
+  };
+  input.onkeydown = e => { if (e.key === "Enter") finish(true); if (e.key === "Escape") finish(false); };
+  input.onblur = () => finish(true);
+  return input;
+}
+
+/* ---------- Pop up menu ---------- */
+function openCtx(anchor, items) {
+  const ctx = $("ctx");
+  ctx.innerHTML = "";
+  items.forEach(it => {
+    if (it === "sep") { ctx.insertAdjacentHTML("beforeend", `<div class="sep"></div>`); return; }
+    if (it.title) { ctx.insertAdjacentHTML("beforeend", `<div class="ctx-title">${esc(it.title)}</div>`); return; }
+    const b = document.createElement("button");
+    b.className = it.danger ? "danger" : "";
+    b.innerHTML = `${it.icon || ""}<span class="ctx-label">${esc(it.label)}</span>${it.checked ? `<span class="ctx-check">${ICONS.check}</span>` : ""}`;
+    b.onclick = e => { e.stopPropagation(); if (!it.keepOpen) closeCtx(); it.onClick(); };
+    ctx.appendChild(b);
+  });
+  ctx.classList.add("open");
+  // Place it next to the button, but keep it on screen
+  const r = anchor.getBoundingClientRect(), w = ctx.offsetWidth, h = ctx.offsetHeight;
+  ctx.style.left = Math.max(8, Math.min(r.right - w, window.innerWidth - w - 8)) + "px";
+  ctx.style.top = (r.bottom + h + 8 > window.innerHeight ? Math.max(8, r.top - h - 4) : r.bottom + 4) + "px";
+  ctx._anchor = anchor;
+}
+function closeCtx() { $("ctx").classList.remove("open"); }
+document.addEventListener("click", e => { if (!$("ctx").contains(e.target)) closeCtx(); });
+window.addEventListener("resize", closeCtx);
+$("chatList").addEventListener("scroll", closeCtx);
+
+function chatMenu(c, anchor) {
+  openCtx(anchor, [
+    { label: "Rename", icon: ICONS.pencil, onClick: () => { renaming = c; renderList(); } },
+    { label: "Move to project", icon: ICONS.move, keepOpen: true, onClick: () => moveMenu(c, anchor) },
+    "sep",
+    { label: "Delete chat", icon: ICONS.trash, danger: true, onClick: () => deleteChat(c) }
+  ]);
+}
+function moveMenu(c, anchor) {
+  openCtx(anchor, [
+    { label: "Back", icon: ICONS.back, keepOpen: true, onClick: () => chatMenu(c, anchor) },
+    "sep",
+    { title: "Move to" },
+    ...projects.map(p => ({
+      label: p.name, icon: `<span style="color:${p.color};display:flex">${ICONS.folder}</span>`, checked: c.projectId === p.id,
+      onClick: () => { c.projectId = p.id; p.open = true; save(); saveProjects(); renderList(); updateProjectChips(); }
+    })),
+    { label: "No project", icon: ICONS.chat, checked: !c.projectId, onClick: () => { c.projectId = null; save(); renderList(); updateProjectChips(); } },
+    "sep",
+    { label: "New project", icon: ICONS.plus, onClick: () => { creatingProject = { moveChat: c }; renderList(); } }
+  ]);
+}
+function projectMenu(p, anchor) {
+  openCtx(anchor, [
+    { label: "New chat in project", icon: ICONS.plus, onClick: () => newChatIn(p) },
+    { label: "Rename", icon: ICONS.pencil, onClick: () => { renaming = p; renderList(); } },
+    "sep",
+    { label: "Delete project", icon: ICONS.trash, danger: true, onClick: () => deleteProject(p) }
+  ]);
+}
+
+function deleteChat(c) {
+  if (!confirm(`Delete "${c.title}"? This can't be undone.`)) return;
+  chats = chats.filter(x => x !== c);
+  if (current === c) current = null;
+  save(); renderChat();
+}
+function deleteProject(p) {
+  const n = chats.filter(c => c.projectId === p.id).length;
+  if (!confirm(`Delete the project "${p.name}"?` + (n ? ` Its ${n} chat${n > 1 ? "s" : ""} will move to Recent.` : ""))) return;
+  chats.forEach(c => { if (c.projectId === p.id) c.projectId = null; });
+  projects = projects.filter(x => x !== p);
+  if (pendingProjectId === p.id) pendingProjectId = null;
+  save(); saveProjects(); renderChat();
+}
+function newChatIn(p) {
+  current = null; pendingProjectId = p.id; p.open = true; saveProjects();
+  renderChat(); $("input").focus(); closeMobileSide();
+}
+
+/* Shows which project you're in (top bar and welcome screen) */
+function updateProjectChips() {
+  const p = current ? projectById(current.projectId) : projectById(pendingProjectId);
+  const html = p ? `<span style="color:${p.color};display:flex">${ICONS.folder}</span>${esc(p.name)}` : "";
+  $("headProj").innerHTML = html; $("headProj").hidden = !p;
+  $("welcomeProj").innerHTML = p ? html : ""; $("welcomeProj").hidden = !p;
+}
+
+/* ---------- Editing your own messages ---------- */
+function editMessage(m, div) {
+  if (busy) return;
+  const wrap = div.querySelector(".user-wrap");
+  wrap.innerHTML = `<div class="edit-box"><textarea rows="2"></textarea><div class="edit-btns">` +
+    `<button class="btn ghost" type="button">Cancel</button><button class="btn primary" type="button">Send</button></div></div>`;
+  const ta = wrap.querySelector("textarea");
+  ta.value = m.text;
+  const grow = () => { ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 240) + "px"; };
+  ta.oninput = grow; setTimeout(() => { grow(); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 0);
+  const [cancel, ok] = wrap.querySelectorAll(".edit-btns button");
+  cancel.onclick = () => renderChat();
+  const submit = () => {
+    const t = ta.value.trim();
+    if (!t || busy) return;
+    const idx = current.messages.indexOf(m);
+    if (idx < 0) return renderChat();
+    // Everything after this message gets replaced by Bob's new answer
+    if (idx === 0 && current.title === m.text.slice(0, 40)) current.title = t.slice(0, 40);
+    current.messages = current.messages.slice(0, idx);
+    pendingQuiz = null;
+    renderChat();
+    send(t);
+  };
+  ok.onclick = submit;
+  ta.onkeydown = e => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); }
+    if (e.key === "Escape") renderChat();
+  };
+}
 
 /* Start up */
 renderMenu();
