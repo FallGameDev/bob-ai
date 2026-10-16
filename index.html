@@ -53,7 +53,7 @@ body {
   font-size: 15px; line-height: 1.6;
 }
 button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; }
-svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+svg:not(.bob-img):not(.bob-img svg) { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
 /* ============================================================
    SIDEBAR
@@ -363,6 +363,16 @@ svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width:
 .viz-imgs figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 8px 5px; font-size: 11px; color: #fff; background: linear-gradient(transparent, rgba(0,0,0,.65)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .viz-credit { font-size: 11px; color: var(--muted); margin-top: 4px; }
 .viz-credit a { color: var(--muted); text-decoration: underline; font-weight: 400; }
+
+/* Pictures from the image maker */
+.bob-figure { margin: 0; max-width: 520px; }
+.bob-figure svg.bob-img { width: 100%; height: auto; display: block; border-radius: 18px; box-shadow: var(--shadow); background: #fff; }
+.img-tools { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.img-tools button { font-size: 12.5px; font-weight: 500; padding: 6px 11px; border: 1px solid var(--border); border-radius: 99px; background: var(--surface); }
+.img-tools button:hover { border-color: var(--accent); color: var(--accent); }
+.img-tools button:disabled { opacity: .6; cursor: default; }
+.bob-figure figcaption { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
+.bob-figure figcaption a { color: var(--muted); text-decoration: underline; font-weight: 400; }
 
 /* ============================================================
    REPORT A BUG (side menu that slides in from the right)
@@ -2256,7 +2266,7 @@ function userName() { return (profile && profile.name) || "there"; }
    text or a function, for answers that change (time, your name...).
    To add one: copy an entry, change the patterns and the answer.
    ================================================================ */
-const BOB_VERSION = "1.4";
+const BOB_VERSION = "1.5";
 const BOB_BIRTHDAY = "October 2026";
 
 const JOKES = [
@@ -2365,8 +2375,8 @@ const SELF_QA = [
     a: () => `I'm not a writing AI, so I can't write essays or stories. I can explain topics so you have stuff to write about, though!` },
   { p: [/can you (write|make|help with) (code|coding|a program|html|javascript|python)/, /can you code/, /do you know (how to )?code/],
     a: () => `I can't write code for you, but I know a bit about game dev! Try "what is Roblox" or "web games vs Roblox development".` },
-  { p: [/can you (draw|make|generate|create) (a )?(picture|image|photo|drawing|art)/, /can you draw/, /make me a picture/],
-    a: () => `I can't make pictures, just text and math. Sorry!` },
+  { p: [/can you (draw|make|generate|create|design) (a |an |me )?(pictures?|images?|photos?|drawings?|art|stickers?|coloring pages?)\s*$/, /^ can you draw $/, /how do (i|you) (make|draw|create) (a |an )?(picture|image|drawing)/, /how do (your|you make) (pictures|images|drawings)/],
+    a: () => `Yes! Say something like **draw a cat in space**, **make a picture of a red car at night**, or **draw 3 penguins in the snow with a snowman**. I find free icons online, recolor them, and put them in a scene I draw myself. You can add:\n\n- **Colors:** *a purple dragon*\n- **Places:** *at the beach*, *in the city*, *under the sea*, *in space*\n- **Times and weather:** *at sunset*, *at night*, *in the rain*, *with a rainbow*\n- **Friends and stuff:** *a dog with a ball and a cat*\n- **How many and how big:** *three tiny frogs*\n- **Words:** *a cake that says "Happy Birthday"*\n- **Styles:** *sticker* or *coloring page*\n\nEvery picture has **Try another**, **PNG**, and **SVG** download buttons.` },
   { p: [/can you (speak|talk in|understand|do) (spanish|french|german|chinese|japanese|korean|other languages|another language|croatian|italian|portuguese)/, /do you speak/, /what languages/],
     a: () => `I only understand English right now.` },
   { p: [/can you (hear|listen to) me/, /can you talk/, /do you have a voice/, /voice (chat|mode)/],
@@ -2482,7 +2492,11 @@ async function askBob(question) {
     pendingQuiz = null;
   }
 
-  // 2. Small talk
+  // 2. "Draw a cat in space": the image maker (before small talk, so "hey bob draw a dog" works)
+  const imgReq = imageRequest(q);
+  if (imgReq) return await makeImage(imgReq, 0);
+
+  // 3. Small talk
   if (/^(hi|hey|hello|yo|sup|hiya|howdy|good (morning|afternoon|evening))\b/.test(low) && low.length < 30 && (/^(hi|hey|hello|yo|sup|hiya|howdy|good (morning|afternoon|evening))( there)?( bob)?[!.\s]*$/.test(low) || !search(q)))
     return { text: tone().hello(userName()), sources: [], kind: "chat", noTone: true };
   // Questions about Bob himself (100+ ways to ask, see SELF_QA)
@@ -2580,7 +2594,7 @@ let mode = MODES[0];
 const STARTERS = [
   { title: "Solve 3x + 7 = 22", sub: "with every step shown" },
   { title: "What is the Pythagorean theorem?", sub: "explained simply" },
-  { title: "Tell me about Rec Room", sub: "and how Circuits work" },
+  { title: "Draw a dragon in space", sub: "make your own picture" },
   { title: "Quiz me on fractions", sub: "practice until it clicks" }
 ];
 
@@ -3214,7 +3228,7 @@ function applyTone(reply) {
   let text = reply.text;
   if (reply.kind === "quiz") {
     text = text.replace(/<good>Correct!<\/good>/g, `<good>${T.correct}</good>`).replace(/<bad>Not quite\.<\/bad>/g, `<bad>${T.wrong}</bad>`);
-  } else if (["topic", "math", "web", "places"].includes(reply.kind) && T.intro.length) {
+  } else if (["topic", "math", "web", "places", "image"].includes(reply.kind) && T.intro.length) {
     text = `${pick(T.intro)}\n\n${text}\n\n${pick(T.outro)}`;
   } else if (reply.kind === "chat" && !reply.noTone) {
     text = text.replace(/\s*$/, "") + pick(T.chatTail);
@@ -3997,6 +4011,633 @@ async function businessLookup(b) {
     `<div class="viz-cap">${esc(f.name)} · Map © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</div></div>`;
   return { text, sources: ["OpenStreetMap"], kind: "places", mapHtml };
 }
+
+/* ================================================================
+   PART 15: IMAGE MAKER
+   "Draw a orange cat playing with a ball at sunset" works like this:
+     1. readImagePrompt() pulls out the subject, colors, place, time,
+        weather, how many, size, style, extra objects, and any words.
+     2. findIcon() searches Iconify (200,000+ free, open license SVG icons)
+        for the subject, preferring colorful emoji style sets.
+     3. Bob edits the SVG: recolors it, resizes it, adds an outline
+        sticker effect, and gives every id a unique name.
+     4. buildScene() draws a background (sky, sun, moon, stars, grass,
+        beach, snow, city, space, underwater...) and puts it all together.
+   No brand logo sets are used, and the image is never copied from a
+   known character or picture.
+   ================================================================ */
+const ICON_API = "https://api.iconify.design";
+// Colorful sets first (cartoon / emoji look), best looking first
+const COLOR_SETS = ["fluent-emoji-flat", "noto", "twemoji", "openmoji", "emojione", "fxemoji", "flat-color-icons", "streamline-emojis", "noto-v1"];
+// Simple one color sets (used when nothing colorful is found)
+const LINE_SETS = ["ph", "tabler", "mdi", "material-symbols", "lucide", "carbon", "iconoir", "game-icons"];
+const BRAND_SETS = /^(logos|simple-icons|skill-icons|devicon|devicon-plain|vscode-icons|cib|fa-brands|fa6-brands|bxl|ri|entypo-social|brandico|grommet-icons|uim|cryptocurrency|token-branded|flagpack)$/;
+const IMG_BLOCK = /\b(guns?|pistols?|rifles?|weapons?|knives|knife|bombs?|grenades?|explosives?|blood|bloody|gore|gory|corpse|dead body|kill|killing|murder|suicide|nude|naked|sexy|sex|porn|boobs|drugs?|cocaine|weed|marijuana|cigarettes?|vape|vaping|beer|wine|alcohol|drunk|nazi|swastika|kkk|terrorists?|middle finger)\b/;
+
+const IMG_COLORS = {
+  red: "#e53935", orange: "#fb8c00", yellow: "#fdd835", green: "#43a047", blue: "#1e88e5", purple: "#8e24aa",
+  violet: "#7e57c2", pink: "#ec407a", brown: "#8d6e63", black: "#262626", white: "#f7f7f7", gray: "#9e9e9e", grey: "#9e9e9e",
+  gold: "#d4af37", golden: "#d4af37", silver: "#bdbdbd", teal: "#00897b", cyan: "#00bcd4", navy: "#1a237e", lime: "#9ccc65",
+  magenta: "#d81b60", indigo: "#3949ab", maroon: "#800000", turquoise: "#26c6da", beige: "#e8d5b5", tan: "#d2b48c"
+};
+const NUMBER_WORDS = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, a: 1, an: 1, couple: 2, few: 3, some: 3, several: 4, many: 5, lots: 5, bunch: 4 };
+const SIZE_WORDS = { tiny: 0.6, small: 0.75, little: 0.8, mini: 0.7, big: 1.2, large: 1.2, huge: 1.35, giant: 1.4, massive: 1.4, enormous: 1.4 };
+const FILLER_IMG = new Set("a an the some cute cool nice pretty very really super awesome happy little of with please me my our".split(" "));
+
+// Places and times Bob understands
+const PLACE_MAP = [
+  [/^(night|nighttime|night time|evening|dark|moonlight|midnight)$/, { sky: "night" }],
+  [/^(sunset|sunrise|dawn|dusk|golden hour)$/, { sky: "sunset" }],
+  [/^(day|daytime|morning|afternoon|noon|sunshine|sun)$/, { sky: "day" }],
+  [/^(space|outer space|galaxy|universe|stars|the stars|orbit)$/, { sky: "space", ground: "none" }],
+  [/^(sky|clouds|air|the sky|the clouds)$/, { sky: "day", ground: "none" }],
+  [/^(ocean|sea|water|lake|pool|river|pond)$/, { ground: "ocean" }],
+  [/^(underwater|under water|the sea floor|sea floor|ocean floor|the deep|coral reef|reef)$/, { sky: "underwater", ground: "seafloor" }],
+  [/^(beach|sand|seaside|shore|island)$/, { ground: "beach" }],
+  [/^(snow|winter|arctic|north pole|south pole|antarctica|ice|mountains?)$/, { ground: "snow", weather: "snow" }],
+  [/^(forest|woods|jungle|rainforest)$/, { ground: "forest" }],
+  [/^(city|town|street|road|downtown|neighborhood)$/, { ground: "city" }],
+  [/^(desert|sahara|dunes)$/, { ground: "desert" }],
+  [/^(park|garden|field|meadow|farm|grass|yard|backyard|countryside|hill|hills)$/, { ground: "grass" }],
+  [/^(room|bedroom|house|home|kitchen|classroom|school|living room|inside)$/, { ground: "indoor" }],
+  [/^(rain|the rain|storm|a storm|thunderstorm)$/, { weather: "rain" }],
+  [/^(party|a party|birthday party)$/, { party: true }]
+];
+// Leading words like "space cat" or "snowy forest"
+const SCENE_ADJ = { space: { sky: "space", ground: "none" }, underwater: { sky: "underwater", ground: "seafloor" }, night: { sky: "night" }, nighttime: { sky: "night" },
+  snowy: { ground: "snow", weather: "snow" }, winter: { ground: "snow", weather: "snow" }, rainy: { weather: "rain" }, starry: { sky: "night" },
+  sunny: { sky: "day" }, desert: { ground: "desert" }, beach: { ground: "beach" }, jungle: { ground: "forest" }, city: { ground: "city" } };
+// Good backgrounds for subjects when no place was given (adds detail for free)
+const AUTO_SCENE = [
+  [/fish|shark|whale|dolphin|octopus|squid|crab|lobster|jellyfish|turtle|seal|coral|mermaid|submarine|seahorse|shrimp|starfish/, { sky: "underwater", ground: "seafloor" }],
+  [/rocket|astronaut|alien|ufo|planet|satellite|comet|saturn|telescope/, { sky: "space", ground: "none" }],
+  [/penguin|snowman|polar bear|igloo|ski|sled|snowflake|reindeer|yeti/, { ground: "snow", weather: "snow" }],
+  [/cactus|camel|scorpion|pyramid|lizard/, { ground: "desert" }],
+  [/owl|bat|ghost|vampire|wolf|moon|zombie|witch|pumpkin|jack o/, { sky: "night", ground: "grass" }],
+  [/boat|ship|sailboat|surf|anchor|pirate|canoe|kayak/, { ground: "ocean" }],
+  [/palm|sandcastle|umbrella|crab|flamingo/, { ground: "beach" }],
+  [/car|bus|truck|taxi|bike|bicycle|motorcycle|police|fire truck|ambulance|train|skyscraper|building|scooter|skateboard/, { ground: "city" }],
+  [/monkey|tiger|lion|elephant|giraffe|parrot|gorilla|sloth|toucan|snake|zebra|hippo/, { ground: "forest" }],
+  [/cake|balloon|gift|present|birthday|confetti|party/, { party: true }],
+  [/bird|plane|airplane|kite|helicopter|cloud|dragon|parachute/, { sky: "day", ground: "grass" }],
+  [/tree|flower|cow|horse|sheep|pig|chicken|rabbit|bunny|dog|puppy|cat|kitten|deer|fox|butterfly|bee|ladybug|frog|duck|tractor|house|mushroom|unicorn|dinosaur|bear|hamster|squirrel|hedgehog|snail|goat/, { ground: "grass" }]
+];
+// Things that float in the air instead of standing on the ground
+const FLYERS = /bird|plane|airplane|butterfly|bee|rocket|ufo|balloon|kite|cloud|bat|ghost|dragon|helicopter|parrot|owl|eagle|angel|fairy|star|moon|sun|planet|astronaut|drone|dove|fish|shark|whale|dolphin|jellyfish|octopus|turtle|squid|seahorse|parachute/;
+
+/* ---------- 1. Is this an image request? ---------- */
+function imageRequest(q) {
+  const low = q.toLowerCase().trim().replace(/[!.]+$/, "").replace(/[’‘]/g, "'").replace(/\?$/, "");
+  const noun = "(?:image|picture|pic|photo|drawing|illustration|art|artwork|icon|sticker|clip ?art|svg|cartoon|coloring page|colouring page|wallpaper|scene|painting|sketch|doodle|poster)s?";
+  const lead = "^(?:(?:hey )?bob,? )?(?:(?:can|could|would|will) you |please |pls |i want you to |go )*";
+  let m =
+    low.match(new RegExp(lead + "(?:draw|paint|sketch|doodle)(?: me| us)?(?: an?| some| the)?(?: " + noun + ")?(?: of| with| showing)?\\s+(.+)$")) ||
+    low.match(new RegExp(lead + "(?:make|create|generate|design|render|give|show|get)(?: me| us)?(?: an?| some| the| another)? (?:\\w+ )?" + noun + "(?: of| with| showing| for)?\\s+(.+)$")) ||
+    low.match(new RegExp(lead + "(?:make|create|generate|design|draw)(?: me| us)?(?: an?)? (.+?) " + noun + "$")) ||
+    low.match(new RegExp("^(?:an? |the )?" + noun + " of (.+)$")) ||
+    low.match(new RegExp("^(?:i want|i need|can i (?:have|get|see)) (?:an?|some) " + noun + " of (.+)$"));
+  if (!m) return null;
+  let subject = m[1].trim();
+  // "draw" questions that aren't pictures
+  if (/^(a )?(conclusion|line under|blank|card|number|names?|straws?)\b/.test(subject)) return null;
+  if (subject.length < 2) return null;
+  // Remember the style word that was used
+  const styleWord = (low.match(new RegExp(noun)) || [""])[0];
+  return { subject, styleWord, original: q };
+}
+
+/* ---------- 2. Read the details out of the prompt ---------- */
+function readImagePrompt(req) {
+  let s = " " + req.subject.replace(/[’‘]/g, "'").replace(/[,;]+/g, " ") + " ";
+  const out = { scene: {}, color: null, count: 1, size: 1, style: "color", text: null, frame: false, extras: [], notes: [] };
+
+  // Words to write on the picture: says "Happy Birthday"
+  const quoted = req.original.match(/["“]([^"”]{1,40})["”]/);
+  if (quoted) { out.text = quoted[1]; s = s.replace(/(?:that |which |and |with (?:the )?(?:words?|text) )?(?:says|reads|saying|with the words|with text)?\s*["“][^"”]*["”]/i, " "); }
+  else {
+    const said = s.match(/\s(?:that |which )?(?:says|saying|reads|with the words?|with text)\s+(.{1,40})$/);
+    if (said) { out.text = said[1].trim().replace(/^["']|["']$/g, ""); s = s.slice(0, said.index) + " "; }
+  }
+  // Style
+  if (/\b(coloring|colouring) (page|sheet|book)\b|\bto color\b|\bline art\b|\boutline\b|\bblack and white\b/.test(req.original.toLowerCase())) out.style = "coloring";
+  if (/sticker/.test(req.styleWord) || /\bsticker\b/.test(s)) out.style = "sticker";
+  s = s.replace(/\b(coloring|colouring) (page|sheet|book)\b|\bline art\b|\bblack and white\b|\bin (an? )?(outline|sticker|cartoon) style\b|\bsticker\b|\bcartoon\b/g, " ");
+  if (/\b(frame|border)\b/.test(s)) { out.frame = true; s = s.replace(/\b(in|with) (a|an)? ?(fancy |nice |gold |golden )?(frame|border)\b/g, " "); }
+
+  // Places and times: "at night", "on the beach", "in outer space", "under the sea"
+  s = s.replace(/\b(under the sea|under the ocean|under water)\b/g, " in underwater ");
+  s = s.replace(/\b(?:in|on|at|under|inside|near|by|over|above|through|during|into|across|around)\s+(?:the |a |an |outer |deep |some )?(night ?time|night|evening|midnight|moonlight|sunset|sunrise|dawn|dusk|golden hour|day ?time|day|morning|afternoon|noon|sunshine|outer space|space|galaxy|universe|the stars|stars|orbit|sky|clouds|air|ocean|sea|water|lake|pool|river|pond|underwater|sea floor|ocean floor|coral reef|reef|beach|sand|seaside|shore|island|snow|winter|arctic|north pole|south pole|antarctica|ice|mountains?|forest|woods|jungle|rainforest|city|town|street|road|downtown|neighborhood|desert|dunes|park|garden|field|meadow|farm|grass|yard|backyard|countryside|hills?|room|bedroom|house|home|kitchen|classroom|school|living room|rain|storm|thunderstorm|party|birthday party)\b/g,
+    (all, place) => {
+      const hit = PLACE_MAP.find(([re]) => re.test(place.replace(/ ?time$/, "")) || re.test(place));
+      if (hit) Object.assign(out.scene, hit[1]); else return all;
+      return " ";
+    });
+  if (/\brainbows?\b/.test(s)) { out.scene.rainbow = true; s = s.replace(/\b(and |with )?(a |an )?rainbows?\b/g, " "); }
+  if (/\b(raining|rainy|in the rain)\b/.test(s)) { out.scene.weather = "rain"; s = s.replace(/\b(while it is |while it's |when it's )?(raining|rainy)\b/g, " "); }
+  if (/\bsnowing\b/.test(s)) { Object.assign(out.scene, { weather: "snow" }); s = s.replace(/\b(while it is |while it's )?snowing\b/g, " "); }
+  if (/\b(birthday|party|celebrat)/.test(s) && !/\bcake\b/.test(s)) out.scene.party = true;
+
+  // Split into the main thing and extra things: "a cat with a ball and a dog"
+  const parts = s.split(/\s(?:with|and|holding|next to|beside|plus|playing with|riding|eating|on top of|chasing|hugging|wearing)\s/).map(x => x.trim()).filter(Boolean);
+  const things = parts.map(p => readThing(p, out)).filter(t => t && t.query);
+  if (!things.length) return null;
+  out.main = things[0];
+  out.extras = things.slice(1, 3);
+  return out;
+}
+
+// Reads one thing: "three big orange cats" -> {count:3, size:1.2, color:"orange", query:"cat"}
+function readThing(text, out) {
+  let words = text.toLowerCase().replace(/[^a-z0-9' -]/g, " ").split(/\s+/).filter(Boolean);
+  const t = { count: 1, size: 1, color: null, query: "" };
+  const keep = [];
+  words.forEach((w, i) => {
+    const next = words.slice(i + 1).find(x => !FILLER_IMG.has(x));
+    if (/^\d+$/.test(w) && +w > 0) { t.count = Math.min(6, +w); return; }
+    if (NUMBER_WORDS[w] && next && w !== "a" && w !== "an") { t.count = Math.min(6, NUMBER_WORDS[w]); return; }
+    if (SIZE_WORDS[w] && next) { t.size = SIZE_WORDS[w]; return; }
+    // A color only counts if something comes after it ("orange cat", not "an orange")
+    if (IMG_COLORS[w] && next && !IMG_COLORS[next]) { t.color = w; return; }
+    if (SCENE_ADJ[w] && next) { Object.assign(out.scene, SCENE_ADJ[w]); return; }
+    if (FILLER_IMG.has(w)) return;
+    keep.push(w);
+  });
+  // Plural to single: "cats" -> "cat" (but not "glass", "bus")
+  t.query = keep.join(" ").replace(/\b(\w{3,}?)(ies)$/, "$1y").replace(/\b(\w{3,}[^s])s$/, "$1").trim();
+  return t;
+}
+
+/* ---------- 3. Find an icon ---------- */
+const iconCache = {};
+async function searchIcons(query, sets) {
+  const key = query + "|" + sets.join(",");
+  if (iconCache[key]) return iconCache[key];
+  const r = await getJSON(`${ICON_API}/search?query=${encodeURIComponent(query)}&limit=64&prefixes=${sets.join(",")}`, 8000);
+  const info = r.collections || {};
+  const icons = (r.icons || []).map(id => { const [prefix, name] = id.split(":"); return { prefix, name, set: info[prefix] || {} }; })
+    .filter(i => !BRAND_SETS.test(i.prefix) && !/brand|logo/i.test(i.set.category || "") && !IMG_BLOCK.test(i.name.replace(/-/g, " ")));
+  iconCache[key] = icons;
+  return icons;
+}
+// Ranks icons: exact name match first, then a nicer set, then shorter names
+function rankIcons(icons, query, sets) {
+  const q = query.replace(/\s+/g, "-"), words = query.split(" ");
+  const score = i => {
+    let s = 0;
+    if (i.name === q) s += 50;
+    if (i.name === q + "-face") s += 45;
+    if (i.name.startsWith(q + "-") || i.name.endsWith("-" + q)) s += 25;
+    if (words.every(w => i.name.split("-").includes(w))) s += 20;
+    s -= i.name.split("-").length * 2;
+    const rank = sets.indexOf(i.prefix);
+    s -= (rank < 0 ? 20 : rank * 1.5);
+    if (/outline|line|light|thin|duotone|twotone|fill|bold|off|slash|remove|add|plus|minus|circle|square/.test(i.name)) s -= 8;
+    return s;
+  };
+  return icons.map(i => ({ i, s: score(i) })).sort((a, b) => b.s - a.s).map(x => x.i);
+}
+async function findIcon(thing, style, seed) {
+  const sets = style === "coloring" ? ["openmoji", ...LINE_SETS] : COLOR_SETS;
+  // Try the full phrase, then the last word, then each word
+  const tries = [thing.query, ...thing.query.split(" ").reverse()].filter((v, i, a) => v && v.length > 1 && a.indexOf(v) === i);
+  for (const q of tries) {
+    let list = await searchIcons(q, sets);
+    if (!list.length && style !== "coloring") list = await searchIcons(q, LINE_SETS);
+    if (list.length) {
+      const ranked = rankIcons(list, q, sets).slice(0, 6);
+      const pickI = ranked[seed % ranked.length];
+      const data = await getJSON(`${ICON_API}/${pickI.prefix}.json?icons=${encodeURIComponent(pickI.name)}`, 8000);
+      let icon = data.icons && data.icons[pickI.name];
+      if (!icon && data.aliases && data.aliases[pickI.name]) icon = data.icons[data.aliases[pickI.name].parent];
+      if (!icon || !icon.body) continue;
+      return {
+        body: icon.body, w: icon.width || data.width || 16, h: icon.height || data.height || 16,
+        name: pickI.name.replace(/-/g, " "), prefix: pickI.prefix, setName: pickI.set.name || pickI.prefix,
+        author: pickI.set.author && pickI.set.author.name, license: pickI.set.license && (pickI.set.license.spdx || pickI.set.license.title),
+        exact: q === thing.query, usedQuery: q, mono: /currentColor/.test(icon.body) && !/#[0-9a-f]{3}/i.test(icon.body)
+      };
+    }
+  }
+  return null;
+}
+
+/* ---------- 4. Edit the SVG ---------- */
+// Color helpers
+function hexToHsl(hex) {
+  let h = hex.replace("#", "");
+  if (h.length === 3) h = h.split("").map(c => c + c).join("");
+  const r = parseInt(h.slice(0, 2), 16) / 255, g = parseInt(h.slice(2, 4), 16) / 255, b = parseInt(h.slice(4, 6), 16) / 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2;
+  let hh = 0, s = 0;
+  if (mx !== mn) {
+    const d = mx - mn;
+    s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+    hh = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    hh *= 60;
+  }
+  return { h: hh, s, l };
+}
+function hslToHex({ h, s, l }) {
+  h = ((h % 360) + 360) % 360; s = Math.max(0, Math.min(1, s)); l = Math.max(0, Math.min(1, l));
+  const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l);
+  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return "#" + [f(0), f(8), f(4)].map(x => Math.round(x * 255).toString(16).padStart(2, "0")).join("");
+}
+const hueGap = (a, b) => { const d = Math.abs(a - b) % 360; return d > 180 ? 360 - d : d; };
+
+/* Recolors the main color of an icon but keeps its shading,
+   so eyes, outlines, and small details stay the same */
+function recolorSvg(body, colorName) {
+  const target = hexToHsl(IMG_COLORS[colorName]);
+  if (/currentColor/.test(body) && !/#[0-9a-f]{3}/i.test(body)) return body.replace(/currentColor/g, IMG_COLORS[colorName]);
+  const found = body.match(/#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b/g) || [];
+  // Find the most used colorful hue (that's the "main" color)
+  const buckets = {};
+  found.forEach(c => { const x = hexToHsl(c); if (x.s > 0.2 && x.l > 0.12 && x.l < 0.92) { const k = Math.round(x.h / 30) % 12; buckets[k] = (buckets[k] || 0) + 1; } });
+  const best = Object.keys(buckets).sort((a, b) => buckets[b] - buckets[a])[0];
+  const neutral = target.s < 0.15 || colorName === "black" || colorName === "white";
+  // If pale (almost white) parts are the biggest part, those get the new color instead
+  const pale = found.filter(c => { const x = hexToHsl(c); return x.l >= 0.82 && x.l < 0.99; }).length;
+  if (!neutral && pale >= (best === undefined ? 1 : buckets[best])) {
+    return body.replace(/#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b/g, c => {
+      const x = hexToHsl(c);
+      return x.l >= 0.82 && x.l < 0.99 ? hslToHex({ h: target.h, s: Math.max(0.45, target.s * 0.75), l: 0.62 + (x.l - 0.82) * 0.9 }) : c;
+    });
+  }
+  if (best === undefined) return body;
+  const mainHue = best * 30;
+  return body.replace(/#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b/g, c => {
+    const x = hexToHsl(c);
+    if (x.s <= 0.2 || x.l <= 0.12 || x.l >= 0.92 || hueGap(x.h, mainHue) > 40) return c;
+    const shade = x.l - 0.5; // keeps light and dark parts light and dark
+    if (neutral) return hslToHex({ h: x.h, s: target.s * 0.4, l: target.l + shade * 0.5 });
+    return hslToHex({ h: target.h + (x.h - mainHue) * 0.3, s: (target.s + x.s) / 2, l: Math.min(0.88, Math.max(0.15, target.l + shade * 0.8)) });
+  });
+}
+// Turns a color icon into a coloring page: every shape gets a black outline
+// and a white inside, so it's ready to color in
+function coloringSvg(body, w) {
+  const line = (w / 34).toFixed(2);
+  body = body
+    .replace(/<(linearGradient|radialGradient)[\s\S]*?<\/\1>/g, "")              // no gradients on a coloring page
+    .replace(/(fill|stop-color)="url\([^)]*\)"/g, 'fill="#fff"')
+    .replace(/stroke="(?!none)[^"]*"/g, 'stroke="#111"')                         // all lines black
+    .replace(/fill="(#[0-9a-fA-F]{3,6}|currentColor|[a-z]+)"/g, (m, c) =>         // tiny dark spots (eyes) stay dark
+      c !== "none" && c !== "currentColor" && c.startsWith("#") && hexToHsl(c).l < 0.22 ? 'fill="#111"' : c === "none" ? m : 'fill="#fff"')
+    .replace(/stroke-width="[^"]*"/g, `stroke-width="${line}"`);
+  return `<g fill="#fff" stroke="#111" stroke-width="${line}" stroke-linejoin="round" stroke-linecap="round">${body}</g>`;
+}
+// Every icon copy gets its own id names so gradients don't clash
+function uniqueIds(body, tag) {
+  return body.replace(/\bid="([^"]+)"/g, `id="${tag}$1"`).replace(/url\(#([^)]+)\)/g, `url(#${tag}$1)`).replace(/href="#([^"]+)"/g, `href="#${tag}$1"`);
+}
+// Safety: remove anything that could run code
+function cleanSvg(body) {
+  return body.replace(/<script[\s\S]*?<\/script>/gi, "").replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, "")
+    .replace(/\son\w+="[^"]*"/gi, "").replace(/(href|xlink:href)="(?!#)[^"]*"/gi, "");
+}
+
+/* Tiny built in drawings, used when the internet can't be reached */
+const BUILTIN_ICONS = {
+  heart: { w: 32, h: 32, body: '<path fill="#f44366" d="M16 29s-12-7.5-12-16a6.5 6.5 0 0 1 12-3.4A6.5 6.5 0 0 1 28 13c0 8.5-12 16-12 16z"/>' },
+  star: { w: 32, h: 32, body: '<path fill="#ffc83d" stroke="#e8a317" stroke-width="1" d="m16 2 4.2 9 9.8 1.2-7.2 6.8 1.9 9.7L16 23.9l-8.7 4.8 1.9-9.7L2 12.2 11.8 11z"/>' },
+  tree: { w: 32, h: 32, body: '<rect x="14" y="22" width="4" height="8" fill="#8d6e63"/><path fill="#43a047" d="M16 2 5 16h5L4 24h24l-6-8h5z"/>' },
+  house: { w: 32, h: 32, body: '<path fill="#ef5350" d="M16 3 2 15h4l10-8 10 8h4z"/><rect x="6" y="14" width="20" height="15" fill="#ffe0b2"/><rect x="13" y="20" width="6" height="9" fill="#8d6e63"/><rect x="8" y="17" width="4" height="4" fill="#90caf9"/><rect x="20" y="17" width="4" height="4" fill="#90caf9"/>' },
+  flower: { w: 32, h: 32, body: '<path stroke="#43a047" stroke-width="2" d="M16 16v14"/><g fill="#ec407a"><circle cx="16" cy="8" r="5"/><circle cx="22" cy="13" r="5"/><circle cx="10" cy="13" r="5"/><circle cx="12" cy="19" r="5"/><circle cx="20" cy="19" r="5"/></g><circle cx="16" cy="14" r="4" fill="#fdd835"/>' },
+  balloon: { w: 32, h: 32, body: '<ellipse cx="16" cy="12" rx="9" ry="11" fill="#e53935"/><path d="M16 23v8" stroke="#555" fill="none"/><path d="m14 23 2 2 2-2z" fill="#c62828"/>' },
+  sun: { w: 32, h: 32, body: '<circle cx="16" cy="16" r="8" fill="#fdd835"/><g stroke="#fbc02d" stroke-width="2"><path d="M16 1v5M16 26v5M1 16h5M26 16h5M5 5l3.5 3.5M23.5 23.5 27 27M5 27l3.5-3.5M23.5 8.5 27 5"/></g>' },
+  smile: { w: 32, h: 32, body: '<circle cx="16" cy="16" r="14" fill="#fdd835"/><circle cx="11" cy="13" r="2" fill="#333"/><circle cx="21" cy="13" r="2" fill="#333"/><path d="M9 19a8 8 0 0 0 14 0" stroke="#333" stroke-width="2" fill="none"/>' }
+};
+function builtinIcon(query) {
+  const k = Object.keys(BUILTIN_ICONS).find(n => query.includes(n) || (n === "smile" && /face|smiley|emoji|happy/.test(query)));
+  return k ? { ...BUILTIN_ICONS[k], name: k, setName: "Bob's built in drawings", exact: true, usedQuery: k, builtin: true } : null;
+}
+
+/* ---------- 5. Draw the scene ---------- */
+const W = 512, H = 384;
+// Same seed = same random stars and clouds (so "Try another" changes things on purpose)
+function seededRandom(seed) {
+  let a = seed * 2654435761 >>> 0;
+  return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+function cloudShape(x, y, s, fill) {
+  return `<g fill="${fill}"><ellipse cx="${x}" cy="${y}" rx="${34 * s}" ry="${16 * s}"/><circle cx="${x - 14 * s}" cy="${y - 8 * s}" r="${15 * s}"/><circle cx="${x + 10 * s}" cy="${y - 13 * s}" r="${19 * s}"/></g>`;
+}
+function drawSky(sky, rnd, T) {
+  let g = "";
+  const grad = (id, stops) => `<linearGradient id="${T}${id}" x1="0" y1="0" x2="0" y2="1">${stops.map((c, i) => `<stop offset="${i / (stops.length - 1)}" stop-color="${c}"/>`).join("")}</linearGradient>`;
+  const SKIES = {
+    day: ["#6ec6ff", "#bfe6ff", "#e8f7ff"], sunset: ["#5b4a9e", "#ff7e5f", "#ffb36b", "#ffe0a3"], night: ["#060d2b", "#14245a", "#2c3f86"],
+    space: ["#030412", "#0d0b2e", "#1d1450"], underwater: ["#3cc2ef", "#1a86c7", "#0b4f8f"], rainy: ["#7d8ea3", "#a9b6c6", "#cfd8e2"]
+  };
+  const colors = SKIES[sky] || SKIES.day;
+  g += `<defs>${grad("sky", colors)}</defs><rect width="${W}" height="${H}" fill="url(#${T}sky)"/>`;
+  if (sky === "day" || sky === "rainy") {
+    if (sky === "day") { const sx = 410 + rnd() * 40, sy = 60 + rnd() * 20; g += `<circle cx="${sx}" cy="${sy}" r="44" fill="#fff6c4" opacity=".55"/><circle cx="${sx}" cy="${sy}" r="30" fill="#ffd54a"/>`; }
+    for (let i = 0; i < 3; i++) g += cloudShape(50 + i * 150 + rnd() * 60, 50 + rnd() * 60, 0.8 + rnd() * 0.6, sky === "rainy" ? "#8f9bab" : "#ffffff");
+  }
+  if (sky === "sunset") {
+    g += `<circle cx="${180 + rnd() * 150}" cy="268" r="60" fill="#ffd36e" opacity=".9"/><circle cx="256" cy="268" r="1" fill="none"/>`;
+    for (let i = 0; i < 3; i++) g += cloudShape(60 + i * 160 + rnd() * 40, 60 + rnd() * 70, 0.7 + rnd() * 0.5, "#ffb4a2");
+  }
+  if (sky === "night" || sky === "space") {
+    const n = sky === "space" ? 90 : 45;
+    for (let i = 0; i < n; i++) g += `<circle cx="${(rnd() * W).toFixed(1)}" cy="${(rnd() * (sky === "space" ? H : 240)).toFixed(1)}" r="${(0.6 + rnd() * 1.6).toFixed(1)}" fill="#fff" opacity="${(0.5 + rnd() * 0.5).toFixed(2)}"/>`;
+    if (sky === "night") g += `<circle cx="420" cy="74" r="40" fill="#fff8d6" opacity=".18"/><circle cx="420" cy="74" r="28" fill="#fff3b0"/><circle cx="433" cy="66" r="25" fill="${colors[0]}"/>`;
+    if (sky === "space") {
+      const px = 80 + rnd() * 40, py = 80 + rnd() * 30;
+      g += `<circle cx="${px}" cy="${py}" r="30" fill="#ff9e7a"/><circle cx="${px - 8}" cy="${py - 6}" r="9" fill="#ffbfa5" opacity=".7"/><ellipse cx="${px}" cy="${py}" rx="50" ry="10" fill="none" stroke="#ffd9a8" stroke-width="5" transform="rotate(-18 ${px} ${py})"/>`;
+      g += `<circle cx="${430 + rnd() * 30}" cy="${300 + rnd() * 40}" r="16" fill="#7ad3ff" opacity=".9"/>`;
+    }
+  }
+  if (sky === "underwater") {
+    for (let i = 0; i < 4; i++) { const x = 40 + i * 130 + rnd() * 40; g += `<path d="M${x} 0 L${x + 40} 0 L${x + 110} ${H} L${x + 40} ${H}z" fill="#fff" opacity=".07"/>`; }
+    for (let i = 0; i < 14; i++) g += `<circle cx="${(rnd() * W).toFixed(1)}" cy="${(rnd() * 300).toFixed(1)}" r="${(2 + rnd() * 6).toFixed(1)}" fill="none" stroke="#e6f7ff" stroke-width="1.5" opacity=".6"/>`;
+  }
+  return g;
+}
+function drawGround(ground, sky, rnd, T) {
+  const night = sky === "night", dim = c => night ? hslToHex({ ...hexToHsl(c), l: hexToHsl(c).l * 0.55 }) : c;
+  let g = "";
+  if (ground === "grass" || ground === "forest") {
+    if (ground === "forest") for (let i = 0; i < 9; i++) {
+      const x = i * 62 + rnd() * 30, h = 90 + rnd() * 60;
+      g += `<rect x="${x - 4}" y="${280 - 20}" width="8" height="24" fill="${dim("#6d4c41")}"/><path d="M${x} ${280 - h} L${x + 34} ${266} L${x - 34} ${266}z" fill="${dim(i % 2 ? "#2e7d32" : "#388e3c")}"/>`;
+    }
+    g += `<path d="M0 ${282} Q ${W * 0.3} ${258} ${W * 0.6} ${276} T ${W} ${270} V ${H} H 0z" fill="${dim("#7cc95b")}"/>`;
+    g += `<path d="M0 ${304} Q ${W * 0.4} ${288} ${W} ${300} V ${H} H 0z" fill="${dim("#5fb34a")}"/>`;
+    for (let i = 0; i < 16; i++) {
+      const x = rnd() * W, y = 300 + rnd() * 75, c = ["#ff8fab", "#ffd54a", "#ffffff", "#b39ddb"][Math.floor(rnd() * 4)];
+      g += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.2" fill="${dim(c)}"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.2" fill="${dim("#fbc02d")}"/>`;
+    }
+  }
+  if (ground === "beach" || ground === "ocean") {
+    const seaTop = ground === "beach" ? 248 : 236;
+    g += `<rect y="${seaTop}" width="${W}" height="${H - seaTop}" fill="${dim("#2e9fd8")}"/>`;
+    for (let i = 0; i < 6; i++) { const y = seaTop + 10 + i * 9; g += `<path d="M${rnd() * 300} ${y} q 12 -5 24 0 t 24 0" stroke="#bfe9ff" stroke-width="2" fill="none" opacity=".7"/>`; }
+    if (ground === "beach") g += `<path d="M0 ${292} Q ${W * 0.5} ${276} ${W} ${290} V ${H} H 0z" fill="${dim("#f5d9a0")}"/><path d="M0 ${292} Q ${W * 0.5} ${276} ${W} ${290}" stroke="#fff" stroke-width="4" fill="none" opacity=".8"/>`;
+    else g += `<rect y="${300}" width="${W}" height="${H - 300}" fill="${dim("#1f86c2")}"/>`;
+  }
+  if (ground === "snow") {
+    g += `<path d="M0 ${200} L 90 ${120} L 170 ${210} L 260 ${110} L 360 ${215} L 450 ${130} L ${W} ${190} V 280 H 0z" fill="${dim("#c7d6ea")}"/>`;
+    g += `<path d="M90 120 l -20 22 h 40z M260 110 l -24 26 h 48z M450 130 l -20 22 h 40z" fill="#fff"/>`;
+    g += `<path d="M0 ${280} Q ${W * 0.35} ${262} ${W} ${278} V ${H} H 0z" fill="${dim("#f4f8ff")}"/><path d="M0 ${320} Q ${W * 0.6} ${305} ${W} ${322} V ${H} H 0z" fill="${dim("#e3ecf8")}"/>`;
+  }
+  if (ground === "desert") {
+    g += `<path d="M0 ${270} Q 140 ${230} 280 ${268} T ${W} ${258} V ${H} H 0z" fill="${dim("#f1c27d")}"/><path d="M0 ${305} Q 200 ${280} ${W} ${300} V ${H} H 0z" fill="${dim("#e5a957")}"/>`;
+  }
+  if (ground === "city") {
+    for (let i = 0; i < 9; i++) {
+      const x = i * 60 - 10 + rnd() * 10, w = 46 + rnd() * 20, h = 90 + rnd() * 110, top = 290 - h;
+      g += `<rect x="${x}" y="${top}" width="${w}" height="${h}" rx="3" fill="${dim(["#90a4ae", "#78909c", "#b0bec5", "#8d99ae"][i % 4])}"/>`;
+      for (let wy = top + 10; wy < 280; wy += 18) for (let wx = x + 8; wx < x + w - 10; wx += 14)
+        g += `<rect x="${wx}" y="${wy}" width="7" height="9" fill="${night ? (rnd() > 0.5 ? "#ffe082" : "#37474f") : "#e3f2fd"}" opacity=".9"/>`;
+    }
+    g += `<rect y="290" width="${W}" height="${H - 290}" fill="${dim("#616161")}"/><rect y="288" width="${W}" height="8" fill="${dim("#9e9e9e")}"/>`;
+    for (let x = 10; x < W; x += 60) g += `<rect x="${x}" y="335" width="34" height="5" fill="#fdd835"/>`;
+  }
+  if (ground === "seafloor") {
+    g += `<path d="M0 ${320} Q ${W * 0.4} ${300} ${W} ${318} V ${H} H 0z" fill="#e8cf95"/>`;
+    for (let i = 0; i < 7; i++) {
+      const x = 20 + i * 75 + rnd() * 30, h = 50 + rnd() * 50;
+      g += `<path d="M${x} 330 q -12 ${-h / 3} 0 ${-h / 1.6} t 0 ${-h / 2.5}" stroke="${["#2e7d32", "#43a047", "#66bb6a"][i % 3]}" stroke-width="7" fill="none" stroke-linecap="round"/>`;
+    }
+    for (let i = 0; i < 5; i++) g += `<circle cx="${rnd() * W}" cy="${335 + rnd() * 35}" r="${4 + rnd() * 5}" fill="${["#ff8a80", "#ffccbc", "#f8bbd0"][i % 3]}"/>`;
+  }
+  if (ground === "indoor") {
+    g += `<rect width="${W}" height="${H}" fill="${dim("#ffe9c9")}"/><rect width="${W}" height="${H}" fill="url(#${T}stripe)" opacity=".35"/>`;
+    g += `<defs><pattern id="${T}stripe" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="20" height="40" fill="#ffd8a8"/></pattern></defs>`;
+    g += `<rect x="60" y="50" width="120" height="100" rx="6" fill="${night ? "#1d2b5a" : "#bfe6ff"}" stroke="#fff" stroke-width="8"/><path d="M120 50v100M60 100h120" stroke="#fff" stroke-width="6"/>`;
+    g += `<rect y="300" width="${W}" height="${H - 300}" fill="${dim("#b9875a")}"/>`;
+    for (let x = 0; x < W; x += 64) g += `<rect x="${x}" y="300" width="2" height="${H - 300}" fill="#8d6340" opacity=".5"/>`;
+  }
+  return g;
+}
+// Returns { back, front }: the rainbow goes behind the subject, rain and confetti in front
+function drawWeather(scene, rnd) {
+  let back = "", g = "";
+  if (scene.rainbow) {
+    const cols = ["#ff5252", "#ffa726", "#ffee58", "#66bb6a", "#42a5f5", "#5c6bc0", "#ab47bc"];
+    cols.forEach((c, i) => { const r = 210 - i * 9; back += `<path d="M ${256 - r} 300 A ${r} ${r} 0 0 1 ${256 + r} 300" stroke="${c}" stroke-width="9" fill="none" opacity=".75"/>`; });
+  }
+  if (scene.weather === "rain") for (let i = 0; i < 70; i++) { const x = rnd() * W, y = rnd() * H; g += `<path d="M${x.toFixed(1)} ${y.toFixed(1)} l -4 12" stroke="#d6eaff" stroke-width="1.6" opacity=".75"/>`; }
+  if (scene.weather === "snow") for (let i = 0; i < 60; i++) g += `<circle cx="${(rnd() * W).toFixed(1)}" cy="${(rnd() * H).toFixed(1)}" r="${(1.2 + rnd() * 2.4).toFixed(1)}" fill="#fff" opacity=".9"/>`;
+  if (scene.party) {
+    // Bunting flags along the top and confetti
+    const cols = ["#ff5252", "#ffd740", "#40c4ff", "#69f0ae", "#e040fb"];
+    g += `<path d="M0 18 Q ${W / 2} 60 ${W} 18" stroke="#795548" stroke-width="2" fill="none"/>`;
+    for (let i = 0; i < 11; i++) { const x = 20 + i * 45, y = 22 + Math.sin(i / 10 * Math.PI) * 30; g += `<path d="M${x} ${y} l 18 2 l -8 22z" fill="${cols[i % 5]}"/>`; }
+    for (let i = 0; i < 40; i++) {
+      const cx = rnd() * W, cy = 60 + rnd() * 300;
+      g += `<rect x="${cx.toFixed(1)}" y="${cy.toFixed(1)}" width="5" height="9" rx="1" fill="${cols[i % 5]}" transform="rotate(${(rnd() * 180).toFixed(0)} ${cx.toFixed(1)} ${cy.toFixed(1)})" opacity=".85"/>`;
+    }
+  }
+  return { back, front: g };
+}
+// Plain pretty backdrop when there is no place (sticker look)
+function drawBackdrop(rnd, T, seed) {
+  const tints = [["#fff1e6", "#ffd6c2"], ["#eaf4ff", "#c9e2ff"], ["#effbe9", "#cdeec0"], ["#f6edff", "#ddc8ff"], ["#fff9db", "#ffe9a3"]];
+  const [a, b] = tints[seed % tints.length];
+  let g = `<defs><radialGradient id="${T}bd" cx=".5" cy=".45" r=".7"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="${a}"/></radialGradient></defs>`;
+  g += `<rect width="${W}" height="${H}" fill="url(#${T}bd)"/><circle cx="256" cy="200" r="150" fill="${b}" opacity=".55"/>`;
+  for (let i = 0; i < 6; i++) {
+    const x = 60 + rnd() * 390, y = 40 + rnd() * 300, s = 6 + rnd() * 8;
+    if (Math.hypot(x - 256, y - 200) < 160) continue;
+    g += `<path d="M${x} ${y - s} Q ${x} ${y} ${x + s} ${y} Q ${x} ${y} ${x} ${y + s} Q ${x} ${y} ${x - s} ${y} Q ${x} ${y} ${x} ${y - s}z" fill="#fff" stroke="${b}" stroke-width="1.5"/>`;
+  }
+  return g;
+}
+
+/* Puts everything together into one SVG */
+function buildScene(p, icons, seed) {
+  const rnd = seededRandom(seed + 7), T = "b" + uid() + "_";
+  const sc = p.scene, coloring = p.style === "coloring";
+  const hasScene = !coloring && (sc.sky || sc.ground);
+  const sky = sc.sky || (sc.ground && sc.ground !== "none" ? (sc.weather === "rain" ? "rainy" : "day") : null);
+  const ground = sc.ground || (sky && sky !== "space" && sky !== "underwater" ? "grass" : "none");
+  let bg = "";
+  if (coloring) bg = `<rect width="${W}" height="${H}" fill="#fff"/><rect x="12" y="12" width="${W - 24}" height="${H - 24}" rx="14" fill="none" stroke="#111" stroke-width="2" stroke-dasharray="10 7"/>` +
+    `<text x="28" y="${H - 26}" font-family="'Trebuchet MS', Arial, sans-serif" font-size="13" fill="#555">Name: ____________________</text>`;
+  else if (hasScene) bg = drawSky(sky === "day" && sc.weather === "rain" ? "rainy" : sky, rnd, T) + (ground !== "none" ? drawGround(ground, sky, rnd, T) : "");
+  else bg = drawBackdrop(rnd, T, seed);
+
+  // Lay out the things: main copies first, extras smaller beside them
+  const floor = { grass: 318, forest: 318, beach: 322, ocean: 300, snow: 318, desert: 318, city: 330, seafloor: 342, indoor: 336, none: null }[ground];
+  const items = [];
+  const mainCount = p.main.count;
+  const base = (hasScene ? 165 : 210) * p.main.size / Math.sqrt(Math.max(1, mainCount + p.extras.length * 0.4));
+  for (let i = 0; i < mainCount; i++) items.push({ icon: icons[0], size: base, thing: p.main });
+  p.extras.forEach((x, k) => { if (icons[k + 1]) for (let i = 0; i < Math.min(3, x.count); i++) items.push({ icon: icons[k + 1], size: base * 0.62 * x.size, thing: x }); });
+  const gap = 14, total = items.reduce((t, it) => t + it.size, 0) + gap * (items.length - 1);
+  const scale = total > W - 40 ? (W - 40) / total : 1;
+  let x = (W - total * scale) / 2;
+  let fg = "";
+  const stickerFilter = `<filter id="${T}stk" x="-20%" y="-20%" width="140%" height="140%"><feMorphology in="SourceAlpha" operator="dilate" radius="4" result="thick"/><feFlood flood-color="#fff"/><feComposite in2="thick" operator="in" result="outline"/><feGaussianBlur in="thick" stdDeviation="4" result="blur"/><feOffset in="blur" dy="5" result="sh"/><feFlood flood-color="#000" flood-opacity=".22"/><feComposite in2="sh" operator="in" result="shadow"/><feMerge><feMergeNode in="shadow"/><feMergeNode in="outline"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
+  const useSticker = !coloring && (!hasScene || p.style === "sticker");
+  items.forEach((it, n) => {
+    const s = it.size * scale, ic = it.icon, h = s * (ic.h / ic.w);
+    const flying = FLYERS.test(it.thing.query);
+    let y;
+    if (floor == null || coloring) y = (H - h) / 2 + (items.length > 1 ? 10 : 0);
+    else y = flying ? Math.min(floor - h - 70 - rnd() * 30, 150 - h / 2) : floor - h;
+    if (flying && floor != null) y = Math.max(20, y);
+    // Small bounce so copies don't line up perfectly
+    if (n > 0 && !flying) y -= rnd() * 8;
+    let body = cleanSvg(ic.body);
+    if (coloring) body = coloringSvg(body, ic.w);
+    else if (it.thing.color) body = recolorSvg(body, it.thing.color);
+    else if (ic.mono) body = body.replace(/currentColor/g, "#37474f");
+    body = uniqueIds(body, T + n + "_");
+    if (!flying && floor != null && !coloring) fg += `<ellipse cx="${(x + s / 2).toFixed(1)}" cy="${(y + h - 2).toFixed(1)}" rx="${(s * 0.36).toFixed(1)}" ry="${(s * 0.06).toFixed(1)}" fill="#000" opacity=".18"/>`;
+    fg += `<g${useSticker ? ` filter="url(#${T}stk)"` : ""}><svg x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${s.toFixed(1)}" height="${h.toFixed(1)}" viewBox="0 0 ${ic.w} ${ic.h}">${body}</svg></g>`;
+    x += s + gap * scale;
+  });
+  // Night makes everything a little darker and bluer
+  const nightTint = !coloring && sky === "night" ? `<rect width="${W}" height="${H}" fill="#0a1a4a" opacity=".22"/>` : "";
+  const weather = coloring ? { back: "", front: "" } : drawWeather(sc, rnd);
+  let words = "";
+  if (p.text) {
+    const t = esc(p.text.slice(0, 40)), fs = Math.max(18, Math.min(34, 560 / Math.max(8, p.text.length)));
+    const bw = Math.min(W - 40, p.text.length * fs * 0.62 + 50);
+    words = `<g><rect x="${(W - bw) / 2}" y="${H - 66}" width="${bw}" height="${fs + 22}" rx="${(fs + 22) / 2}" fill="#fff" stroke="#263238" stroke-width="3" opacity=".96"/>` +
+      `<text x="${W / 2}" y="${H - 66 + (fs + 22) / 2 + fs * 0.35}" text-anchor="middle" font-family="'Trebuchet MS', 'Arial Rounded MT Bold', Arial, sans-serif" font-weight="700" font-size="${fs}" fill="#263238">${t}</text></g>`;
+  }
+  const frame = p.frame ? `<rect x="6" y="6" width="${W - 12}" height="${H - 12}" rx="22" fill="none" stroke="#d4af37" stroke-width="12"/><rect x="16" y="16" width="${W - 32}" height="${H - 32}" rx="14" fill="none" stroke="#fff3c4" stroke-width="3"/>` : "";
+  const clip = `<clipPath id="${T}clip"><rect width="${W}" height="${H}" rx="18"/></clipPath>`;
+  return `<svg class="bob-img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(p.label)}"><defs>${clip}${stickerFilter}</defs><g clip-path="url(#${T}clip)">${bg}${weather.back}${nightTint}${fg}${weather.front}${words}${frame}</g></svg>`;
+}
+
+/* ---------- 6. Make the image and Bob's message ---------- */
+function describeScene(p) {
+  const sc = p.scene, bits = [];
+  const placeWords = { grass: "in a grassy field", forest: "in a forest", beach: "at the beach", ocean: "on the ocean", snow: "in the snow", desert: "in the desert", city: "in the city", seafloor: "under the sea", indoor: "inside a cozy room" };
+  if (sc.sky === "space") bits.push("in outer space");
+  else if (sc.ground && placeWords[sc.ground]) bits.push(placeWords[sc.ground]);
+  else if (sc.ground === "none" && sc.sky === "day") bits.push("up in the sky");
+  if (sc.sky === "night") bits.push("at night under the stars");
+  if (sc.sky === "sunset") bits.push("at sunset");
+  if (sc.weather === "rain") bits.push("in the rain");
+  if (sc.weather === "snow" && sc.ground !== "snow") bits.push("with falling snow");
+  if (sc.rainbow) bits.push("with a rainbow");
+  if (sc.party) bits.push("with party decorations");
+  return bits.join(" ");
+}
+
+async function makeImage(req, seed = 0) {
+  if (IMG_BLOCK.test(req.original.toLowerCase())) {
+    return { text: `I can't make that kind of picture. How about something fun instead, like **a dragon in space**, **a cat at the beach**, or **a birthday cake that says "Yay!"**?`, sources: [], kind: "chat", noTone: true };
+  }
+  // Shapes with numbers are math, so draw them with the math diagram maker
+  if (/\b(triangle|rectangle|square|circle|trapezoid|cube|cylinder|sphere|box|prism)\b/.test(req.subject) && /\d/.test(req.subject)) {
+    const d = mathDiagram("area of " + req.subject, {}) || mathDiagram("volume of " + req.subject, {});
+    if (d) return { text: `Here's your shape with its measurements labeled:`, sources: [SRC_ENGINE], kind: "image", visual: d, visualPos: "top" };
+  }
+  const p = readImagePrompt(req);
+  if (!p) return { text: `What should I draw? Try something like **draw a cat in space** or **make a picture of a red car at night**.`, sources: [], kind: "chat", noTone: true };
+  // Add a nice background if none was asked for (unless it's a sticker or coloring page)
+  let autoScene = false;
+  if (!p.scene.sky && !p.scene.ground && p.style === "color") {
+    const all = [p.main, ...p.extras].map(t => t.query).join(" ");
+    const hit = AUTO_SCENE.find(([re]) => re.test(all));
+    if (hit) { p.scene = { ...hit[1], ...p.scene }; autoScene = true; }
+    // "Try another" switches up the time of day on scenes Bob picked
+    if (p.scene.ground && !p.scene.sky && seed % 3 === 1) p.scene.sky = "sunset";
+    if (p.scene.ground && !p.scene.sky && seed % 3 === 2 && p.scene.ground !== "indoor") p.scene.sky = "night";
+  }
+  p.label = req.subject;
+
+  // Find icons for the main thing and the extras
+  let icons = [], offline = false;
+  for (const [k, thing] of [p.main, ...p.extras].entries()) {
+    let ic = null;
+    try { ic = await findIcon(thing, p.style, seed + k); }
+    catch (e) { offline = true; }
+    if (!ic) ic = builtinIcon(thing.query);
+    icons.push(ic);
+  }
+  if (!icons[0]) {
+    return { text: offline
+      ? `I need the internet to find pictures to draw with, and I couldn't connect. Check your connection and try again!`
+      : `I couldn't find anything that looks like **${p.main.query}**. Try a simpler word, like **dog**, **rocket**, **pizza**, or **castle**.`, sources: [], kind: "chat", noTone: true };
+  }
+  // Drop extras Bob couldn't find
+  const missing = p.extras.filter((x, i) => !icons[i + 1]).map(x => x.query);
+  p.extras = p.extras.filter((x, i) => icons[i + 1]);
+  icons = icons.filter(Boolean);
+
+  const svg = buildScene(p, icons, seed);
+  const main = icons[0];
+  // What Bob did, in plain words
+  const things = [p.main, ...p.extras].map((t, i) => {
+    const c = t.color ? t.color + " " : "", sz = t.size > 1.1 ? "big " : t.size < 0.9 ? "little " : "";
+    const rest = sz + c + (icons[i].usedQuery || t.query);
+    const n = t.count > 1 ? t.count + " " : /^[aeiou]/.test(rest) ? "an " : "a ";
+    return n + rest + (t.count > 1 && !/s$/.test(icons[i].usedQuery || "") ? "s" : "");
+  });
+  let text = p.style === "coloring" ? `Here's your coloring page of **${things.join(" and ")}**! Print it out and color it in. 🖍️`
+    : `Here's **${things[0]}**${things.length > 1 ? ` with **${things.slice(1).join("** and **")}**` : ""}${describeScene(p) ? " " + describeScene(p) : ""}! 🎨`;
+  const notes = [];
+  if (!main.exact) notes.push(`I couldn't find exactly "${p.main.query}", so I drew a **${main.usedQuery}** instead.`);
+  if (missing.length) notes.push(`I couldn't find ${missing.map(m => `"${m}"`).join(" or ")}, so I left ${missing.length > 1 ? "those" : "that"} out.`);
+  if (autoScene) notes.push(`I picked the background to match. Say a place or time (like *in space* or *at night*) to change it.`);
+  if (notes.length) text += "\n\n" + notes.join(" ");
+  if (lenPref() !== "summary") text += `\n\n**Make it yours:** add a color (*a purple cat*), a place (*on the beach*, *in the snow*), a time (*at sunset*), friends (*with a dog*), words (*that says "Hi!"*), or ask for a *sticker* or *coloring page*.`;
+
+  const credit = icons.filter(i => !i.builtin).map(i => `${esc(i.name)} from ${esc(i.setName)}${i.author ? " by " + esc(i.author) : ""}${i.license ? " (" + esc(i.license) + ")" : ""}`);
+  const visual = `<figure class="bob-figure" data-prompt="${esc(req.original)}" data-seed="${seed}">${svg}` +
+    `<div class="img-tools"><button type="button" data-img="again">🔀 Try another</button><button type="button" data-img="png">⬇ PNG</button><button type="button" data-img="svg">⬇ SVG</button><button type="button" data-img="copy">Copy SVG code</button></div>` +
+    (credit.length ? `<figcaption>Made by Bob using ${credit.join(", ")} via <a href="https://iconify.design" target="_blank" rel="noopener">Iconify</a></figcaption>` : `<figcaption>Made by Bob</figcaption>`) + `</figure>`;
+  return { text, sources: credit.length ? ["Iconify"] : [], kind: "image", visual, visualPos: "top" };
+}
+
+/* ---------- 7. Buttons under each picture ---------- */
+function svgString(fig) {
+  const svg = fig.querySelector("svg.bob-img");
+  return '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(svg);
+}
+function downloadBlob(blob, name) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+function fileName(fig) {
+  return "bob-" + (fig.dataset.prompt || "image").toLowerCase().replace(/^.*?\b(of|draw|paint|sketch)\s+/, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) + "-" + fig.dataset.seed;
+}
+$("thread").addEventListener("click", async e => {
+  const btn = e.target.closest("[data-img]");
+  if (!btn) return;
+  const fig = btn.closest(".bob-figure");
+  const act = btn.dataset.img;
+  if (act === "svg") return downloadBlob(new Blob([svgString(fig)], { type: "image/svg+xml" }), fileName(fig) + ".svg");
+  if (act === "copy") { try { await navigator.clipboard.writeText(svgString(fig)); btn.textContent = "Copied!"; } catch (err) { btn.textContent = "Couldn't copy"; } setTimeout(() => btn.textContent = "Copy SVG code", 1500); return; }
+  if (act === "png") {
+    const url = URL.createObjectURL(new Blob([svgString(fig)], { type: "image/svg+xml" }));
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement("canvas"); c.width = W * 2; c.height = H * 2;
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob(b => b && downloadBlob(b, fileName(fig) + ".png"), "image/png");
+    };
+    img.src = url;
+    return;
+  }
+  if (act === "again") {
+    if (busy) return;
+    const msgEl = fig.closest(".msg"), all = [...$("thread").querySelectorAll(":scope > .msg")];
+    const msg = current && current.messages[all.indexOf(msgEl)];
+    btn.disabled = true; btn.textContent = "Drawing...";
+    const req = imageRequest(fig.dataset.prompt);
+    const r = req ? await makeImage(req, +fig.dataset.seed + 1) : null;
+    if (r && r.visual) {
+      fig.outerHTML = r.visual;
+      const content = msgEl.querySelector(".content");
+      if (content) content.innerHTML = format(r.text);
+      if (msg) { msg.visual = r.visual; msg.text = r.text; save(); }
+    } else { btn.disabled = false; btn.textContent = "🔀 Try another"; }
+  }
+});
 
 /* Start up */
 renderMenu();

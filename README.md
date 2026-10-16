@@ -14,6 +14,7 @@ Everything lives in one file: `index.html`.
 - **Visuals:** pictures from the topic's Wikipedia article, plus math diagrams Bob draws himself (step cards, shapes, graphs, fraction bars, percent grids, bar charts)
 - **Saved answers:** answers are cached on your device, so asking again is instant
 - **Business finder:** "pizza near me", "Walmart hours", "phone number for CVS in Miami" use OpenStreetMap for address, hours, phone, and website, plus a button to the Google Business profile on Google Maps
+- **Image maker:** "draw a cat in space" finds free open license icons on Iconify, recolors them, and builds a scene (sky, place, weather, extra objects, words, sticker or coloring page styles) with Try another, PNG, and SVG buttons
 - **Chats and projects:** rename, delete, or move chats into project folders, and edit your messages to get a new answer
 - **Report a bug:** builds a full report and opens Gmail, Outlook, Yahoo, AOL, or Proton
 
