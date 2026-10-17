@@ -3078,8 +3078,8 @@ $("clearBtn").onclick = () => {
      4. Authentication > URL Configuration: set the Site URL to your
         GitHub Pages address (like https://fallgamedev.github.io/bob-ai/)
    ================================================================ */
-const SUPABASE_URL = "https://YOUR-PROJECT-ID.supabase.co";
-const SUPABASE_ANON_KEY = "YOUR-SUPABASE-ANON-KEY";
+const SUPABASE_URL = "https://msvjvnlczfbsipaxktti.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1zdmp2bmxjemZic2lwYXhrdHRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxODg1ODQsImV4cCI6MjEwNzc2NDU4NH0.W--GPBZIWsZHKhnTkOsgLi0-xUBf43KNrElOtfOoVrM"; // public anon key (safe in the browser)
 
 const authConfigured = /^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(SUPABASE_URL) && SUPABASE_ANON_KEY.length > 40;
 const sb = authConfigured && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;

@@ -26,7 +26,9 @@ Everything lives in one file: `index.html`.
 
 People sign in with **Google**, **GitHub**, or **email** (a sign-in link, or a password with "Forgot password?"). Each account gets its own chats, projects, and settings on the device. Names and profile pictures come from Google or GitHub automatically.
 
-Until Supabase is set up, the home page shows a setup note and a **Try Bob without an account** button.
+Bob is connected to the Supabase project **bob-ai** (`msvjvnlczfbsipaxktti`, in the Here Studios organization). Email sign-in is on. Google and GitHub need their Client Secrets added in Supabase (see below).
+
+If the Supabase keys are ever removed, the home page shows a setup note and a **Try Bob without an account** button.
 
 ### One-time setup
 
