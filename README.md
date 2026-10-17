@@ -15,6 +15,10 @@ Everything lives in one file: `index.html`.
 - **Saved answers:** answers are cached on your device, so asking again is instant
 - **Business finder:** "pizza near me", "Walmart hours", "phone number for CVS in Miami" use OpenStreetMap for address, hours, phone, and website, plus a button to the Google Business profile on Google Maps
 - **Image maker:** "draw a cat in space" searches the web for free SVG templates (whole pictures, backgrounds, and coloring pages from Wikimedia Commons, plus objects from Iconify), then edits them: recolors, places, sizes, and adds words or a frame. Try another pages through results forever, plus PNG and SVG downloads
+- **+ menu:** Upload files, Create image, Research, and Create website
+- **Uploads:** text files (.txt, .md, .csv, .html...) become part of Bob's knowledge so you can ask about them; pictures go into websites
+- **Research:** reads several Wikipedia articles and writes a report with a summary, overview, key facts, a fun fact, related topics, and numbered sources
+- **Website builder:** searches GitHub for a free license template (MIT, Apache, and others), downloads its HTML, CSS, and JS, swaps in your pictures, recolors its main colors to yours, and puts your name and topic in the logo, title, and big headings. The files show in the chat, with a side panel for a live preview (computer, tablet, phone), code view, .zip download, and Try another template. Brand clones and unlicensed repos are skipped
 - **Chats and projects:** rename, delete, or move chats into project folders, and edit your messages to get a new answer
 - **Report a bug:** builds a full report and opens Gmail, Outlook, Yahoo, AOL, or Proton
 

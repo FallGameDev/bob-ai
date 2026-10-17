@@ -172,6 +172,7 @@ svg:not(.bob-img):not(.bob-img svg) { width: 18px; height: 18px; stroke: current
 .msg.user .bubble { background: var(--user-bubble); padding: 10px 16px; border-radius: 18px; white-space: pre-wrap; word-wrap: break-word; }
 /* Your messages: bubble plus Edit and Copy buttons */
 .user-wrap { display: flex; flex-direction: column; align-items: flex-end; max-width: 80%; }
+.tool-tag { font-size: 12px; font-weight: 600; color: var(--accent); }
 .user-actions { display: flex; gap: 2px; margin-top: 3px; opacity: 0; transition: opacity .2s; }
 .msg.user:hover .user-actions { opacity: 1; }
 @media (hover: none) { .user-actions { opacity: 1; } }
@@ -373,6 +374,63 @@ svg:not(.bob-img):not(.bob-img svg) { width: 18px; height: 18px; stroke: current
 .img-tools button:disabled { opacity: .6; cursor: default; }
 .bob-figure figcaption { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
 .bob-figure figcaption a { color: var(--muted); text-decoration: underline; font-weight: 400; }
+
+/* ============================================================
+   + MENU, FILE CHIPS, WEBSITE CARD, AND WEBSITE PANEL
+   ============================================================ */
+.plus-btn { border: 1px solid var(--border); border-radius: 50%; width: 32px; height: 32px; padding: 0; margin-right: 2px; }
+.plus-btn svg { width: 17px; height: 17px; }
+.attach-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.attach-row[hidden] { display: none; }
+.tool-chip, .file-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; padding: 4px 6px 4px 10px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); }
+.file-chip { background: var(--bg); color: var(--text); border: 1px solid var(--border); padding-left: 4px; max-width: 220px; }
+.file-chip img { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; }
+.file-ico { font-size: 16px; padding-left: 4px; }
+.file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tool-chip button, .file-chip button { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 15px; line-height: 1; color: inherit; opacity: .7; }
+.tool-chip button:hover, .file-chip button:hover { opacity: 1; background: rgba(0,0,0,.08); }
+.composer-note { max-width: 740px; margin: 0 auto 6px; font-size: 13px; color: var(--bad); text-align: center; }
+.composer-note[hidden] { display: none; }
+.user-files { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; margin-bottom: 6px; }
+.user-files img { width: 120px; height: 90px; object-fit: cover; border-radius: 12px; border: 1px solid var(--border); }
+.user-files .doc { font-size: 13px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); }
+
+.site-card { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); padding: 14px; margin: 4px 0 12px; max-width: 620px; }
+.site-head { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
+.site-globe { font-size: 26px; }
+.site-head b { display: block; font-size: 16px; }
+.site-head small { color: var(--muted); font-size: 12.5px; }
+.site-head a { color: var(--muted); }
+.site-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.site-btns .btn { padding: 7px 12px; font-size: 13px; border: 1px solid var(--border); }
+.site-btns .btn.primary { border-color: var(--accent); }
+.site-file { border: 1px solid var(--border); border-radius: 10px; margin-top: 6px; overflow: hidden; }
+.site-file summary { display: flex; align-items: center; gap: 8px; padding: 8px 10px; cursor: pointer; font-family: ui-monospace, Menlo, monospace; font-size: 13px; background: var(--bg); }
+.site-file summary span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.site-file summary small { color: var(--muted); }
+.site-file summary button { font-size: 12px; padding: 2px 8px; border: 1px solid var(--border); border-radius: 6px; font-family: Inter, sans-serif; }
+.site-file pre, .site-code pre { margin: 0; padding: 10px 12px; max-height: 320px; overflow: auto; font-size: 12px; line-height: 1.5; white-space: pre; background: var(--surface); }
+.site-imgs { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.site-imgs img { width: 64px; height: 48px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
+
+.site-panel { position: fixed; top: 0; right: 0; bottom: 0; width: min(900px, 100%); background: var(--surface); border-left: 1px solid var(--border); box-shadow: var(--shadow); transform: translateX(100%); transition: transform .28s ease; z-index: 60; display: flex; flex-direction: column; }
+.site-panel.open { transform: none; }
+.site-toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.site-toolbar .btn { padding: 7px 12px; font-size: 13px; }
+.seg.small { width: auto; }
+.seg.small button { padding: 5px 12px; flex: none; }
+.site-preview { flex: 1; background: var(--bg); display: flex; justify-content: center; overflow: auto; }
+.site-preview iframe { width: 100%; height: 100%; border: 0; background: #fff; transition: width .2s; }
+.site-code { flex: 1; display: flex; min-height: 0; }
+.site-code[hidden], .site-preview[hidden] { display: none; }
+.site-file-list { width: 210px; border-right: 1px solid var(--border); overflow-y: auto; padding: 6px; flex-shrink: 0; }
+.site-file-list button { display: block; width: 100%; text-align: left; padding: 7px 9px; border-radius: 8px; font-family: ui-monospace, Menlo, monospace; font-size: 12px; word-break: break-all; }
+.site-file-list button small { display: block; color: var(--muted); font-family: Inter, sans-serif; }
+.site-file-list button.on, .site-file-list button:hover { background: var(--hover); }
+.site-code-wrap { flex: 1; position: relative; min-width: 0; overflow: auto; }
+.site-code-wrap pre { max-height: none; height: 100%; }
+#siteCopy { position: sticky; top: 8px; float: right; margin: 8px; padding: 5px 12px; font-size: 12px; border: 1px solid var(--border); background: var(--surface); }
+@media (max-width: 760px) { .site-file-list { width: 120px; } }
 
 /* ============================================================
    REPORT A BUG (side menu that slides in from the right)
@@ -635,6 +693,27 @@ svg:not(.bob-img):not(.bob-img svg) { width: 18px; height: 18px; stroke: current
   </div>
 </aside>
 
+<!-- ===================== WEBSITE PREVIEW PANEL ===================== -->
+<div class="bug-overlay" id="siteOverlay"></div>
+<aside class="site-panel" id="sitePanel">
+  <div class="bug-head">
+    <h2 id="sitePanelTitle">Website</h2>
+    <button class="icon-btn" id="siteClose" title="Close"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="site-toolbar">
+    <div class="seg small" id="siteTabs"><button type="button" data-tab="preview" class="on">Preview</button><button type="button" data-tab="code">Code</button></div>
+    <div class="seg small" id="siteDevices"><button type="button" data-w="100%" class="on" title="Computer">🖥</button><button type="button" data-w="768px" title="Tablet">📱</button><button type="button" data-w="390px" title="Phone">📲</button></div>
+    <div class="spacer"></div>
+    <button class="btn ghost" id="siteNewTab" type="button">↗ New tab</button>
+    <button class="btn primary" id="siteZip" type="button">⬇ .zip</button>
+  </div>
+  <div class="site-preview" id="sitePreview"><iframe id="siteFrame" title="Website preview" sandbox="allow-scripts allow-forms allow-popups"></iframe></div>
+  <div class="site-code" id="siteCode" hidden>
+    <div class="site-file-list" id="siteFileList"></div>
+    <div class="site-code-wrap"><button class="btn ghost" id="siteCopy" type="button">Copy</button><pre id="siteCodeView"></pre></div>
+  </div>
+</aside>
+
 <!-- Pop up menu for chats and projects (filled in by openCtx) -->
 <div class="ctx" id="ctx"></div>
 
@@ -743,9 +822,16 @@ svg:not(.bob-img):not(.bob-img svg) { width: 18px; height: 18px; stroke: current
   </div>
 
   <div class="composer-wrap">
+    <div class="composer-note" id="composerNote" hidden></div>
     <div class="composer">
+      <!-- Picked tool and files show up here -->
+      <div class="attach-row" id="attachRow" hidden></div>
       <textarea id="input" rows="1" placeholder="Message Bob..."></textarea>
       <div class="composer-row">
+        <button class="icon-btn plus-btn" id="plusBtn" type="button" title="Upload files, create image, research, or create website">
+          <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+        <input type="file" id="fileInput" multiple accept="image/*,.txt,.md,.csv,.json,.html,.htm,.css,.js" hidden>
         <button class="pill" id="pillBtn">
           <svg viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/></svg>
           <span id="pillText">Study mode</span>
@@ -2266,7 +2352,7 @@ function userName() { return (profile && profile.name) || "there"; }
    text or a function, for answers that change (time, your name...).
    To add one: copy an entry, change the patterns and the answer.
    ================================================================ */
-const BOB_VERSION = "1.6";
+const BOB_VERSION = "1.7";
 const BOB_BIRTHDAY = "October 2026";
 
 const JOKES = [
@@ -2397,8 +2483,12 @@ const SELF_QA = [
     a: () => `I save my answers on this device, so if you ask the same thing again (with the same settings) I answer instantly, even offline. Looked up answers refresh after a week. You can clear them in **Settings** with **Clear saved answers**.` },
   { p: [/can you (learn|get smarter|remember)/, /do you remember (me|things|what i said)/, /will you remember/],
     a: () => `A little! On this device I remember your name, your chats, and anyone I looked up online. FallGameDev makes me smarter by adding new files.` },
-  { p: [/can i (add|upload|give you) (a )?(file|pdf|document|my notes)/, /how do i (add|upload) (files|pdfs?)/],
-    a: () => `Right now only FallGameDev can add files to my brain. If there's a topic you want me to know, tap **Report a bug** at the bottom and suggest it!` },
+  { p: [/can i (add|upload|give you|send you) (a |an |my )?(files?|pdfs?|documents?|notes|pictures?|images?|photos?)/, /how do i (add|upload|send) (files|pdfs?|pictures|images|photos)/],
+    a: () => `Yes! Press the **+** button in the message box and pick **Upload files** (or drag files onto it). I can read **text files** (.txt, .md, .csv, .html...) and answer questions about them. **Pictures** go into websites you make with me. I can't read PDFs yet.` },
+  { p: [/can you (make|build|create|code|design) (a |me a )?(website|web ?site|web ?page|site)/, /how do (i|you) (make|build|create) (a )?(website|site)/],
+    a: () => `Yes! Press **+** and pick **Create website**, or just say *make a website for my bakery called Sweet Treats, pink and brown*. I search GitHub for a free template, download its files, swap in your pictures (upload them with **+**), your colors, and your name, and show you a live preview. You can download it as a .zip.` },
+  { p: [/can you (do )?research/, /how do(es)? (research|the research tool) work/],
+    a: () => `Yes! Press **+** and pick **Research**, or say *research volcanoes*. I read several Wikipedia articles and put together a report with a short summary, an overview, key facts, a fun fact, related topics, and numbered sources.` },
   { p: [/can you play (a )?(game|games) with me/, /let'?s play (a )?game/, /i'm bored/, /entertain me/],
     a: () => `Let's play a quiz game! Switch to **Quiz me** mode (top of the screen) and name a topic, like "fractions" or "Minecraft". I'll keep the questions coming.` },
   { p: [/can you (hack|hack into)/, /teach me (to|how to) hack/, /are you a hacker/],
@@ -2476,14 +2566,30 @@ function topicsList() {
   const cats = [...new Set(KB.map(e => e.cat))];
   return cats.map(c => {
     const items = KB.filter(e => e.cat === c);
-    const shown = c === "Math" ? "K-12, from counting all the way to calculus" : items.map(e => e.title).join(", ");
+    const shown = c === "Math" ? "K-12, from counting all the way to calculus" : [...new Set(items.map(e => e.title.replace(/ \(part \d+\)$/, "")))].join(", ");
     return `- **${c}:** ${shown}`;
   }).join("\n");
 }
 
-async function askBob(question) {
-  await new Promise(r => setTimeout(r, 450 + Math.random() * 500)); // a little "thinking" pause
-  const q = question.trim(), low = q.toLowerCase();
+async function askBob(question, opts = {}) {
+  await new Promise(r => setTimeout(r, window.__fast ? 0 : 450 + Math.random() * 500)); // window.__fast skips the pause in tests // a little "thinking" pause
+  let q = question.trim().replace(/^\(sent a (picture|file)\)$/, "");
+  const low = q.toLowerCase(), files = opts.files || [];
+
+  // 0. Tools from the + menu (or asked for in words)
+  if (opts.tool === "website" || (q && websiteRequest(q))) return await buildWebsite(q || "a website", files, 0);
+  if (opts.tool === "image") return await makeImage(imageRequest(q) || { subject: q, styleWord: "", original: q }, 0);
+  if (opts.tool === "research" || researchRequest(q)) return await research(researchRequest(q) || q);
+  // Text files become part of Bob's knowledge, so you can ask about them
+  const texts = files.filter(f => f.kind === "text"), pics = files.filter(f => f.kind === "image");
+  let fileNote = "";
+  if (texts.length) {
+    fileNote = texts.map(f => { const r = learnTextFile(f); return `I read **${f.name}** (${r.words.toLocaleString("en-US")} words). It starts: "${r.first}"`; }).join("\n\n");
+    if (!q) return { text: fileNote + `\n\nAsk me anything about ${texts.length > 1 ? "them" : "it"}!`, sources: texts.map(f => f.name), kind: "chat", noTone: true };
+  }
+  const fromFile = q ? fileAnswer(q) : null;
+  if (fromFile) { if (fileNote) fromFile.text = fileNote + "\n\n" + fromFile.text; return fromFile; }
+  if (pics.length && !q) return { text: `Nice ${pics.length > 1 ? "pictures" : "picture"}! I can't see what's inside pictures, but I can put ${pics.length > 1 ? "them" : "it"} into a website. Press **+**, pick **Create website**, and describe your site.`, sources: [], kind: "chat", noTone: true };
 
   // 1. Answering a quiz question?
   if (pendingQuiz) {
@@ -2595,7 +2701,7 @@ const STARTERS = [
   { title: "Solve 3x + 7 = 22", sub: "with every step shown" },
   { title: "What is the Pythagorean theorem?", sub: "explained simply" },
   { title: "Draw a dragon in space", sub: "make your own picture" },
-  { title: "Quiz me on fractions", sub: "practice until it clicks" }
+  { title: "Make a website for my bakery called Sweet Treats, pink and brown", sub: "build your own site" }
 ];
 
 let chats = load() || [];
@@ -2608,6 +2714,14 @@ function save() {
     for (const c of [...chats].reverse()) for (const m of c.messages) {
       if (m.visual && m.visual.length > 20000) {
         m.visual = '<div class="viz-cap">(Picture removed to save space. Ask again to make a new one.)</div>';
+        try { localStorage.setItem("bob-chats", JSON.stringify(chats)); return; } catch (err) { }
+      }
+      if (m.site && m.site.files) {
+        m.site = { ...m.site, files: null, userImages: [] };
+        try { localStorage.setItem("bob-chats", JSON.stringify(chats)); return; } catch (err) { }
+      }
+      if (m.files && m.files.some(f => f.dataUrl)) {
+        m.files = m.files.map(f => ({ kind: "text", name: f.name, text: "" }));
         try { localStorage.setItem("bob-chats", JSON.stringify(chats)); return; } catch (err) { }
       }
     }
@@ -2649,6 +2763,13 @@ async function addMessage(role, text, sources, animate, extra = {}) {
     wrap.className = "user-wrap";
     const b = document.createElement("div");
     b.className = "bubble"; b.textContent = text;
+    if (extra.files && extra.files.length) {
+      const fl = document.createElement("div");
+      fl.className = "user-files";
+      extra.files.forEach(f => fl.insertAdjacentHTML("beforeend", f.kind === "image" ? `<img src="${f.dataUrl}" alt="${esc(f.name)}" title="${esc(f.name)}">` : `<span class="doc">📄 ${esc(f.name)}</span>`));
+      wrap.appendChild(fl);
+    }
+    if (extra.tool) b.insertAdjacentHTML("afterbegin", `<span class="tool-tag">${TOOLS[extra.tool].icon} ${TOOLS[extra.tool].name}</span> `);
     wrap.appendChild(b);
     wrap.insertAdjacentHTML("beforeend", `<div class="user-actions">
       <button class="icon-btn" data-act="edit" title="Edit">${ICONS.pencil}</button>
@@ -2662,6 +2783,7 @@ async function addMessage(role, text, sources, animate, extra = {}) {
   div.innerHTML = `<div class="logo">b</div><div class="bot-body"><div class="content"></div></div>`;
   // Pictures and diagrams: above the text in Visual mode, below it in Both mode
   if (extra.visual) div.querySelector(".bot-body").insertAdjacentHTML(extra.visualPos === "top" ? "afterbegin" : "beforeend", `<div class="visual-block">${extra.visual}</div>`);
+  if (extra.site) div.querySelector(".bot-body").appendChild(siteBlock(extra));
   $("thread").appendChild(div);
   const content = div.querySelector(".content"), body = div.querySelector(".bot-body");
 
@@ -2708,10 +2830,16 @@ function renderChat() {
 /* Sending a message */
 let busy = false;
 let lastReply = null; // Bob's last answer, so he can say where it came from
-async function send(text) {
+async function send(text, opts = {}) {
   text = (text || $("input").value).trim();
-  if (!text || busy) return;
+  // Files and the picked tool from the + menu go with this message
+  const files = opts.files || pendingFiles.slice();
+  const tool = opts.tool !== undefined ? opts.tool : activeTool;
+  if ((!text && !files.length) || busy) return;
   busy = true;
+  if (!opts.files) { pendingFiles = []; }
+  if (opts.tool === undefined && activeTool) setTool(null); else renderComposerChips();
+  if (!text) text = files.some(f => f.kind === "image") ? "(sent a picture)" : "(sent a file)";
   if (!current) {
     current = { id: uid(), title: text.slice(0, 40), messages: [], projectId: pendingProjectId };
     chats.unshift(current);
@@ -2723,16 +2851,18 @@ async function send(text) {
   $("input").value = ""; resizeInput();
 
   const userMsg = { role: "user", text };
+  if (files.length) userMsg.files = files;
+  if (tool) userMsg.tool = tool;
   current.messages.push(userMsg);
   addMessage("user", text, null, false, userMsg);
   renderList(); updateProjectChips(); save();
 
   showTyping();
   let reply;
-  const saved = cacheGet(text);
+  const saved = tool || files.length ? null : cacheGet(text);
   if (saved) { reply = saved; await sleep(250); } // already answered this before
   else {
-    try { reply = await askBob(text); }
+    try { reply = await askBob(text, { tool, files }); }
     catch (e) { reply = { text: "Oops, something went wrong on my end. Try asking another way!", sources: [] }; }
   }
   if (!reply.kind) reply.kind = "chat";
@@ -2745,6 +2875,7 @@ async function send(text) {
 
   const msg = { role: "bot", text: reply.text, sources: reply.sources };
   if (reply.visual) { msg.visual = reply.visual; msg.visualPos = reply.visualPos; }
+  if (reply.site) msg.site = reply.site;
   current.messages.push(msg);
   await addMessage("bot", reply.text, reply.sources, true, msg);
   save();
@@ -2753,7 +2884,7 @@ async function send(text) {
 
 /* Input box */
 function resizeInput() { const t = $("input"); t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 200) + "px"; updateSend(); }
-function updateSend() { $("send").disabled = !$("input").value.trim() || busy; }
+function updateSend() { $("send").disabled = (!$("input").value.trim() && !(typeof pendingFiles !== "undefined" && pendingFiles.length)) || busy; }
 $("input").addEventListener("input", resizeInput);
 $("input").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
 $("send").onclick = () => send();
@@ -3239,7 +3370,7 @@ function applyTone(reply) {
   let text = reply.text;
   if (reply.kind === "quiz") {
     text = text.replace(/<good>Correct!<\/good>/g, `<good>${T.correct}</good>`).replace(/<bad>Not quite\.<\/bad>/g, `<bad>${T.wrong}</bad>`);
-  } else if (["topic", "math", "web", "places", "image"].includes(reply.kind) && T.intro.length) {
+  } else if (["topic", "math", "web", "places", "image", "research", "site"].includes(reply.kind) && T.intro.length) {
     text = `${pick(T.intro)}\n\n${text}\n\n${pick(T.outro)}`;
   } else if (reply.kind === "chat" && !reply.noTone) {
     text = text.replace(/\s*$/, "") + pick(T.chatTail);
@@ -3602,7 +3733,7 @@ async function decorate(reply, question) {
   } else if (reply.directImages) {
     const imgs = reply.directImages.slice(0); imgs.page = reply.imgPage;
     parts.push(imageGrid(imgs).replace(">Wikipedia</a>", ">Wikimedia Commons</a>"));
-  } else if ((reply.kind === "topic" || reply.kind === "web") && reply.imgTitle) {
+  } else if ((reply.kind === "topic" || reply.kind === "web" || reply.kind === "research") && reply.imgTitle) {
     const imgs = await wikiImages(reply.imgTitle, type === "visual" ? 3 : 1, reply.imgHost, reply.leadImage);
     parts.push(imageGrid(imgs));
   }
@@ -3770,7 +3901,7 @@ function inlineInput(placeholder, value, onSave, onCancel) {
 }
 
 /* ---------- Pop up menu ---------- */
-function openCtx(anchor, items) {
+function openCtx(anchor, items, alignLeft = anchor && anchor.id === "plusBtn") {
   const ctx = $("ctx");
   ctx.innerHTML = "";
   items.forEach(it => {
@@ -3785,7 +3916,7 @@ function openCtx(anchor, items) {
   ctx.classList.add("open");
   // Place it next to the button, but keep it on screen
   const r = anchor.getBoundingClientRect(), w = ctx.offsetWidth, h = ctx.offsetHeight;
-  ctx.style.left = Math.max(8, Math.min(r.right - w, window.innerWidth - w - 8)) + "px";
+  ctx.style.left = Math.max(8, Math.min(alignLeft ? r.left : r.right - w, window.innerWidth - w - 8)) + "px";
   ctx.style.top = (r.bottom + h + 8 > window.innerHeight ? Math.max(8, r.top - h - 4) : r.bottom + 4) + "px";
   ctx._anchor = anchor;
 }
@@ -3874,7 +4005,7 @@ function editMessage(m, div) {
     current.messages = current.messages.slice(0, idx);
     pendingQuiz = null;
     renderChat();
-    send(t);
+    send(t, { files: m.files || [], tool: m.tool || null });
   };
   ok.onclick = submit;
   ta.onkeydown = e => {
@@ -4682,6 +4813,671 @@ $("thread").addEventListener("click", async e => {
   }
 });
 
+
+/* ================================================================
+   PART 16: THE + MENU (upload files, create image, research, create website)
+   ================================================================ */
+let activeTool = null;        // "image" | "research" | "website" | null
+let pendingFiles = [];        // files picked with Upload, sent with the next message
+const TOOLS = {
+  image: { icon: "🎨", name: "Image", hint: "Describe your picture, like: an orange cat at sunset" },
+  research: { icon: "🔎", name: "Research", hint: "What should I research? Like: volcanoes" },
+  website: { icon: "🌐", name: "Website", hint: "Describe your site, like: a bakery called Sweet Treats, pink and brown" }
+};
+
+/* ---------- Uploads ---------- */
+// Shrinks big photos so they fit in the chat and in websites
+function shrinkImage(file, max = 1280) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      const png = /png|gif|svg/.test(file.type);
+      resolve({ dataUrl: c.toDataURL(png ? "image/png" : "image/jpeg", 0.85), w: c.width, h: c.height });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("bad image")); };
+    img.src = url;
+  });
+}
+async function addFiles(list) {
+  for (const f of [...list].slice(0, 10)) {
+    try {
+      if (f.type.startsWith("image/")) {
+        const s = await shrinkImage(f);
+        pendingFiles.push({ kind: "image", name: f.name, dataUrl: s.dataUrl });
+      } else if (/\.(txt|md|csv|json|html?|css|js)$/i.test(f.name) || f.type.startsWith("text/")) {
+        if (f.size > 300000) { alertSoft(`${f.name} is too big (max 300 KB).`); continue; }
+        pendingFiles.push({ kind: "text", name: f.name, text: await f.text() });
+      } else alertSoft(`I can't read ${f.name}. Try an image or a text file.`);
+    } catch (e) { alertSoft(`I couldn't open ${f.name}.`); }
+  }
+  renderComposerChips();
+}
+// A small message above the input box (instead of a popup)
+function alertSoft(msg) {
+  const el = $("composerNote");
+  el.textContent = msg; el.hidden = false;
+  clearTimeout(alertSoft.t); alertSoft.t = setTimeout(() => el.hidden = true, 4000);
+}
+
+/* Shows the picked tool and files above the input box */
+function renderComposerChips() {
+  const row = $("attachRow");
+  row.innerHTML = "";
+  if (activeTool) {
+    const t = TOOLS[activeTool];
+    row.insertAdjacentHTML("beforeend", `<span class="tool-chip">${t.icon} ${t.name}<button type="button" title="Turn off">×</button></span>`);
+    row.lastElementChild.querySelector("button").onclick = () => setTool(null);
+  }
+  pendingFiles.forEach((f, i) => {
+    const chip = document.createElement("span");
+    chip.className = "file-chip";
+    chip.innerHTML = (f.kind === "image" ? `<img src="${f.dataUrl}" alt="">` : `<span class="file-ico">📄</span>`) + `<span class="file-name">${esc(f.name)}</span><button type="button" title="Remove">×</button>`;
+    chip.querySelector("button").onclick = () => { pendingFiles.splice(i, 1); renderComposerChips(); };
+    row.appendChild(chip);
+  });
+  row.hidden = !activeTool && !pendingFiles.length;
+  updateSend();
+}
+function setTool(t) {
+  activeTool = t;
+  $("input").placeholder = t ? TOOLS[t].hint : (mode.id === "quiz" ? "Name a topic to get quizzed on, like fractions or Minecraft..." : "Message Bob...");
+  renderComposerChips();
+  $("input").focus();
+}
+
+/* The + menu */
+$("plusBtn").onclick = e => {
+  e.stopPropagation();
+  openCtx($("plusBtn"), [
+    { label: "Upload files", icon: '<svg viewBox="0 0 24 24"><path d="m21 11-8.6 8.6a5 5 0 0 1-7-7l8.5-8.6a3.3 3.3 0 0 1 4.7 4.7l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4l7.9-7.9"/></svg>', onClick: () => $("fileInput").click() },
+    "sep",
+    { label: "Create image", icon: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>', checked: activeTool === "image", onClick: () => setTool(activeTool === "image" ? null : "image") },
+    { label: "Research", icon: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>', checked: activeTool === "research", onClick: () => setTool(activeTool === "research" ? null : "research") },
+    { label: "Create website", icon: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>', checked: activeTool === "website", onClick: () => setTool(activeTool === "website" ? null : "website") }
+  ]);
+};
+$("fileInput").addEventListener("change", e => { addFiles(e.target.files); e.target.value = ""; });
+// Drag and drop or paste files onto the input box
+$("input").addEventListener("paste", e => { const fs = [...(e.clipboardData && e.clipboardData.files || [])]; if (fs.length) { e.preventDefault(); addFiles(fs); } });
+document.querySelector(".composer").addEventListener("dragover", e => e.preventDefault());
+document.querySelector(".composer").addEventListener("drop", e => { e.preventDefault(); if (e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
+
+/* Text files you upload become part of Bob's knowledge */
+function learnTextFile(f) {
+  const clean = f.text.replace(/<[^>]+>/g, " ").replace(/\r/g, "");
+  const paras = clean.split(/\n\s*\n/).map(x => x.replace(/\s+/g, " ").trim()).filter(x => x.length > 30);
+  const chunks = [];
+  let buf = "";
+  paras.forEach(p => { if ((buf + " " + p).length > 700 && buf) { chunks.push(buf); buf = p; } else buf = (buf + " " + p).trim(); });
+  if (buf) chunks.push(buf);
+  const base = f.name.replace(/\.[a-z]+$/i, "");
+  chunks.slice(0, 40).forEach((c, i) => learn({ cat: "Your files", title: chunks.length > 1 ? `${base} (part ${i + 1})` : base, names: [base], keys: base.replace(/[-_]/g, " "), text: c, src: f.name }));
+  return { words: clean.split(/\s+/).filter(Boolean).length, first: shorten(clean.replace(/\s+/g, " ").trim(), 2) };
+}
+
+/* Finds the best sentence in your uploaded files for a question */
+function fileAnswer(q) {
+  const mine = KB.filter(e => e.cat === "Your files");
+  if (!mine.length) return null;
+  const words = [...new Set(tok(q))].filter(w => w.length > 2);
+  if (!words.length) return null;
+  let best = null;
+  mine.forEach(e => {
+    const sentences = e.text.split(/(?<=[.!?])\s+/);
+    sentences.forEach((sen, i) => {
+      const st = new Set(tok(sen));
+      const hits = words.filter(w => st.has(w)).length;
+      if (!best || hits > best.hits) best = { hits, sen, next: sentences[i + 1], e };
+    });
+  });
+  // Most of the question's words need to be in the sentence
+  if (!best || best.hits < Math.max(1, Math.ceil(words.length * 0.6))) return null;
+  const extra = best.next && best.next.length < 160 && lenPref() === "detailed" ? " " + best.next : "";
+  return { text: `From **${best.e.src}**: ${best.sen}${extra}`, sources: [best.e.src], kind: "chat", noTone: true };
+}
+
+/* ---------- Research ---------- */
+function researchRequest(q) {
+  const m = q.trim().match(/^(?:please )?(?:research|do (?:some )?research (?:on|about)|find out (?:everything )?about|write (?:me )?a report (?:on|about)|tell me everything about|learn about)\s+(.+?)[?.!]*$/i);
+  return m ? m[1] : null;
+}
+async function research(topic) {
+  topic = topic.replace(/^(about|on|the topic of)\s+/i, "").trim();
+  if (IMG_BLOCK.test(topic.toLowerCase())) return { text: `I can't research that one. Try something like **volcanoes**, **the Roman Empire**, or **how rockets work**.`, sources: [], kind: "chat", noTone: true };
+  let s;
+  try { s = await getJSON(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(topic)}&srlimit=8&format=json&origin=*`); }
+  catch (e) { return { text: `I need the internet to do research, and I couldn't connect. Try again in a moment!`, sources: [], kind: "chat", noTone: true }; }
+  const hits = ((s.query && s.query.search) || []).filter(h => !/disambiguation|^list of|^index of/i.test(h.title)).slice(0, 5);
+  if (!hits.length) return { text: `I couldn't find anything to research about **${topic}**. Try different words!`, sources: [], kind: "chat", noTone: true };
+  const sums = (await Promise.all(hits.map(h => getJSON(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(h.title.replace(/ /g, "_"))}`, 6000).catch(() => null))))
+    .filter(x => x && x.extract && x.type !== "disambiguation");
+  if (!sums.length) return { text: `I couldn't load the articles about **${topic}**. Try again in a moment!`, sources: [], kind: "chat", noTone: true };
+  const main = sums[0];
+  let simple = null;
+  try { simple = await getJSON(`https://simple.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(main.title.replace(/ /g, "_"))}`, 5000); } catch (e) { }
+  const L = lenPref(), sentences = tidy(main.extract).split(/(?<=[.!?])\s+/);
+  const link = x => safeUrl((x.content_urls && x.content_urls.desktop && x.content_urls.desktop.page) || `https://en.wikipedia.org/wiki/${encodeURIComponent(x.title)}`);
+  let text = `**Research: ${main.title}**`;
+  text += `\n\n**In short:** ${shorten(tidy((simple && simple.extract) || main.extract), 2)} [1]`;
+  if (L !== "summary") {
+    text += `\n\n**Overview:** ${sentences.slice(0, L === "detailed" ? 8 : 4).join(" ")} [1]`;
+    const facts = sums.slice(1).map((x, i) => `- **${x.title}:** ${firstSentence(tidy(x.extract))} [${i + 2}]`);
+    if (facts.length) text += `\n\n**Key facts:**\n${facts.join("\n")}`;
+    const fun = sentences.slice(4).find(x => /\d|first|largest|only|most|oldest|biggest|fastest|discovered|named/i.test(x));
+    if (fun) text += `\n\n**Did you know?** ${fun}`;
+    const related = hits.filter(h => !sums.some(x => x.title === h.title)).map(h => h.title);
+    if (related.length) text += `\n\n**Keep exploring:** ${related.join(", ")}`;
+  }
+  text += `\n\n**Sources:**\n` + sums.map((x, i) => `${i + 1}. [${linkText(x.title)}](${link(x)}) (Wikipedia)`).join("\n");
+  if (simple && simple.extract) text += `\n${sums.length + 1}. [${linkText(simple.title)}](${link(simple)}) (Simple English Wikipedia)`;
+  return { text, sources: ["Wikipedia"], kind: "research", imgTitle: main.title, imgHost: "en.wikipedia.org", leadImage: main.thumbnail && main.thumbnail.source };
+}
+
+/* ================================================================
+   WEBSITE BUILDER
+   1. Read the request (name, topic, colors, description)
+   2. Search GitHub for a free license template that matches
+   3. Download its HTML, CSS, and JS
+   4. Swap in your pictures, your colors, and your name and topic
+   5. Show the files in the chat and a live preview in a side panel
+   ================================================================ */
+const GOOD_LICENSES = /^(MIT|Apache-2\.0|CC0-1\.0|Unlicense|BSD-2-Clause|BSD-3-Clause|CC-BY-4\.0|CC-BY-3\.0|ISC|MPL-2\.0|WTFPL|0BSD|CC-BY-SA-4\.0)$/;
+const REPO_BLOCK = /clone|replica|phishing|login page|fake|casino|gambl|betting|\bbet\b|adult|xxx|dating|crypto|nft|hack|cheat|exploit|bank|paypal|netflix|facebook|instagram|amazon|spotify|youtube clone|whatsapp|discord clone/i;
+const SITE_TYPES = [
+  [/bakery|cake|cupcake|dessert|sweets?|donut/, ["bakery", "cafe", "restaurant"]], [/cafe|coffee|tea/, ["cafe", "coffee shop", "restaurant"]],
+  [/restaurant|food|pizza|burger|diner|menu|cook|chef|recipe/, ["restaurant", "food"]], [/portfolio|resume|cv|about me|personal|myself/, ["portfolio", "personal"]],
+  [/game|gaming|gamer|minecraft|roblox|esports|clan/, ["game", "gaming"]], [/youtube|youtuber|channel|streamer|twitch|creator|content/, ["portfolio", "personal", "landing page"]],
+  [/school|class|teacher|student|education|course|tutor|learn/, ["education", "school"]], [/store|shop|sell|products?|merch|ecommerce/, ["ecommerce", "shop"]],
+  [/photo|photography|camera|gallery/, ["photography", "gallery"]], [/music|band|singer|dj|album|song/, ["music", "band"]],
+  [/blog|journal|diary|writing/, ["blog"]], [/business|company|agency|startup|studio|services?/, ["business", "agency", "landing page"]],
+  [/event|party|wedding|birthday|conference/, ["event", "wedding"]], [/travel|trip|vacation|tour|hotel/, ["travel", "hotel"]],
+  [/fitness|gym|workout|sport|soccer|football|basketball|team/, ["fitness", "gym", "sports"]], [/pets?|dogs?|cats?|vet|animal/, ["pet", "animal"]],
+  [/app|software|saas|product/, ["app landing page", "landing page"]], [/charity|volunteer|nonprofit|club/, ["charity", "nonprofit"]],
+  [/real estate|house|home|apartment/, ["real estate"]], [/church|faith/, ["church"]], [/doctor|clinic|dental|health|medical/, ["medical", "health"]]
+];
+
+function websiteRequest(q) {
+  const low = q.toLowerCase();
+  return /\b(make|create|build|design|generate|code|start|need|want)\b[^.?!]*\b(website|web ?site|web ?page|webpage|landing page|home ?page|site)\b/.test(low) && !/^(what|how|why|who) (is|are|do|does)\b/.test(low);
+}
+
+/* Reads "a website for my bakery called Sweet Treats with pink and brown colors" */
+function readSiteRequest(text) {
+  const out = { name: null, tagline: null, colors: [], keywords: [], cats: [] };
+  const quoted = text.match(/["“]([^"”]{2,40})["”]/);
+  const called = text.match(/\b(?:called|named|titled|name it|name is|brand(?:ed)? as)\s+([A-Za-z0-9&' ]{2,40}?)(?=\s+(?:with|that|and|in|using|for|about|which|where|it)\b|[,.!?]|$)/i);
+  out.name = (quoted && quoted[1]) || (called && called[1]) || null;
+  // Colors: words like "pink" or codes like #ff8800
+  const low = text.toLowerCase();
+  (low.match(/#[0-9a-f]{6}\b|#[0-9a-f]{3}\b|\b[a-z]+\b/g) || []).forEach(w => {
+    if (w.startsWith("#")) out.colors.push(w.length === 4 ? "#" + w.slice(1).split("").map(c => c + c).join("") : w);
+    else if (IMG_COLORS[w] && !/orange juice/.test(low)) out.colors.push(IMG_COLORS[w]);
+  });
+  out.colors = [...new Set(out.colors)].slice(0, 3);
+  // The topic: what's left after removing the "make a website" words
+  let rest = text.replace(/["“][^"”]*["”]/g, " ")
+    .replace(/\b(?:called|named|titled|name it|name is)\s+[A-Za-z0-9&' ]{2,40}?(?=\s+(?:with|that|and|in|using|for|about|which|where|it)\b|[,.!?]|$)/i, " ")
+    .replace(/^.*?\b(website|web ?site|web ?page|webpage|landing page|home ?page|site)\b/i, " ")
+    .replace(/#[0-9a-f]{3,6}\b/gi, " ").replace(/\b(colou?rs?|theme|themed|style|styled|using|use|with|and|in|the|a|an|for|my|me|our|of|about|please|that|is|it|to|be|make|build|create)\b/gi, " ");
+  Object.keys(IMG_COLORS).forEach(c => rest = rest.replace(new RegExp(`\\b${c}\\b`, "gi"), " "));
+  rest = rest.replace(/[^a-z0-9' &-]/gi, " ").replace(/\s+/g, " ").trim();
+  out.keywords = rest.toLowerCase().split(" ").filter(w => w.length > 2).slice(0, 6);
+  const typeText = (out.keywords.join(" ") + " " + low);
+  SITE_TYPES.forEach(([re, cats]) => { if (re.test(typeText)) cats.forEach(c => out.cats.includes(c) || out.cats.push(c)); });
+  const titleCase = s => s.replace(/\b[a-z]/g, c => c.toUpperCase());
+  if (!out.name) {
+    const forMy = text.match(/\bfor (?:my|our|a|an|the)\s+([a-z' ]{3,30}?)(?=\s+(?:called|named|with|that|in|using|which|where)\b|[,.!?]|$)/i);
+    out.name = forMy ? titleCase("My " + forMy[1].replace(/\b(colou?rs?|website|site)\b/gi, "").trim()) : out.keywords.length ? titleCase(out.keywords.slice(0, 3).join(" ")) : "My Website";
+  }
+  out.name = out.name.trim();
+  // A short line under the big title
+  const about = text.match(/\b(?:that|which|where|about|to)\s+((?:sells?|makes?|shows?|has|is|teaches|helps|offers|shares?|bakes?|plays?|posts?|talks?)[^.!?]{3,90})/i);
+  let tag = about ? about[1] : "";
+  // Take color words and "colors" off the tagline ("sells cupcakes, pink and brown" -> "sells cupcakes")
+  tag = tag.replace(new RegExp(`[,\\s]*(?:with |in |using )?(?:the )?(?:colou?rs? )?(?:(?:${Object.keys(IMG_COLORS).join("|")})(?:\\s*(?:,|and|&)\\s*)?)+(?:\\s*colou?rs?)?\\s*$`, "i"), "").replace(/[,\s]+(and|with)?\s*$/i, "").trim();
+  out.tagline = tag ? tag.replace(/^\w/, c => c.toUpperCase()) + "." : `Welcome to ${out.name}!`;
+  out.topic = out.keywords.join(" ");
+  return out;
+}
+
+/* ---------- GitHub search ---------- */
+const ghCache = {};
+async function ghSearch(q) {
+  if (ghCache[q]) return ghCache[q];
+  const r = await fetch(`https://api.github.com/search/repositories?q=${encodeURIComponent(q)}&sort=stars&order=desc&per_page=30`, { headers: { Accept: "application/vnd.github+json" } });
+  if (r.status === 403 || r.status === 429) throw new Error("rate");
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const items = ((await r.json()).items || []).filter(x =>
+    x.license && GOOD_LICENSES.test(x.license.spdx_id || "") && x.size < 30000 && !x.disabled &&
+    !REPO_BLOCK.test(x.full_name + " " + (x.description || "")) && !IMG_BLOCK.test((x.full_name + " " + (x.description || "")).toLowerCase()));
+  ghCache[q] = items;
+  return items;
+}
+async function findTemplateRepos(req) {
+  const words = req.keywords.filter(w => !/^(website|site|page|template|web)$/.test(w)).slice(0, 2).join(" ");
+  const tries = [];
+  if (words) tries.push(`${words} website template language:HTML`, `${words} template language:HTML`);
+  req.cats.slice(0, 3).forEach(c => tries.push(`${c} template language:HTML`, `${c} website template`));
+  tries.push("landing page template language:HTML", "website template language:HTML stars:>50");
+  const seen = new Set(), repos = [];
+  for (const q of [...new Set(tries)]) {
+    const items = await ghSearch(q);
+    items.forEach(x => { if (!seen.has(x.full_name)) { seen.add(x.full_name); repos.push(x); } });
+    if (repos.length >= 12) break;
+  }
+  return repos;
+}
+
+/* ---------- Downloading a template ---------- */
+const cdnUrl = (repo, path) => `https://cdn.jsdelivr.net/gh/${repo.full_name}@${repo.default_branch}/${path.split("/").map(encodeURIComponent).join("/")}`;
+async function repoFiles(repo) {
+  try {
+    const r = await fetch(`https://api.github.com/repos/${repo.full_name}/git/trees/${encodeURIComponent(repo.default_branch)}?recursive=1`);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return ((await r.json()).tree || []).filter(x => x.type === "blob").map(x => ({ path: x.path, size: x.size || 0 }));
+  } catch (e) {
+    // Backup: jsDelivr's file list
+    const j = await getJSON(`https://data.jsdelivr.com/v1/packages/gh/${repo.full_name}@${repo.default_branch}?structure=flat`, 9000);
+    return (j.files || []).map(x => ({ path: x.name.replace(/^\//, ""), size: x.size || 0 }));
+  }
+}
+async function fetchText(repo, path) {
+  for (const u of [cdnUrl(repo, path), `https://raw.githubusercontent.com/${repo.full_name}/${repo.default_branch}/${path}`]) {
+    try { const r = await fetch(u); if (r.ok) return await r.text(); } catch (e) { }
+  }
+  throw new Error("couldn't download " + path);
+}
+// Path helpers: everything is a path from the top of the repo, like "docs/css/style.css"
+const isExternal = u => /^(https?:)?\/\/|^data:|^mailto:|^tel:|^#|^javascript:/i.test(u.trim());
+function resolveRepoPath(fromFile, ref) {
+  const clean = ref.trim().split("#")[0].split("?")[0];
+  try { return decodeURIComponent(new URL(clean, "https://repo.local/" + fromFile).pathname.slice(1)); } catch (e) { return null; }
+}
+function relPath(fromFile, toPath) {
+  const depth = fromFile.split("/").length - 1;
+  return "../".repeat(depth) + toPath;
+}
+const IMAGE_EXT = /\.(jpe?g|png|webp|gif|avif)$/i;
+
+/* ---------- Color swapping ---------- */
+const COLOR_RE = /#[0-9a-fA-F]{8}\b|#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b|rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(?:,\s*[\d.]+\s*)?\)/g;
+function parseColor(c) {
+  if (c.startsWith("#")) {
+    let h = c.slice(1);
+    if (h.length === 3) h = h.split("").map(x => x + x).join("");
+    return { hex: "#" + h.slice(0, 6).toLowerCase(), alpha: h.length === 8 ? h.slice(6) : null, kind: "hex" };
+  }
+  const n = c.match(/[\d.]+/g).map(Number);
+  return { hex: "#" + n.slice(0, 3).map(v => Math.min(255, v).toString(16).padStart(2, "0")).join(""), alpha: n.length > 3 ? n[3] : null, kind: c.startsWith("rgba") ? "rgba" : "rgb" };
+}
+function writeColor(hex, orig) {
+  if (orig.kind === "hex") return hex + (orig.alpha || "");
+  const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  return orig.alpha !== null ? `rgba(${r}, ${g}, ${b}, ${orig.alpha})` : `rgb(${r}, ${g}, ${b})`;
+}
+/* Finds the template's main colors (most used colorful ones, grouped by hue) */
+function mainColors(texts) {
+  const buckets = {};
+  texts.forEach(t => (t.match(COLOR_RE) || []).forEach(c => {
+    const x = hexToHsl(parseColor(c).hex);
+    if (x.s < 0.25 || x.l < 0.12 || x.l > 0.9) return;     // skip grays, black, white
+    const k = Math.round(x.h / 30) % 12;
+    (buckets[k] = buckets[k] || { hue: k * 30, count: 0, sample: {} }).count++;
+    buckets[k].sample[parseColor(c).hex] = (buckets[k].sample[parseColor(c).hex] || 0) + 1;
+  }));
+  return Object.values(buckets).sort((a, b) => b.count - a.count).map(b => ({ ...b, top: Object.entries(b.sample).sort((a, c) => c[1] - a[1])[0][0] }));
+}
+/* Swaps each main color group for one of the user's colors (keeps light and dark shades) */
+function swapColors(text, plan) {
+  return text.replace(COLOR_RE, c => {
+    const o = parseColor(c), x = hexToHsl(o.hex);
+    if (x.s < 0.25 || x.l < 0.12 || x.l > 0.9) return c;
+    const p = plan.find(p => hueGap(x.h, p.hue) <= 18);
+    if (!p) return c;
+    const t = hexToHsl(p.to);
+    const neutral = t.s < 0.15;
+    const nh = { h: t.h + (x.h - p.hue) * 0.2, s: neutral ? t.s : (t.s * 0.7 + x.s * 0.3), l: Math.min(0.9, Math.max(0.1, x.l + (t.l - hexToHsl(p.top).l) * 0.8)) };
+    return writeColor(hslToHex(nh), o);
+  });
+}
+
+/* ---------- Build the site ---------- */
+async function buildSiteFromRepo(repo, req, userImages) {
+  const list = await repoFiles(repo);
+  const paths = new Set(list.map(f => f.path));
+  // Find the main page: index.html near the top (not inside node_modules or src of a build tool)
+  const htmls = list.filter(f => /\.html?$/i.test(f.path) && !/node_modules|\/src\/|^src\/|\/test|example|demo\//i.test(f.path) && f.size < 400000)
+    .sort((a, b) => (/(^|\/)index\.html?$/i.test(b.path) - /(^|\/)index\.html?$/i.test(a.path)) || a.path.split("/").length - b.path.split("/").length);
+  if (!htmls.length) throw new Error("no html");
+  const main = htmls[0].path, root = main.includes("/") ? main.slice(0, main.lastIndexOf("/") + 1) : "";
+  const html = await fetchText(repo, main);
+  if (/\{\{|<%|\{%|id=["'](root|app)["']\s*>\s*<\/div>/.test(html) && !/<h1|<h2/i.test(html)) throw new Error("needs a build step");
+
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const files = [];                     // { path, content, kind: "html"|"css"|"js"|"image" }
+  const outPath = p => p.startsWith(root) ? p.slice(root.length) : "extra/" + p.split("/").pop();
+  let total = 0;
+  const fetchLocal = async (repoPath, kind) => {
+    const f = list.find(x => x.path === repoPath);
+    if (!f || f.size > 400000 || total + f.size > 1500000) return null;
+    const content = await fetchText(repo, repoPath).catch(() => null);
+    if (content == null) return null;
+    total += content.length;
+    const file = { path: outPath(repoPath), repoPath, content, kind };
+    files.push(file);
+    return file;
+  };
+
+  // 1. Download the page's own CSS and JS files
+  for (const l of doc.querySelectorAll('link[rel~="stylesheet"][href]')) {
+    const href = l.getAttribute("href");
+    if (isExternal(href)) continue;
+    const rp = resolveRepoPath(main, href);
+    if (rp && paths.has(rp) && await fetchLocal(rp, "css")) l.setAttribute("href", relPath(outPath(main), outPath(rp)));
+    else if (rp) l.setAttribute("href", cdnUrl(repo, rp));
+  }
+  for (const sc of doc.querySelectorAll("script[src]")) {
+    const src = sc.getAttribute("src");
+    if (isExternal(src)) continue;
+    const rp = resolveRepoPath(main, src);
+    if (rp && paths.has(rp) && /\.m?js$/i.test(rp) && await fetchLocal(rp, "js")) sc.setAttribute("src", relPath(outPath(main), outPath(rp)));
+    else if (rp) sc.setAttribute("src", cdnUrl(repo, rp));
+  }
+
+  // 2. Find picture spots and give the best ones to the user's pictures
+  const slots = [];  // { kind: "img"|"css"|"style", el, file, ref, rp, score }
+  const cssFiles = files.filter(f => f.kind === "css");
+  cssFiles.forEach(f => {
+    for (const m of f.content.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const sel = m[1].trim().slice(-120);
+      for (const u of m[2].matchAll(/url\(\s*['"]?([^'")]+)['"]?\s*\)/g)) {
+        if (isExternal(u[1])) continue;
+        const rp = resolveRepoPath(f.repoPath, u[1]);
+        if (rp && IMAGE_EXT.test(rp) && /background/.test(m[2])) slots.push({ kind: "css", file: f, ref: u[1], rp, score: /hero|banner|header|masthead|intro|home|cover|jumbotron|slide|main|top|bg/i.test(sel) ? 3 : 1 });
+      }
+    }
+  });
+  doc.querySelectorAll("img[src]").forEach(img => {
+    const src = img.getAttribute("src");
+    if (isExternal(src)) return;
+    const rp = resolveRepoPath(main, src);
+    if (rp && IMAGE_EXT.test(rp) && !/logo|icon|favicon|sprite|loader|spinner|arrow|dot|pattern/i.test(rp)) slots.push({ kind: "img", el: img, rp, score: 2 });
+  });
+  doc.querySelectorAll("[style*='url(']").forEach(el => {
+    const u = el.getAttribute("style").match(/url\(\s*['"]?([^'")]+)['"]?\s*\)/);
+    if (!u || isExternal(u[1])) return;
+    const rp = resolveRepoPath(main, u[1]);
+    if (rp && IMAGE_EXT.test(rp)) slots.push({ kind: "style", el, ref: u[1], rp, score: 2.5 });
+  });
+  slots.sort((a, b) => b.score - a.score);
+  const used = [];
+  userImages.forEach((im, i) => {
+    const slot = slots[i];
+    const ext = im.dataUrl.startsWith("data:image/png") ? "png" : "jpg";
+    const path = `bob-images/your-picture-${i + 1}.${ext}`;
+    files.push({ path, content: im.dataUrl, kind: "image", userImage: true });
+    if (!slot) { used.push({ path, extra: true }); return; }
+    slot.done = true;
+    if (slot.kind === "img") { slot.el.setAttribute("src", relPath(outPath(main), path)); slot.el.removeAttribute("srcset"); slot.el.setAttribute("alt", req.name); }
+    if (slot.kind === "style") slot.el.setAttribute("style", slot.el.getAttribute("style").replace(slot.ref, relPath(outPath(main), path)));
+    if (slot.kind === "css") slot.file.content = slot.file.content.split(slot.ref).join(relPath(slot.file.path, path));
+    used.push({ path });
+  });
+  // Pictures that weren't swapped (and fonts) load straight from the template's repo
+  cssFiles.forEach(f => {
+    f.content = f.content.replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g, (all, q, ref) => {
+      if (isExternal(ref) || ref.startsWith("bob-images/") || ref.includes("/bob-images/")) return all;
+      const rp = resolveRepoPath(f.repoPath, ref);
+      return rp ? `url("${cdnUrl(repo, rp)}")` : all;
+    });
+  });
+  doc.querySelectorAll("img[src], source[srcset], img[srcset], link[rel~='icon'][href], video[poster], [style*='url(']").forEach(el => {
+    ["src", "srcset", "href", "poster"].forEach(a => {
+      const v = el.getAttribute(a);
+      if (!v || isExternal(v) || v.includes("bob-images/")) return;
+      if (a === "srcset") { el.setAttribute(a, v.split(",").map(part => { const [u, d] = part.trim().split(/\s+/); const rp = resolveRepoPath(main, u); return (rp ? cdnUrl(repo, rp) : u) + (d ? " " + d : ""); }).join(", ")); return; }
+      const rp = resolveRepoPath(main, v);
+      if (rp) el.setAttribute(a, cdnUrl(repo, rp));
+    });
+    const st = el.getAttribute("style");
+    if (st) el.setAttribute("style", st.replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g, (all, q, ref) => {
+      if (isExternal(ref) || ref.includes("bob-images/")) return all;
+      const rp = resolveRepoPath(main, ref);
+      return rp ? `url("${cdnUrl(repo, rp)}")` : all;
+    }));
+  });
+  // Extra pictures get a little gallery before the footer
+  const extras = used.filter(u => u.extra);
+  if (extras.length) {
+    const sec = doc.createElement("section");
+    sec.setAttribute("style", "padding:48px 16px;text-align:center");
+    sec.innerHTML = `<h2 style="margin:0 0 20px">Gallery</h2><div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center">` +
+      extras.map(u => `<img src="${relPath(outPath(main), u.path)}" alt="${esc(req.name)}" style="width:260px;max-width:90%;height:190px;object-fit:cover;border-radius:12px">`).join("") + `</div>`;
+    const footer = doc.querySelector("footer");
+    footer ? footer.parentNode.insertBefore(sec, footer) : doc.body.appendChild(sec);
+  }
+
+  // 3. Colors: find the template's main colors and swap in the user's
+  const styleTags = [...doc.querySelectorAll("style")];
+  const styled = [...doc.querySelectorAll("[style]")];
+  const groups = mainColors([...cssFiles.map(f => f.content), ...styleTags.map(s => s.textContent), ...styled.map(e => e.getAttribute("style"))]);
+  const plan = req.colors.map((to, i) => groups[i] && { hue: groups[i].hue, top: groups[i].top, to }).filter(Boolean);
+  if (plan.length) {
+    cssFiles.forEach(f => f.content = swapColors(f.content, plan));
+    styleTags.forEach(s => s.textContent = swapColors(s.textContent, plan));
+    styled.forEach(e => e.setAttribute("style", swapColors(e.getAttribute("style"), plan)));
+    doc.querySelectorAll("meta[name='theme-color']").forEach(m => m.setAttribute("content", req.colors[0]));
+  }
+
+  // 4. Words: the template's brand name, the title, and the big headings become the user's
+  const changed = [];
+  const brandEl = [...doc.querySelectorAll(".logo, .brand, .navbar-brand, .site-title, .site-name, #logo, header a[href='#'], header a[href='index.html'], header a[href='/']")]
+    .find(el => el.textContent.trim().length > 1 && el.textContent.trim().length < 40 && !el.querySelector("img, svg"));
+  const oldTitle = (doc.querySelector("title") || {}).textContent || "";
+  const oldBrand = (brandEl && brandEl.textContent.trim()) || oldTitle.split(/\s[|\-–:]\s/)[0].trim();
+  // Swap the old brand name everywhere it shows up as text
+  if (oldBrand && oldBrand.length >= 3 && !/^(home|menu|welcome|logo|brand)$/i.test(oldBrand)) {
+    const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
+    let n, count = 0;
+    while ((n = walker.nextNode())) {
+      if (/^(script|style|noscript)$/i.test(n.parentNode.nodeName)) continue;
+      if (n.nodeValue.includes(oldBrand)) { n.nodeValue = n.nodeValue.split(oldBrand).join(req.name); count++; }
+    }
+    if (count) changed.push(`the name "${oldBrand}"`);
+  }
+  if (brandEl && !brandEl.textContent.includes(req.name)) { brandEl.textContent = req.name; changed.push("the logo text"); }
+  let title = doc.querySelector("title");
+  if (!title) { title = doc.createElement("title"); doc.head.appendChild(title); }
+  title.textContent = req.name; changed.push("the page title");
+  const h1s = [...doc.querySelectorAll("h1")];
+  const big = h1s[0] || doc.querySelector("h2");
+  if (big) {
+    big.textContent = req.name; changed.push("the big heading");
+    // The line under the big heading becomes the tagline
+    let sib = big.nextElementSibling;
+    for (let i = 0; sib && i < 3; i++, sib = sib.nextElementSibling) {
+      if (/^(P|H2|H3|H4|H5|SPAN|DIV)$/.test(sib.tagName) && !sib.querySelector("img, a.btn, button, form, input") && sib.textContent.trim().length > 8 && sib.textContent.trim().length < 400 && sib.children.length <= 2) {
+        sib.textContent = req.tagline; changed.push("the line under it"); break;
+      }
+    }
+  }
+  if (h1s[1]) h1s[1].textContent = req.tagline.replace(/\.$/, "");
+  let meta = doc.querySelector("meta[name='description']");
+  if (!meta) { meta = doc.createElement("meta"); meta.setAttribute("name", "description"); doc.head.appendChild(meta); }
+  meta.setAttribute("content", req.tagline);
+
+  // 5. Credit the template (its license asks for this)
+  const credit = ` Made with Bob AI. Template: ${repo.full_name} (${repo.license.spdx_id} license) https://github.com/${repo.full_name} `;
+  const out = "<!DOCTYPE html>\n<!--" + credit.replace(/--/g, "-") + "-->\n" + doc.documentElement.outerHTML;
+  files.unshift({ path: outPath(main), content: out, kind: "html", main: true });
+  const report = {
+    images: used.filter(u => !u.extra).length, gallery: extras.length,
+    colors: plan.map(p => ({ from: p.top, to: p.to })), words: [...new Set(changed)]
+  };
+  return { files: files.map(({ path, content, kind, main, userImage }) => ({ path, content, kind, main: !!main, userImage: !!userImage })), report };
+}
+
+async function buildWebsite(text, attachments, seed = 0) {
+  if (IMG_BLOCK.test(text.toLowerCase())) return { text: `I can't make that kind of website. How about a site for a hobby, a pet, a game, or a business?`, sources: [], kind: "chat", noTone: true };
+  const req = readSiteRequest(text);
+  const userImages = (attachments || []).filter(a => a.kind === "image");
+  let repos;
+  try { repos = await findTemplateRepos(req); }
+  catch (e) {
+    return { text: e.message === "rate" ? `GitHub says I've searched too much for a minute. Wait about 60 seconds and try again!` : `I couldn't reach GitHub to find templates. Check your internet and try again.`, sources: [], kind: "chat", noTone: true };
+  }
+  if (!repos.length) return { text: `I couldn't find a free template for that. Try describing it differently, like **a portfolio website** or **a website for my bakery**.`, sources: [], kind: "chat", noTone: true };
+  // Try templates starting at the seed until one works
+  let built = null, repo = null, tries = 0;
+  for (let k = 0; k < repos.length && tries < 5; k++) {
+    repo = repos[(seed + k) % repos.length]; tries++;
+    try { built = await buildSiteFromRepo(repo, req, userImages); break; } catch (e) { built = null; }
+  }
+  if (!built) return { text: `I found some templates, but couldn't download one that works. Try again in a minute!`, sources: [], kind: "chat", noTone: true };
+  const r = built.report;
+  const bits = [];
+  if (r.words.length) bits.push(`put **${req.name}** in ${r.words.slice(0, 4).join(", ")}`);
+  if (r.colors.length) bits.push(`swapped its main colors for yours`);
+  if (r.images) bits.push(`replaced ${r.images} of its pictures with yours`);
+  if (r.gallery) bits.push(`added a gallery for ${r.gallery} more of your pictures`);
+  let msg = `Here's your website, **${req.name}**! 🌐\n\nI found the template **[${repo.full_name}](https://github.com/${repo.full_name})** on GitHub (⭐ ${repo.stargazers_count.toLocaleString("en-US")}, ${repo.license.spdx_id} license), downloaded its files, and ${bits.length ? bits.join(", ").replace(/, ([^,]*)$/, ", and $1") : "kept it as is"}.`;
+  if (!req.colors.length) msg += ` Tip: name some colors (like *pink and brown*) and I'll recolor it.`;
+  if (!userImages.length) msg += ` Upload pictures with the **+** button and I'll put them in.`;
+  msg += `\n\nOpen the preview to see it, or download the files. The template's license is credited at the top of the HTML.`;
+  return {
+    text: msg, sources: ["GitHub"], kind: "site",
+    site: { name: req.name, prompt: text, seed: seed + (tries - 1), repo: { name: repo.full_name, stars: repo.stargazers_count, license: repo.license.spdx_id }, files: built.files, userImages: userImages.map(u => ({ name: u.name, dataUrl: u.dataUrl, kind: "image" })) }
+  };
+}
+
+/* ---------- Preview, code, and downloads ---------- */
+// Makes one HTML with the CSS, JS, and your pictures packed inside (for the preview)
+function sitePreviewHtml(site) {
+  const files = Object.fromEntries(site.files.map(f => [f.path, f]));
+  const main = site.files.find(f => f.main);
+  const doc = new DOMParser().parseFromString(main.content, "text/html");
+  const inlineUrls = (text, fromPath) => text.replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g, (all, q, ref) => {
+    const p = resolveRepoPath(fromPath, ref);
+    return p && files[p] && files[p].kind === "image" ? `url("${files[p].content}")` : all;
+  });
+  doc.querySelectorAll('link[rel~="stylesheet"][href]').forEach(l => {
+    const p = resolveRepoPath(main.path, l.getAttribute("href"));
+    if (p && files[p]) { const st = doc.createElement("style"); st.textContent = inlineUrls(files[p].content, p); l.replaceWith(st); }
+  });
+  doc.querySelectorAll("script[src]").forEach(s => {
+    const p = resolveRepoPath(main.path, s.getAttribute("src"));
+    if (p && files[p]) { s.removeAttribute("src"); s.textContent = files[p].content.replace(/<\/script/gi, "<\\/script"); }
+  });
+  doc.querySelectorAll("img[src]").forEach(img => {
+    const p = resolveRepoPath(main.path, img.getAttribute("src"));
+    if (p && files[p] && files[p].kind === "image") img.setAttribute("src", files[p].content);
+  });
+  doc.querySelectorAll("[style*='url(']").forEach(el => el.setAttribute("style", inlineUrls(el.getAttribute("style"), main.path)));
+  return "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+}
+
+// A tiny ZIP maker (no compression), so all the files download together
+const CRC_TABLE = (() => { const t = []; for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(bytes) { let c = 0xFFFFFFFF; for (let i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function fileBytes(f) {
+  if (f.kind === "image" && f.content.startsWith("data:")) { const b = atob(f.content.split(",")[1]); return Uint8Array.from(b, ch => ch.charCodeAt(0)); }
+  return new TextEncoder().encode(f.content);
+}
+function makeZip(files) {
+  const enc = new TextEncoder(), parts = [], central = [];
+  let offset = 0;
+  files.forEach(f => {
+    const name = enc.encode(f.path), data = fileBytes(f), crc = crc32(data);
+    const head = new DataView(new ArrayBuffer(30));
+    [[0, 0x04034b50, 4], [4, 20, 2], [6, 0x0800, 2], [8, 0, 2], [10, 0, 2], [12, 0x21, 2], [14, crc, 4], [18, data.length, 4], [22, data.length, 4], [26, name.length, 2], [28, 0, 2]]
+      .forEach(([o, v, n]) => n === 4 ? head.setUint32(o, v, true) : head.setUint16(o, v, true));
+    parts.push(new Uint8Array(head.buffer), name, data);
+    const cen = new DataView(new ArrayBuffer(46));
+    [[0, 0x02014b50, 4], [4, 20, 2], [6, 20, 2], [8, 0x0800, 2], [10, 0, 2], [12, 0, 2], [14, 0x21, 2], [16, crc, 4], [20, data.length, 4], [24, data.length, 4], [28, name.length, 2], [30, 0, 2], [32, 0, 2], [34, 0, 2], [36, 0, 2], [38, 0, 4], [42, offset, 4]]
+      .forEach(([o, v, n]) => n === 4 ? cen.setUint32(o, v, true) : cen.setUint16(o, v, true));
+    central.push(new Uint8Array(cen.buffer), name);
+    offset += 30 + name.length + data.length;
+  });
+  const cenSize = central.reduce((t, a) => t + a.length, 0);
+  const end = new DataView(new ArrayBuffer(22));
+  [[0, 0x06054b50, 4], [8, files.length, 2], [10, files.length, 2], [12, cenSize, 4], [16, offset, 4]]
+    .forEach(([o, v, n]) => n === 4 ? end.setUint32(o, v, true) : end.setUint16(o, v, true));
+  return new Blob([...parts, ...central, new Uint8Array(end.buffer)], { type: "application/zip" });
+}
+const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "website";
+const kb = n => n < 1024 ? n + " B" : (n / 1024).toFixed(n < 10240 ? 1 : 0) + " KB";
+
+/* The side panel with the live preview and the code */
+let panelSite = null;
+function openSitePanel(site, tab = "preview") {
+  panelSite = site;
+  $("sitePanelTitle").textContent = site.name;
+  $("sitePanel").classList.add("open"); $("siteOverlay").classList.add("show");
+  showSiteTab(tab);
+}
+function closeSitePanel() { $("sitePanel").classList.remove("open"); $("siteOverlay").classList.remove("show"); $("siteFrame").srcdoc = ""; }
+function showSiteTab(tab, file) {
+  document.querySelectorAll("#siteTabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
+  $("sitePreview").hidden = tab !== "preview"; $("siteCode").hidden = tab !== "code";
+  if (tab === "preview") $("siteFrame").srcdoc = sitePreviewHtml(panelSite);
+  if (tab === "code") {
+    const files = panelSite.files.filter(f => f.kind !== "image");
+    const pickF = files.find(f => f.path === file) || files[0];
+    $("siteFileList").innerHTML = files.map(f => `<button type="button" class="${f === pickF ? "on" : ""}" data-path="${esc(f.path)}">${esc(f.path)}<small>${kb(f.content.length)}</small></button>`).join("");
+    $("siteCodeView").textContent = pickF ? pickF.content : "";
+    $("siteFileList").querySelectorAll("button").forEach(b => b.onclick = () => showSiteTab("code", b.dataset.path));
+  }
+}
+function openSiteInTab(site) {
+  // Opens in a sandboxed frame so the template's scripts can't see Bob's saved data
+  const w = window.open("", "_blank");
+  if (!w) return alertSoft("Your browser blocked the new tab. Allow pop ups for this site.");
+  w.document.write(`<!DOCTYPE html><title>${esc(site.name)}</title><style>html,body,iframe{margin:0;width:100%;height:100%;border:0}</style><iframe sandbox="allow-scripts allow-forms allow-popups"></iframe>`);
+  w.document.close();
+  w.document.querySelector("iframe").srcdoc = sitePreviewHtml(site);
+}
+$("siteClose").onclick = closeSitePanel;
+$("siteOverlay").onclick = closeSitePanel;
+document.querySelectorAll("#siteTabs button").forEach(b => b.onclick = () => showSiteTab(b.dataset.tab));
+document.querySelectorAll("#siteDevices button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("#siteDevices button").forEach(x => x.classList.toggle("on", x === b));
+  $("siteFrame").style.width = b.dataset.w; showSiteTab("preview");
+});
+$("siteNewTab").onclick = () => panelSite && openSiteInTab(panelSite);
+$("siteZip").onclick = () => panelSite && downloadBlob(makeZip(panelSite.files), slug(panelSite.name) + ".zip");
+$("siteCopy").onclick = async () => { try { await navigator.clipboard.writeText($("siteCodeView").textContent); $("siteCopy").textContent = "Copied!"; } catch (e) { } setTimeout(() => $("siteCopy").textContent = "Copy", 1500); };
+document.addEventListener("keydown", e => { if (e.key === "Escape" && $("sitePanel").classList.contains("open")) closeSitePanel(); });
+
+/* The website card inside the chat: the files pasted in, plus buttons */
+function siteBlock(msg) {
+  const site = msg.site, el = document.createElement("div");
+  el.className = "site-card";
+  if (!site.files) { el.innerHTML = `<div class="viz-cap">(Website files removed to save space. Ask again to make a new one.)</div>`; return el; }
+  const shown = site.files.filter(f => f.kind !== "image");
+  el.innerHTML = `<div class="site-head"><span class="site-globe">🌐</span><div><b>${esc(site.name)}</b><small>Template: <a href="https://github.com/${esc(site.repo.name)}" target="_blank" rel="noopener">${esc(site.repo.name)}</a> · ${esc(site.repo.license)}</small></div></div>` +
+    `<div class="site-btns"><button type="button" class="btn primary" data-s="preview">▶ Open preview</button><button type="button" class="btn ghost" data-s="zip">⬇ Download .zip</button><button type="button" class="btn ghost" data-s="tab">↗ New tab</button><button type="button" class="btn ghost" data-s="again">🔀 Try another template</button></div>` +
+    shown.map((f, i) => `<details class="site-file"><summary><span>${esc(f.path)}</span><small>${kb(f.content.length)}</small><button type="button" data-copy="${i}">Copy</button></summary><pre></pre></details>`).join("") +
+    (site.files.some(f => f.userImage) ? `<div class="site-imgs">${site.files.filter(f => f.userImage).map(f => `<img src="${f.content}" alt="" title="${esc(f.path)}">`).join("")}</div>` : "");
+  // Code is filled in when a file is opened (keeps the chat fast)
+  el.querySelectorAll(".site-file").forEach((d, i) => d.addEventListener("toggle", () => { if (d.open && !d.querySelector("pre").textContent) d.querySelector("pre").textContent = shown[i].content; }));
+  el.querySelectorAll("[data-copy]").forEach(b => b.onclick = async e => { e.preventDefault(); try { await navigator.clipboard.writeText(shown[+b.dataset.copy].content); b.textContent = "Copied!"; } catch (err) { } setTimeout(() => b.textContent = "Copy", 1500); });
+  el.querySelector('[data-s="preview"]').onclick = () => openSitePanel(site);
+  el.querySelector('[data-s="zip"]').onclick = () => downloadBlob(makeZip(site.files), slug(site.name) + ".zip");
+  el.querySelector('[data-s="tab"]').onclick = () => openSiteInTab(site);
+  el.querySelector('[data-s="again"]').onclick = async e => {
+    if (busy) return;
+    const b = e.currentTarget; b.disabled = true; b.textContent = "Finding another...";
+    const r = await buildWebsite(site.prompt, site.userImages || [], site.seed + 1);
+    if (r.site) { msg.site = r.site; msg.text = r.text; save(); renderChat(); openSitePanel(r.site); }
+    else { b.disabled = false; b.textContent = "🔀 Try another template"; alertSoft("Couldn't find another template right now."); }
+  };
+  return el;
+}
 
 /* Start up */
 renderMenu();
