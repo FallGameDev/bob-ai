@@ -22,26 +22,31 @@ Everything lives in one file: `index.html`.
 - **Chats and projects:** rename, delete, or move chats into project folders, and edit your messages to get a new answer
 - **Report a bug:** builds a full report and opens Gmail, Outlook, Yahoo, AOL, or Proton
 
-## Login keys
+## Accounts (Supabase)
 
-People need a key to get past the home page. Keys are saved in the code as SHA-256 hashes, so the real keys never show up in the source.
+People sign in with **Google**, **GitHub**, or **email** (a sign-in link, or a password with "Forgot password?"). Each account gets its own chats, projects, and settings on the device. Names and profile pictures come from Google or GitHub automatically.
 
-**Add a key**
-1. Open the site with `#makekey` at the end of the address
-2. Type who it's for, type a key (or press Random), then press **Make line**
-3. Paste the line into the `LOGIN_KEYS` list in `index.html` (delete the `// key:` note first) and push
+Until Supabase is set up, the home page shows a setup note and a **Try Bob without an account** button.
 
-**Remove a key:** delete its line from `LOGIN_KEYS`. Anyone using it gets logged out the next time they open Bob.
+### One-time setup
 
-This is a fun lock, not real security. Since everything runs in the browser, someone who knows code could get around it. A real lock would need a server (like Supabase).
+1. Make a free project at [supabase.com](https://supabase.com).
+2. **Project Settings > API:** copy the **Project URL** and the **anon public** key into `SUPABASE_URL` and `SUPABASE_ANON_KEY` at the top of PART 9 in `index.html`. (The anon key is meant to be public.)
+3. **Authentication > URL Configuration:** set **Site URL** to `https://fallgamedev.github.io/bob-ai/` and add the same address under **Redirect URLs**.
+4. **Authentication > Providers > Email:** it's on by default. Sign-in links and password sign up both use it.
+5. **Authentication > Providers > GitHub:** on GitHub go to **Settings > Developer settings > OAuth Apps > New OAuth App**. Use your site as the homepage and `https://<your-project-id>.supabase.co/auth/v1/callback` as the callback URL. Paste the Client ID and a new Client Secret into Supabase.
+6. **Authentication > Providers > Google:** in [Google Cloud Console](https://console.cloud.google.com/apis/credentials) make an **OAuth client ID** (Web application). Add `https://<your-project-id>.supabase.co/auth/v1/callback` as an authorized redirect URI, then paste the Client ID and Secret into Supabase.
+
+Google and GitHub sign in only work on the real website (like GitHub Pages), not when opening the file directly.
 
 ## Saved in the browser (localStorage)
 
+Sign-in itself is handled by Supabase (it saves its own session). Bob's data is saved per account:
+
 | Key | What it holds |
 | --- | --- |
-| `bob-login` | Which login key you used |
-| `bob-profile` | Display name, avatar color, response settings, your city, online search setting, YouTube API key |
-| `bob-chats` | Your chat history (and which project each chat is in) |
-| `bob-projects` | Your project folders |
+| `bob-profile:<account>` | Display name, avatar color, response settings, your city, online search setting, YouTube API key |
+| `bob-chats:<account>` | Your chat history (and which project each chat is in) |
+| `bob-projects:<account>` | Your project folders |
 | `bob-learned` | People and things Bob looked up online |
 | `bob-cache` | Saved answers (up to 200, cleared when Bob's version changes) |
